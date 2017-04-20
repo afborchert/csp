@@ -1,0 +1,4 @@
+/* 1.1.4 X1 p. 11 */
+DD = setorange -> O | setlemon -> L
+ O = orange -> O | setlemon -> L | setorange -> O
+ L = lemon -> L | setorange -> O | setlemon -> L

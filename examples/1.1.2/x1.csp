@@ -1,0 +1,2 @@
+// CSP, X1, p. 6
+CLOCK = tick -> CLOCK
