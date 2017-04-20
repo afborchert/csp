@@ -36,21 +36,40 @@
 
 using namespace CSP;
 
+void usage(const char* cmdname) {
+   std::cerr << "Usage: " << cmdname << " [-epv] source.csp" << std::endl;
+   exit(1);
+}
+
 int main(int argc, char** argv) {
-   char* cmdname = *argv++; --argc;
+   const char* cmdname = *argv++; --argc;
+   if (argc == 0) usage(cmdname);
 
    // permit verbose process output to be suppressed
-   bool opt_p = true;
-   if (argc > 0 && strcmp(argv[0], "-p") == 0) {
-      opt_p = false; --argc; ++argv;
+   bool opt_a = true;  // print alphabet at the beginning
+   bool opt_e = false; // print events if accepted
+   bool opt_p = true;  // print current process after each event
+   bool opt_v = true;  // print current set of acceptable events
+   while (argc > 0 && **argv == '-') {
+      for (char* cp = *argv + 1; *cp; ++cp) {
+	 switch (*cp) {
+	    case 'a':
+	       opt_a = false; break;
+	    case 'e':
+	       opt_e = true; break;
+	    case 'p':
+	       opt_p = false; break;
+	    case 'v':
+	       opt_v = false; break;
+	    default:
+	       usage(cmdname); break;
+	 }
+      }
+      --argc; ++argv;
    }
+   if (argc != 1) usage(cmdname);
 
-   if (argc != 1) {
-      std::cerr << "Usage: " << cmdname << " [-p] filename" << std::endl;
-      exit(1);
-   }
-
-   char* fname = *argv++; --argc;
+   const char* fname = *argv++; --argc;
    std::ifstream fin(fname);
    if (!fin) {
       std::cerr << cmdname << ": unable to open " << fname <<
@@ -67,9 +86,15 @@ int main(int argc, char** argv) {
    ProcessPtr process;
    parser p(scanner, symtab, process);
    if (p.parse() == 0) {
-      if (opt_p) std::cout << "Tracing: " << process << std::endl;
-      std::cout << "Alphabet: " << process->get_alphabet() << std::endl;
-      std::cout << "Acceptable: " << process->acceptable() << std::endl;
+      if (opt_p) {
+	 std::cout << "Tracing: " << process << std::endl;
+      }
+      if (opt_a) {
+	 std::cout << "Alphabet: " << process->get_alphabet() << std::endl;
+      }
+      if (opt_v) {
+	 std::cout << "Acceptable: " << process->acceptable() << std::endl;
+      }
       if (!process->accepts_success()) {
 	 std::string event;
 	 while (std::cin >> event) {
@@ -80,9 +105,16 @@ int main(int argc, char** argv) {
 		  exit(1);
 	       }
 	       if (process->accepts_success()) break;
-	       if (opt_p) std::cout << "Process: " << process << std::endl;
-	       std::cout << "Acceptable: " << process->acceptable() <<
-		  std::endl;
+	       if (opt_e) {
+		  std::cout << event << std::endl;
+	       }
+	       if (opt_p) {
+		  std::cout << "Process: " << process << std::endl;
+	       }
+	       if (opt_v) {
+		  std::cout << "Acceptable: " << process->acceptable() <<
+		     std::endl;
+	       }
 	    } else {
 	       std::cout << "Not in alphabet: " << event << std::endl;
 	    }
