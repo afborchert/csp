@@ -1,7 +1,7 @@
 # CSP
 CSP is a language by C. A. R. Hoare for describing patterns of interaction. The language
 is specified in the book _Communicating Sequential Processes_ which
-is fortunately online available in an updated version: <http://www.usingcsp.com/>.
+is fortunately available online in an updated version: <http://www.usingcsp.com/>.
 
 This package supports a small subset of CSP and provides a utility that allows to
 interactively follow possible traces.
@@ -46,16 +46,18 @@ Following identifiers and keywords are used by the grammar:
 Following operators are supported and presented in the order of precedence,
 those with the highest precedence coming first:
 
-| Operator  | Description          | Section
-| --------- | -------------------- | -------
-| `(`...`)` | grouping             |
-| `->`      | prefix               | 1.1.1
-| `|~|`     | non-deterministic or | 3.2
-| `[]`      | general choice       | 3.3
-| `|`       | choice               | 1.1.3
-| `|||`     | interleaving         | 3.6
-| `||`      | concurrency          | 2.3
-| `=`       | definition           | 1.1
+| Operator             | Description          | Section
+| -------------------- | -------------------- | -------
+| `(`...`)`            | grouping             |
+| `->`                 | prefix               | 1.1.1
+| `&#124;~&#124;`      | non-deterministic or | 3.2
+| `[]`                 | general choice       | 3.3
+| `&#124;`             | choice               | 1.1.3
+| `&#124;&#124;&#124;` | interleaving         | 3.6
+| `&#124;&#124;`       | concurrency          | 2.3
+| `=`                  | definition           | 1.1
+
+The sections refer to the book by C. A. R. Hoare.
 
 ### Delimiters
 
@@ -66,17 +68,29 @@ those with the highest precedence coming first:
 The grammar represents a subset of CSP:
 
    _ProcessDefinitions_ &#8594; _ProcessDefinition_ | _ProcessDefinitions_ _ProcessDefinition_
+
    _ProcessDefinition_ &#8594; *PROCESS* "`=`" _ProcessExpression_ | *PROCESS* _Alphabet_ "`=`" _ProcessExpression_
+
    _ProcessExpression_ &#8594; _ProcessSequence_
+
    _ProcessSequence_ &#8594; _ParallelProcesses_ | _ProcessSequence_ "`;`" _ParallelProcesses_
+
    _ParallelProcesses_ &#8594; _InterleavingProcesses_ | _ParallelProcesses_ "`||`" _InterleavingProcesses_
+
    _InterleavingProcesses_ &#8594; _ProcessChoices_ | _InterleavingProcesses_ "`|||`" _ProcessChoirces_
+
    _ProcessChoices_ &#8594; _ExternalChoice_ | _ProcessChoices_ "`|`" _ExternalChoice_
+
    _ExternalChoice_ &#8594; _InternalChoice_ | _ExternalChoice_ "`[]`" _InternalChoice_
+
    _InternalChoice_ &#8594; _PrefixExpression_ | _InternalChoice_ = "`|~|`" _PrefixExpression_
+
    _PrefixExpression_ &#8594; _SimpleProcessExpression_ | *EVENT* "`->`" _PrefixExpression_
+
    _SimpleProcessExpression_ &#8594; *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | "`(`" _ProcessExpression_ "`)`"
+
    _Alphabet_ &#8594; "`{`" "`}`" | "`{`" _AlphabetMembers_ "`}`"
+
    _AlphabetMembers_ &#8594; *EVENT* | _AlphabetMembers_ "`,`" *EVENT*
 
 # Usage
