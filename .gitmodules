@@ -1,0 +1,6 @@
+[submodule "bison-scripts"]
+	path = bison-scripts
+	url = https://github.com/afborchert/bison-scripts.git
+[submodule "gcc-makedepend"]
+	path = gcc-makedepend
+	url = https://github.com/afborchert/gcc-makedepend.git
