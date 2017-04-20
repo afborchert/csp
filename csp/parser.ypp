@@ -1,0 +1,265 @@
+/* 
+   Copyright (c) 2011-2017 Andreas F. Borchert
+   All rights reserved.
+
+   Permission is hereby granted, free of charge, to any person obtaining
+   a copy of this software and associated documentation files (the
+   "Software"), to deal in the Software without restriction, including
+   without limitation the rights to use, copy, modify, merge, publish,
+   distribute, sublicense, and/or sell copies of the Software, and to
+   permit persons to whom the Software is furnished to do so, subject to
+   the following conditions:
+
+   The above copyright notice and this permission notice shall be
+   included in all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+   KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+   WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+   ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*/
+
+/*
+   Parser for a subset of CSP:
+
+   Terminals:
+      PROCESS    Identifier that begins with an upper case letter
+      EVENT      Identifier that begins with a lower case letter
+      ALPHA      keyword "alpha"
+      RUN        keyword "RUN"
+      STOP       keyword "STOP"
+      SKIP       keyword "SKIP"
+
+   Productions:
+      ProcessDefinitions = ProcessDefinition |
+	 ProcessDefinitions ProcessDefinition .
+      ProcessDefinition = PROCESS "=" ProcessExpression |
+	 PROCESS Alphabet "=" ProcessExpression .
+      ProcessExpression = ProcessSequence .
+      ProcessSequence = ParallelProcesses |
+	 ProcessSequence ";" ParallelProcesses .
+      ParallelProcesses = InterleavingProcesses |
+	 ParallelProcesses "||" InterleavingProcesses .
+      InterleavingProcesses = ProcessChoices |
+	 InterleavingProcesses "|||" ProcessChoirces .
+      ProcessChoices = ExternalChoice |
+	 ProcessChoices "|" ExternalChoice .
+      ExternalChoice = InternalChoice |
+	 ExternalChoice "[]" InternalChoice .
+      InternalChoice = PrefixExpression |
+	 InternalChoice = "|~|" PrefixExpression .
+      PrefixExpression = SimpleProcessExpression |
+	 EVENT "->" PrefixExpression .
+      SimpleProcessExpression = PROCESS |
+	 RUN Alphabet | RUN ALPHA PROCESS |
+	 STOP Alphabet | STOP ALPHA PROCESS |
+	 SKIP Alphabet | SKIP ALPHA PROCESS |
+	 "(" ProcessExpression ")" .
+      Alphabet = "{" "}" | "{" AlphabetMembers "}" .
+      AlphabetMembers = EVENT | AlphabetMembers "," EVENT .
+*/
+
+%{
+namespace CSP {
+   class Scanner;
+   class SymTable;
+}
+
+using namespace CSP;
+
+#include <memory>
+#include "yystype.hpp"
+#include "scanner.hpp"
+#include "yytname.hpp"
+#include "symtable.hpp"
+#include "object.hpp"
+%}
+
+%skeleton "lalr1.cc"
+%define api.prefix {csp}
+%define api.namespace { CSP }
+%defines
+%verbose
+%locations
+%token-table
+%parse-param { Scanner& scanner }
+%parse-param { SymTable& symtab }
+%parse-param { ProcessPtr& p }
+%lex-param { Scanner& scanner }
+
+/* operators */
+%token ARROW OR EQUAL PARALLEL INTERLEAVES INTERNAL_CHOICE EXTERNAL_CHOICE
+
+/* delimiters */
+%token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
+
+/* identifiers */
+%token EVENT PROCESS
+
+/* keywords */
+%token ALPHA RUN SKIP STOP
+
+%%
+
+start:
+      { symtab.open(); }
+   process_definitions
+      {
+	 p = std::dynamic_pointer_cast<Process>($2);
+	 symtab.close();
+      }
+   ;
+
+process_definitions: process_definition
+      { $$ = $1; }
+   | process_definitions process_definition
+      { $$ = $1; } // just remember the very first process definition
+   ;
+
+process_definition: PROCESS EQUAL process_expression
+      {
+	 auto pn = std::dynamic_pointer_cast<ProcessReference>($1);
+	 auto gp = std::dynamic_pointer_cast<Process>($3);
+	 auto process = std::make_shared<ProcessDefinition>(pn->get_name(), gp);
+	 symtab.insert(process);
+	 $$ = process;
+      }
+   ;
+process_definition: PROCESS alphabet EQUAL process_expression
+      {
+	 auto pn = std::dynamic_pointer_cast<ProcessReference>($1);
+	 auto gp = std::dynamic_pointer_cast<Process>($4);
+	 auto process = std::make_shared<ProcessDefinition>(pn->get_name(), gp);
+	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
+	 process->set_alphabet(evset->get_alphabet());
+	 symtab.insert(process);
+	 $$ = process;
+      }
+   ;
+
+process_expression: process_sequence
+   ;
+
+process_sequence: parallel_processes
+   | process_sequence SEMICOLON parallel_processes
+      {
+	 auto p1 = std::dynamic_pointer_cast<Process>($1);
+	 auto p2 = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<ProcessSequence>(p1, p2);
+      }
+   ;
+
+parallel_processes: interleaving_processes
+   | parallel_processes PARALLEL interleaving_processes
+      {
+	 auto p1 = std::dynamic_pointer_cast<Process>($1);
+	 auto p2 = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<ParallelProcesses>(p1, p2);
+      }
+   ;
+
+interleaving_processes: process_choices
+   | interleaving_processes INTERLEAVES process_choices
+      {
+	 auto p1 = std::dynamic_pointer_cast<Process>($1);
+	 auto p2 = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<InterleavingProcesses>(p1, p2);
+      }
+   ;
+
+process_choices: external_choice
+   | process_choices OR external_choice
+      {
+	 auto p1 = std::dynamic_pointer_cast<Process>($1);
+	 auto p2 = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<SelectingProcess>(p1, p2);
+      }
+   ;
+
+external_choice: internal_choice
+   | external_choice EXTERNAL_CHOICE internal_choice
+      {
+	 auto p1 = std::dynamic_pointer_cast<Process>($1);
+	 auto p2 = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<ExternalChoice>(p1, p2);
+      }
+   ;
+
+internal_choice: prefix_expression
+   | internal_choice INTERNAL_CHOICE prefix_expression
+      {
+	 auto p1 = std::dynamic_pointer_cast<Process>($1);
+	 auto p2 = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<InternalChoice>(p1, p2);
+      }
+   ;
+
+prefix_expression: simple_process_expression
+   | EVENT ARROW prefix_expression
+      {  
+	 auto event = std::dynamic_pointer_cast<Event>($1);
+	 auto process = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
+      }
+   ;
+
+simple_process_expression: PROCESS
+   | RUN alphabet
+      {
+	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
+	 $$ = std::make_shared<RunProcess>(evset->get_alphabet());
+      }
+   | RUN ALPHA PROCESS
+      {
+	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<RunProcess>(alpha_p);
+      }
+   | STOP alphabet
+      {
+	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
+	 $$ = std::make_shared<StopProcess>(evset->get_alphabet());
+      }
+   | STOP ALPHA PROCESS
+      {
+	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<StopProcess>(alpha_p);
+      }
+   | SKIP alphabet
+      {
+	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
+	 $$ = std::make_shared<SkipProcess>(evset->get_alphabet());
+      }
+   | SKIP ALPHA PROCESS
+      {
+	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<SkipProcess>(alpha_p);
+      }
+   | LPAREN process_expression RPAREN
+      { $$ = $2; }
+   ;
+
+alphabet: LBRACE RBRACE
+      { $$ = std::make_shared<EventSet>(); }
+   | LBRACE alphabet_members RBRACE
+      { $$ = $2; }
+   ;
+alphabet_members: EVENT
+      {
+	 auto event = std::dynamic_pointer_cast<Event>($1);
+	 $$ = std::make_shared<EventSet>(event->get_name());
+      }
+   | alphabet_members COMMA EVENT
+      {
+	 auto set = std::dynamic_pointer_cast<EventSet>($1);
+	 auto event = std::dynamic_pointer_cast<Event>($3);
+	 Alphabet a = set->get_alphabet();
+	 a.add(event->get_name());
+	 $$ = std::make_shared<EventSet>(a);
+      }
+   ;
+
+%%
