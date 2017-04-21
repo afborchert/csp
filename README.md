@@ -1,14 +1,20 @@
 # CSP
-CSP is a language by C. A. R. Hoare for describing patterns of interaction. The language
-is specified in the book _Communicating Sequential Processes_ which
-is fortunately available online in an updated version: <http://www.usingcsp.com/>.
+CSP is a language by C. A. R. Hoare for a process algebra that describes
+patterns of interaction. The language is specified in the book
+_Communicating Sequential Processes_, published by Prentice Hall 1985,
+ISBN 0-13-153289, which is fortunately available online in an updated
+version: <http://www.usingcsp.com/>.
 
-This package supports a small subset of CSP and provides a utility that allows to
-interactively follow possible traces.
+The book itself provides sections that give directions how various
+operators can be implemented in LISP. This package is such an
+implementation, albeit based on C++ and yacc, that supports a small
+subset of CSP. A utility is provided that allows to interactively follow
+possible traces or to check non-interactively for a process _P_ if a
+trace is member of _traces_(_P_).
 
 ## Downloading and building
 
-If you want to clone it, you should do this recursively:
+Cloning should be done recursively:
 
 ```
 git clone --recursive https://github.com/afborchert/csp.git
@@ -18,7 +24,7 @@ To build it, you need _bison_ 3.x and a recent _g++_ with
 C++14 support:
 
 ```
-cd csp
+cd csp/csp
 make depend
 make
 ```
