@@ -50,11 +50,11 @@ those with the highest precedence coming first:
 | -------------------- | -------------------- | -------
 | `(`...`)`            | grouping             |
 | `->`                 | prefix               | 1.1.1
-| `&#124;~&#124;`      | non-deterministic or | 3.2
+| &#124;~&#124;        | non-deterministic or | 3.2
 | `[]`                 | general choice       | 3.3
-| `&#124;`             | choice               | 1.1.3
-| `&#124;&#124;&#124;` | interleaving         | 3.6
-| `&#124;&#124;`       | concurrency          | 2.3
+| &#124;               | choice               | 1.1.3
+| &#124;&#124;&#124;   | interleaving         | 3.6
+| &#124;&#124;         | concurrency          | 2.3
 | `=`                  | definition           | 1.1
 
 The sections refer to the book by C. A. R. Hoare.
