@@ -46,16 +46,17 @@ Following identifiers and keywords are used by the grammar:
 Following operators are supported and presented in the order of precedence,
 those with the highest precedence coming first:
 
-| Operator             | Description          | Section
-| -------------------- | -------------------- | -------
-| `(`...`)`            | grouping             |
-| `->`                 | prefix               | 1.1.1
-| &#124;~&#124;        | non-deterministic or | 3.2
-| `[]`                 | general choice       | 3.3
-| &#124;               | choice               | 1.1.3
-| &#124;&#124;&#124;   | interleaving         | 3.6
-| &#124;&#124;         | concurrency          | 2.3
-| `=`                  | definition           | 1.1
+| Operator             | Description          | Associativity   | Section
+| -------------------- | -------------------- | --------------- | -------
+| `(`...`)`            | grouping             |                 |
+| `->`                 | prefix               | right-to-left   | 1.1.1
+| &#124;~&#124;        | non-deterministic or | left-to-right   | 3.2
+| `[]`                 | general choice       | left-to-right   | 3.3
+| &#124;               | choice               | left-to-right   | 1.1.3
+| &#124;&#124;&#124;   | interleaving         | left-to-right   | 3.6
+| &#124;&#124;         | concurrency          | left-to-right   | 2.3
+| `;`                  | sequence             | left-to-right   | 5.1
+| `=`                  | definition           | non-associative | 1.1
 
 The sections refer to the book by C. A. R. Hoare.
 
