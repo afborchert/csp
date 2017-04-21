@@ -118,10 +118,10 @@ section is given, then the example number within that section.
 
 ## 1.1.2 X1
 ```
-thales$ cat x1.csp
+$ cat x1.csp
 // CSP, X1, p. 6
 CLOCK = tick -> CLOCK
-thales$ trace x1.csp
+$ trace x1.csp
 Tracing: CLOCK = tick -> CLOCK
 Alphabet: {tick}
 Acceptable: {tick}
@@ -132,12 +132,12 @@ tick
 Process: CLOCK = tick -> CLOCK
 Acceptable: {tick}
 OK
-thales$
+$
 ```
 
 ## 1.1.2 X2
 ```
-thales$ trace x2.csp
+$ trace x2.csp
 Tracing: VMS = coin -> choc -> VMS
 Alphabet: {choc, coin}
 Acceptable: {coin}
@@ -154,7 +154,7 @@ choc
 Process: VMS = coin -> choc -> VMS
 Acceptable: {coin}
 OK
-thales$
+$
 ```
 
 ## 1.1.2 X3
@@ -163,17 +163,17 @@ are just interested in checking whether a particular trace is in traces(P)
 all verbose output can be switched off:
 
 ```
-thales$ cat x3.csp
+$ cat x3.csp
 CH5A = in5p -> out2p -> out1p -> out2p -> CH5A
-thales$ echo in5p out2p out1p out2p | trace -apv x3.csp
+$ echo in5p out2p out1p out2p | trace -apv x3.csp
 OK
-thales$ echo in5p out2p in5p out2p | trace -apv x3.csp
+$ echo in5p out2p in5p out2p | trace -apv x3.csp
 cannot accept in5p
-thales$ echo in5p out2p in5p out2p | trace -aepv x3.csp
+$ echo in5p out2p in5p out2p | trace -aepv x3.csp
 in5p
 out2p
 cannot accept in5p
-thales$
+$
 ```
 
 ## 1.1.3 X1
@@ -184,10 +184,10 @@ the *alpha* keyword or by enumerating the events explicitly
 in braces.
 
 ```
-thales$ cat x1.csp
+$ cat x1.csp
 /* 1.1.3 X1 p.8 */
 P = up -> STOP alpha P | right -> right -> up -> STOP alpha P
-thales$ trace x1.csp
+$ trace x1.csp
 Tracing: P = up -> STOP {right, up} | right -> right -> up -> STOP {right, up}
 Alphabet: {right, up}
 Acceptable: {right, up}
@@ -201,7 +201,7 @@ up
 Process: STOP {right, up}
 Acceptable: {}
 OK
-thales$
+$
 ```
 
 At the end we observe an empty set of acceptable events. If the input
@@ -210,13 +210,13 @@ error message is printed.
 
 ## 1.1.4 X1
 ```
-thales$ cat x1.csp
+$ cat x1.csp
 /* 1.1.4 X1 p. 11 */
 DD = setorange -> O | setlemon -> L
  O = orange -> O | setlemon -> L | setorange -> O
  L = lemon -> L | setorange -> O | setlemon -> L
-thales$
-thales$ trace x1.csp
+$
+$ trace x1.csp
 Tracing: DD = setorange -> O | setlemon -> L
 Alphabet: {lemon, orange, setlemon, setorange}
 Acceptable: {setlemon, setorange}
@@ -236,17 +236,17 @@ orange
 Process: O = orange -> O | setlemon -> L | setorange -> O
 Acceptable: {orange, setlemon, setorange}
 OK
-thales$
+$
 ```
 
 ## 2.2 X1
 ```
-thales$ cat x1.csp
+$ cat x1.csp
 /* 2.2 X1 p. 46 */
 P = GRCUST || VMCT
 GRCUST = toffee -> GRCUST | choc -> GRCUST | coin -> choc -> GRCUST
 VMCT = coin -> (choc -> VMCT | toffee -> VMCT) /* see 1.1.3 X3 p. 8 */
-thales$ trace x1.csp
+$ trace x1.csp
 Tracing: P = GRCUST || VMCT
 Alphabet: {choc, coin, toffee}
 Acceptable: {coin}
@@ -263,7 +263,7 @@ choc
 Process: GRCUST || VMCT
 Acceptable: {coin}
 OK
-thales$
+$
 ```
 
 ## 2.2 X2
@@ -274,7 +274,7 @@ extended by this operation. For this reason it was necessary in the
 following example to specify the alphabet of _FOOLCUST_ explicitly:
 
 ```
-thales$ cat x2.csp
+$ cat x2.csp
 /* 2.2 X2 p. 46 */
 P = FOOLCUST || VMC
 FOOLCUST {in1p, in2p, out1p, small, large} = in2p -> large -> FOOLCUST | in1p -> large -> FOOLCUST
@@ -282,7 +282,7 @@ FOOLCUST {in1p, in2p, out1p, small, large} = in2p -> large -> FOOLCUST | in1p ->
    with design flaw: "WARNING: do not insert three pennies in a row" */
 VMC = in2p -> (large -> VMC | small -> out1p -> VMC) |
       in1p -> (small -> VMC | in1p -> (large -> VMC | in1p -> STOP alpha VMC))
-thales$ trace x2.csp
+$ trace x2.csp
 Tracing: P = FOOLCUST || VMC
 Alphabet: {in1p, in2p, large, out1p, small}
 Acceptable: {in1p, in2p}
@@ -296,5 +296,5 @@ in1p
 Process: large -> FOOLCUST || small -> VMC | in1p -> large -> VMC | in1p -> STOP {in1p, in2p, large, out1p, small}
 Acceptable: {}
 OK
-thales$
+$
 ```
