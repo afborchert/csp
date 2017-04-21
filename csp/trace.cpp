@@ -37,7 +37,14 @@
 using namespace CSP;
 
 void usage(const char* cmdname) {
-   std::cerr << "Usage: " << cmdname << " [-epv] source.csp" << std::endl;
+   std::cerr << "Usage: " << cmdname << " [-aepv] source.csp" << std::endl;
+   std::cerr << "Options:" << std::endl;
+   std::cerr << " -a   do not print the alphabet at the beginning" << std::endl;
+   std::cerr << " -e   print events, if accepted" << std::endl;
+   std::cerr << " -p   do not print current process after each event" <<
+      std::endl;
+   std::cerr << " -v   do not print the set of acceptable events" <<
+      std::endl;
    exit(1);
 }
 
