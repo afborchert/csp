@@ -80,9 +80,6 @@ int main(int argc, char** argv) {
    std::string filename(fname);
    Scanner scanner(fin, filename, symtab);
 
-   /* initialize pseudo-randomgenerator */
-   std::srand(time(0) ^ getpid());
-
    ProcessPtr process;
    parser p(scanner, symtab, process);
    if (p.parse() == 0) {

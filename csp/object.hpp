@@ -33,6 +33,7 @@
 #include "alphabet.hpp"
 #include "symtable.hpp"
 #include "types.hpp"
+#include "uniformint.hpp"
 
 namespace CSP {
 
@@ -436,7 +437,7 @@ namespace CSP {
 	    bool ok1 = a1.is_member(event);
 	    bool ok2 = a2.is_member(event);
 	    if (ok1 && ok2) {
-	       if (std::rand() % 2 == 0) {
+	       if (prg.flip()) {
 		  ok1 = false;
 	       } else {
 		  ok2 = false;
@@ -458,6 +459,7 @@ namespace CSP {
       private:
 	 ProcessPtr process1;
 	 ProcessPtr process2;
+	 UniformIntDistribution prg;
 	 virtual void initialize_dependencies() const {
 	    process1->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
@@ -487,7 +489,7 @@ namespace CSP {
 	    bool ok1 = a1.is_member(event);
 	    bool ok2 = a2.is_member(event);
 	    if (ok1 && ok2) {
-	       if (std::rand() % 2 == 0) {
+	       if (prg.flip()) {
 		  ok1 = false;
 	       } else {
 		  ok2 = false;
@@ -506,6 +508,7 @@ namespace CSP {
 	 /* if asked, we tell our next decision */
 	 ProcessPtr process1;
 	 ProcessPtr process2;
+	 UniformIntDistribution prg;
 	 virtual void initialize_dependencies() const {
 	    process1->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
@@ -550,11 +553,12 @@ namespace CSP {
       private:
 	 /* if asked, we tell our next decision */
 	 mutable enum {undecided, headforp1, headforp2} nextmove;
+	 mutable UniformIntDistribution prg;
 	 ProcessPtr process1;
 	 ProcessPtr process2;
 	 void decide() const {
 	    if (nextmove == undecided) {
-	       if (std::rand() % 2 == 0) {
+	       if (prg.flip()) {
 		  nextmove = headforp1;
 	       } else {
 		  nextmove = headforp2;

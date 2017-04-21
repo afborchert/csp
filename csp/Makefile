@@ -21,9 +21,10 @@ Binaries := testlex testparser trace
 MAKEDEPEND := perl ../gcc-makedepend/gcc-makedepend.pl
 
 CXX :=		g++
-CXXFLAGS :=	-Wall -g -std=c++14
+CXXSTD :=	-std=c++14
+CXXFLAGS :=	-Wall -g
 LDFLAGS :=
-CPPFLAGS +=	-I.
+CPPFLAGS +=	-I. $(CXXSTD)
 LDLIBS :=
 BISON :=	bison
 
@@ -54,34 +55,34 @@ depend:		$(CPPSources)
 		$(MAKEDEPEND) $(CPPFLAGS) $(CPPSources) $(MainCPPSources)
 # DO NOT DELETE
 parser.tab.o: parser.tab.cpp yystype.hpp object.hpp alphabet.hpp \
- symtable.hpp types.hpp scanner.hpp parser.hpp location.hh position.hh \
- parser.tab.hpp stack.hh yytname.hpp
+ symtable.hpp types.hpp uniformint.hpp scanner.hpp parser.hpp location.hh \
+ position.hh parser.tab.hpp stack.hh yytname.hpp
 yytname.o: yytname.cpp
 error.o: error.cpp error.hpp parser.hpp location.hh position.hh \
  yystype.hpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- parser.tab.hpp stack.hh
+ uniformint.hpp parser.tab.hpp stack.hh
 scanner.o: scanner.cpp error.hpp parser.hpp location.hh position.hh \
  yystype.hpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- parser.tab.hpp stack.hh scanner.hpp
+ uniformint.hpp parser.tab.hpp stack.hh scanner.hpp
 scope.o: scope.cpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- scope.hpp
+ uniformint.hpp scope.hpp
 symtable.o: symtable.cpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- scope.hpp
+ uniformint.hpp scope.hpp
 testlex.o: testlex.cpp parser.hpp location.hh position.hh yystype.hpp \
- object.hpp alphabet.hpp symtable.hpp types.hpp parser.tab.hpp stack.hh \
- scanner.hpp yytname.hpp
+ object.hpp alphabet.hpp symtable.hpp types.hpp uniformint.hpp \
+ parser.tab.hpp stack.hh scanner.hpp yytname.hpp
 testparser.o: testparser.cpp parser.hpp location.hh position.hh \
  yystype.hpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- parser.tab.hpp stack.hh scanner.hpp yytname.hpp
+ uniformint.hpp parser.tab.hpp stack.hh scanner.hpp yytname.hpp
 trace.o: trace.cpp parser.hpp location.hh position.hh yystype.hpp \
- object.hpp alphabet.hpp symtable.hpp types.hpp parser.tab.hpp stack.hh \
- scanner.hpp yytname.hpp
+ object.hpp alphabet.hpp symtable.hpp types.hpp uniformint.hpp \
+ parser.tab.hpp stack.hh scanner.hpp yytname.hpp
 testlex.o: testlex.cpp parser.hpp location.hh position.hh yystype.hpp \
- object.hpp alphabet.hpp symtable.hpp types.hpp parser.tab.hpp stack.hh \
- scanner.hpp yytname.hpp
+ object.hpp alphabet.hpp symtable.hpp types.hpp uniformint.hpp \
+ parser.tab.hpp stack.hh scanner.hpp yytname.hpp
 testparser.o: testparser.cpp parser.hpp location.hh position.hh \
  yystype.hpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- parser.tab.hpp stack.hh scanner.hpp yytname.hpp
+ uniformint.hpp parser.tab.hpp stack.hh scanner.hpp yytname.hpp
 trace.o: trace.cpp parser.hpp location.hh position.hh yystype.hpp \
- object.hpp alphabet.hpp symtable.hpp types.hpp parser.tab.hpp stack.hh \
- scanner.hpp yytname.hpp
+ object.hpp alphabet.hpp symtable.hpp types.hpp uniformint.hpp \
+ parser.tab.hpp stack.hh scanner.hpp yytname.hpp

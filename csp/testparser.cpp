@@ -41,25 +41,25 @@ int main(int argc, char** argv) {
    }
 
    SymTable symtab;
-   Scanner* scanner;
-   std::ifstream* fin = nullptr;
+   std::unique_ptr<Scanner> scanner;
+   std::unique_ptr<std::ifstream> fin = nullptr;
    if (argc > 0) {
       char* fname = *argv++; --argc;
-      fin = new std::ifstream(fname);
+      fin = std::make_unique<std::ifstream>(fname);
       std::string filename(fname);
       if (!*fin) {
-         std::cerr << cmdname << ": unable to open " << fname <<
-            " for reading" << std::endl;
-         exit(1);
+	 std::cerr << cmdname << ": unable to open " << fname <<
+	    " for reading" << std::endl;
+	 exit(1);
       }
-      scanner = new Scanner(*fin, filename, symtab);
+      scanner = std::make_unique<Scanner>(*fin, filename, symtab);
    } else {
-      scanner = new Scanner(std::cin, "stdin", symtab);
+      scanner = std::make_unique<Scanner>(std::cin, "stdin", symtab);
    }
+
    ProcessPtr process;
    parser p(*scanner, symtab, process);
    if (p.parse() == 0) {
       std::cout << "OK" << std::endl;
    }
-   delete scanner;
 }
