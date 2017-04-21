@@ -62,8 +62,8 @@ The sections refer to the book by C. A. R. Hoare.
 
 ### Delimiters
 
-* Alphabets are enclosed in "`{`" ... "`}`".
-* Multiple members of an alphabet are separated by commas: "`,`"
+* Alphabets are enclosed in `{` ... `}`.
+* Multiple members of an alphabet are separated by commas: `,`
 
 ## Grammar
 The grammar represents a subset of CSP:
