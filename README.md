@@ -70,29 +70,29 @@ The grammar represents a subset of CSP:
 
    _ProcessDefinitions_ &#8594; _ProcessDefinition_ | _ProcessDefinitions_ _ProcessDefinition_
 
-   _ProcessDefinition_ &#8594; *PROCESS* "`=`" _ProcessExpression_ | *PROCESS* _Alphabet_ "`=`" _ProcessExpression_
+   _ProcessDefinition_ &#8594; *PROCESS* `=` _ProcessExpression_ | *PROCESS* _Alphabet_ `=` _ProcessExpression_
 
    _ProcessExpression_ &#8594; _ProcessSequence_
 
-   _ProcessSequence_ &#8594; _ParallelProcesses_ | _ProcessSequence_ "`;`" _ParallelProcesses_
+   _ProcessSequence_ &#8594; _ParallelProcesses_ | _ProcessSequence_ `;` _ParallelProcesses_
 
-   _ParallelProcesses_ &#8594; _InterleavingProcesses_ | _ParallelProcesses_ "`||`" _InterleavingProcesses_
+   _ParallelProcesses_ &#8594; _InterleavingProcesses_ | _ParallelProcesses_ `||` _InterleavingProcesses_
 
-   _InterleavingProcesses_ &#8594; _ProcessChoices_ | _InterleavingProcesses_ "`|||`" _ProcessChoirces_
+   _InterleavingProcesses_ &#8594; _ProcessChoices_ | _InterleavingProcesses_ `|||` _ProcessChoirces_
 
-   _ProcessChoices_ &#8594; _ExternalChoice_ | _ProcessChoices_ "`|`" _ExternalChoice_
+   _ProcessChoices_ &#8594; _ExternalChoice_ | _ProcessChoices_ `|` _ExternalChoice_
 
-   _ExternalChoice_ &#8594; _InternalChoice_ | _ExternalChoice_ "`[]`" _InternalChoice_
+   _ExternalChoice_ &#8594; _InternalChoice_ | _ExternalChoice_ `[]` _InternalChoice_
 
-   _InternalChoice_ &#8594; _PrefixExpression_ | _InternalChoice_ = "`|~|`" _PrefixExpression_
+   _InternalChoice_ &#8594; _PrefixExpression_ | _InternalChoice_ = `|~|` _PrefixExpression_
 
-   _PrefixExpression_ &#8594; _SimpleProcessExpression_ | *EVENT* "`->`" _PrefixExpression_
+   _PrefixExpression_ &#8594; _SimpleProcessExpression_ | *EVENT* `->` _PrefixExpression_
 
-   _SimpleProcessExpression_ &#8594; *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | "`(`" _ProcessExpression_ "`)`"
+   _SimpleProcessExpression_ &#8594; *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | `(` _ProcessExpression_ `)`
 
-   _Alphabet_ &#8594; "`{`" "`}`" | "`{`" _AlphabetMembers_ "`}`"
+   _Alphabet_ &#8594; `{` `}` | `{` _AlphabetMembers_ `}`
 
-   _AlphabetMembers_ &#8594; *EVENT* | _AlphabetMembers_ "`,`" *EVENT*
+   _AlphabetMembers_ &#8594; *EVENT* | _AlphabetMembers_ `,` *EVENT*
 
 # Usage
 The _trace_ command expects a filename as last argument and supports following flags:
