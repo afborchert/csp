@@ -138,6 +138,9 @@ $
 
 ## 1.1.2 X2
 ```
+$ cat x2.csp
+// CSP, X2, p. 6
+VMS = coin -> choc -> VMS
 $ trace x2.csp
 Tracing: VMS = coin -> choc -> VMS
 Alphabet: {choc, coin}
@@ -165,6 +168,7 @@ all verbose output can be switched off:
 
 ```
 $ cat x3.csp
+/* CSP 1.1.2 X3 p. 7 */
 CH5A = in5p -> out2p -> out1p -> out2p -> CH5A
 $ echo in5p out2p out1p out2p | trace -apv x3.csp
 OK
@@ -216,7 +220,6 @@ $ cat x1.csp
 DD = setorange -> O | setlemon -> L
  O = orange -> O | setlemon -> L | setorange -> O
  L = lemon -> L | setorange -> O | setlemon -> L
-$
 $ trace x1.csp
 Tracing: DD = setorange -> O | setlemon -> L
 Alphabet: {lemon, orange, setlemon, setorange}
