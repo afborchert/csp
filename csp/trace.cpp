@@ -37,8 +37,10 @@
 using namespace CSP;
 
 void usage(const char* cmdname) {
-   std::cerr << "Usage: " << cmdname << " [-aepv] source.csp" << std::endl;
+   std::cerr << "Usage: " << cmdname << " [-Aaepv] source.csp" << std::endl;
    std::cerr << "Options:" << std::endl;
+   std::cerr << " -A   print alphabet, one symbol per line, and exit" <<
+      std::endl;
    std::cerr << " -a   do not print the alphabet at the beginning" << std::endl;
    std::cerr << " -e   print events, if accepted" << std::endl;
    std::cerr << " -p   do not print current process after each event" <<
@@ -53,6 +55,7 @@ int main(int argc, char** argv) {
    if (argc == 0) usage(cmdname);
 
    // permit verbose process output to be suppressed
+   bool opt_A = false; // print alphabet and exit
    bool opt_a = true;  // print alphabet at the beginning
    bool opt_e = false; // print events if accepted
    bool opt_p = true;  // print current process after each event
@@ -60,6 +63,8 @@ int main(int argc, char** argv) {
    while (argc > 0 && **argv == '-') {
       for (char* cp = *argv + 1; *cp; ++cp) {
 	 switch (*cp) {
+	    case 'A':
+	       opt_A = true; break;
 	    case 'a':
 	       opt_a = false; break;
 	    case 'e':
@@ -90,6 +95,13 @@ int main(int argc, char** argv) {
    ProcessPtr process;
    parser p(scanner, symtab, process);
    if (p.parse() == 0) {
+      if (opt_A) {
+	 auto alphabet = process->get_alphabet();
+	 for (auto event: alphabet) {
+	    std::cout << event << std::endl;
+	 }
+	 exit(0);
+      }
       if (opt_p) {
 	 std::cout << "Tracing: " << process << std::endl;
       }
