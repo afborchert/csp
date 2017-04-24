@@ -59,7 +59,7 @@ namespace CSP {
 
    class Event: public Object {
       public:
-	 Event(const std::string& name_) : name(name_) {
+	 Event(const std::string& name) : name(name) {
 	 }
 	 const std::string& get_name() const {
 	    return name;
@@ -75,7 +75,7 @@ namespace CSP {
       public:
 	 EventSet() {
 	 }
-	 EventSet(const Alphabet& alphabet_) : alphabet(alphabet_) {
+	 EventSet(const Alphabet& alphabet) : alphabet(alphabet) {
 	 }
 	 EventSet(const std::string& name) {
 	    alphabet.add(name);
@@ -209,8 +209,8 @@ namespace CSP {
 
    class ProcessDefinition: public Process {
       public:
-	 ProcessDefinition(const std::string& name_, ProcessPtr process_) :
-	       name(name_), process(process_) {
+	 ProcessDefinition(const std::string& name, ProcessPtr process) :
+	       name(name), process(process) {
 	    assert(process);
 	 }
 	 const std::string& get_name() const {
@@ -240,8 +240,8 @@ namespace CSP {
 
    class ProcessReference: public Process {
       public:
-	 ProcessReference(const std::string& name_, SymTable& symtab_) :
-	       name(name_), symtab(symtab_) {
+	 ProcessReference(const std::string& name, SymTable& symtab) :
+	       name(name), symtab(symtab) {
 	 }
 	 const std::string& get_name() const {
 	    return name;
@@ -309,8 +309,8 @@ namespace CSP {
 
    class PrefixedProcess: public Process {
       public:
-	 PrefixedProcess(const std::string& event_, ProcessPtr process_) :
-	       event(event_), process(process_) {
+	 PrefixedProcess(const std::string& event, ProcessPtr process) :
+	       event(event), process(process) {
 	    assert(process);
 	 }
 	 const std::string& get_event() {
@@ -615,11 +615,11 @@ namespace CSP {
 
    class StopProcess: public Process {
       public:
-	 StopProcess(const Alphabet& alphabet_) :
-	       stop_alphabet(alphabet_) {
+	 StopProcess(const Alphabet& alphabet) :
+	       stop_alphabet(alphabet) {
 	 }
-	 StopProcess(ProcessPtr p_alphabet_) :
-	       p_alphabet(p_alphabet_) {
+	 StopProcess(ProcessPtr p_alphabet) :
+	       p_alphabet(p_alphabet) {
 	 }
 	 virtual void print(std::ostream& out) const {
 	    out << "STOP " << get_alphabet();
@@ -650,11 +650,11 @@ namespace CSP {
 
    class RunProcess: public Process {
       public:
-	 RunProcess(const Alphabet& alphabet_) :
-	       run_alphabet(alphabet_) {
+	 RunProcess(const Alphabet& alphabet) :
+	       run_alphabet(alphabet) {
 	 }
-	 RunProcess(ProcessPtr p_alphabet_) :
-	       p_alphabet(p_alphabet_) {
+	 RunProcess(ProcessPtr p_alphabet) :
+	       p_alphabet(p_alphabet) {
 	 }
 	 virtual void print(std::ostream& out) const {
 	    out << "RUN " << get_alphabet();
@@ -688,11 +688,9 @@ namespace CSP {
 
    class SkipProcess: public Process {
       public:
-	 SkipProcess(const Alphabet& alphabet_) :
-	       skip_alphabet(alphabet_) {
+	 SkipProcess(const Alphabet& alphabet) : skip_alphabet(alphabet) {
 	 }
-	 SkipProcess(ProcessPtr p_alphabet_) :
-	       p_alphabet(p_alphabet_) {
+	 SkipProcess(ProcessPtr p_alphabet) : p_alphabet(p_alphabet) {
 	 }
 	 virtual void print(std::ostream& out) const {
 	    out << "SKIP " << get_alphabet();
