@@ -32,7 +32,7 @@ make
 ## Lexical symbols
 
 ### Comments
-Both variants of C-style comments are supported:
+The commenting style of Ada and C is supported:
 * For single-line comments `//` or `--` can be used which extend to the end of the line.
 * Comments can be enclosed in `/*` and `*/`.
 
