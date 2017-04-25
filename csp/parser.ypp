@@ -71,6 +71,7 @@ namespace CSP {
 }
 
 #include <memory>
+#include "error.hpp"
 #include "event.hpp"
 #include "external-choice.hpp"
 #include "interleaving-processes.hpp"
@@ -247,6 +248,11 @@ choices: prefix_expression
       {
 	 auto p1 = std::dynamic_pointer_cast<Process>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
+	 auto intersection = p1->acceptable() * p2->acceptable();
+	 if (intersection.cardinality() > 0) {
+	    yyerror(&yylhs.location,
+	       "prefix events within a choice must be unique");
+	 }
 	 $$ = std::make_shared<SelectingProcess>(p1, p2);
       }
    ;

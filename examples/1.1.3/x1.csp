@@ -1,2 +1,2 @@
 -- CSP 1.1.3 X1 p.8
-P = up -> STOP alpha P | right -> right -> up -> STOP alpha P
+P = (up -> STOP alpha P | right -> right -> up -> STOP alpha P)

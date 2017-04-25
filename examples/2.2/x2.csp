@@ -1,7 +1,10 @@
 -- CSP 2.2 X2 p. 46
 P = FOOLCUST || VMC
-FOOLCUST {in1p, in2p, out1p, small, large} = in2p -> large -> FOOLCUST | in1p -> large -> FOOLCUST
-/* VMC comes from 1.1.3 X4 p. 8
-   with design flaw: "WARNING: do not insert three pennies in a row" */
-VMC = in2p -> (large -> VMC | small -> out1p -> VMC) |
-      in1p -> (small -> VMC | in1p -> (large -> VMC | in1p -> STOP alpha VMC))
+
+FOOLCUST {in1p, in2p, out1p, small, large} =
+   (in2p -> large -> FOOLCUST | in1p -> large -> FOOLCUST)
+
+-- VMC comes from CSP 1.1.3 X4 p. 8 with design flaw:
+--    "WARNING: do not insert three pennies in a row"
+VMC = (in2p -> (large -> VMC | small -> out1p -> VMC) |
+      in1p -> (small -> VMC | in1p -> (large -> VMC | in1p -> STOP alpha VMC)))

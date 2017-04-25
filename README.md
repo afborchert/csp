@@ -93,7 +93,7 @@ The grammar represents a subset of CSP:
 
    _ExternalChoice_ &#8594; _InternalChoice_ | _ExternalChoice_ `[]` _InternalChoice_
 
-   _InternalChoice_ &#8594; _PrefixExpression_ | _InternalChoice_ = `|~|` _PrefixExpression_
+   _InternalChoice_ &#8594; _SimpleProcessExpression_ | _InternalChoice_ = `|~|` _SimpleProcessExpression_
 
    _SimpleProcessExpression_ &#8594; *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | `(` _ProcessExpression_ `)` | `(` _Choices_ `)`
 
