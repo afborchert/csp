@@ -33,7 +33,7 @@ make
 
 ### Comments
 Both variants of C-style comments are supported:
-* For single-line comments `//` can be used which extend to the end of the line.
+* For single-line comments `//` or `--` can be used which extend to the end of the line.
 * Comments can be enclosed in `/*` and `*/`.
 
 ### Identifiers and keywords

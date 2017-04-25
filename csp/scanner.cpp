@@ -162,6 +162,15 @@ restart:
 	    nextch();
 	    if (ch == '>') {
 	       nextch(); token = parser::token::ARROW;
+	    } else if (ch == '-') {
+	       /* Ada-style single-line comment */
+	       while (!eof && ch != '\n') {
+		  nextch();
+	       }
+	       if (eof) {
+		  error("unexpected eof in single-line comment");
+	       }
+	       goto restart;
 	    } else {
 	       error("invalid token");
 	    }
