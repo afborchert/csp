@@ -30,6 +30,7 @@
 #include <iostream>
 #include <unistd.h>
 #include "parser.hpp"
+#include "process.hpp"
 #include "scanner.hpp"
 #include "symtable.hpp"
 #include "yytname.hpp"

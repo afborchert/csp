@@ -23,36 +23,58 @@
    SOFTWARE.
 */
 
-#ifndef CSP_SCOPE_HPP
-#define CSP_SCOPE_HPP
+/*
+   Extension of Process for prefixed processes, i.e. processes of
+   the form
 
-#include <map>
+      event -> P
+*/
+
+#ifndef CSP_PREFIXED_PROCESS_HPP
+#define CSP_PREFIXED_PROCESS_HPP
+
+#include <cassert>
+#include <iostream>
 #include <memory>
 #include <string>
-#include "process-definition.hpp"
+#include "alphabet.hpp"
+#include "process.hpp"
 
 namespace CSP {
 
-   class Scope;
-   using ScopePtr = std::shared_ptr<Scope>;
-
-   class Scope {
-      private:
-	 using ProcMap = std::map<std::string, ProcessDefinitionPtr>;
-	 ProcMap processes;
-	 ScopePtr outer;
+   class PrefixedProcess: public Process {
       public:
-	 // constructors
-	 Scope();
-	 Scope(ScopePtr outer);
-
-	 // accessors
-	 bool lookup(const std::string& name,
-	       ProcessDefinitionPtr& process) const;
-	 ScopePtr get_outer() const;
-
-	 // mutators
-	 bool insert(const ProcessDefinitionPtr& process);
+	 PrefixedProcess(const std::string& event, ProcessPtr process) :
+	       event(event), process(process) {
+	    assert(process);
+	 }
+	 const std::string& get_event() {
+	    return event;
+	 }
+	 virtual void print(std::ostream& out) const {
+	    out << event << " -> "; process->print(out);
+	 }
+	 virtual Alphabet acceptable() const {
+	    return Alphabet(event);
+	 }
+      protected:
+	 virtual ProcessPtr internal_proceed(std::string& next_event) {
+	    if (event == next_event) {
+	       return process;
+	    } else {
+	       return nullptr;
+	    }
+	 }
+	 virtual Alphabet internal_get_alphabet() const {
+	    return Alphabet(event) + process->get_alphabet();
+	 }
+      private:
+	 const std::string event;
+	 ProcessPtr process;
+	 virtual void initialize_dependencies() const {
+	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
+	       shared_from_this()));
+	 }
    };
 
 } // namespace CSP

@@ -23,36 +23,58 @@
    SOFTWARE.
 */
 
-#ifndef CSP_SCOPE_HPP
-#define CSP_SCOPE_HPP
+/*
+   RUN process
+*/
 
-#include <map>
+#ifndef CSP_RUN_PROCESS_HPP
+#define CSP_RUN_PROCESS_HPP
+
+#include <cassert>
+#include <iostream>
 #include <memory>
 #include <string>
-#include "process-definition.hpp"
+#include "alphabet.hpp"
+#include "process.hpp"
 
 namespace CSP {
 
-   class Scope;
-   using ScopePtr = std::shared_ptr<Scope>;
-
-   class Scope {
-      private:
-	 using ProcMap = std::map<std::string, ProcessDefinitionPtr>;
-	 ProcMap processes;
-	 ScopePtr outer;
+   class RunProcess: public Process {
       public:
-	 // constructors
-	 Scope();
-	 Scope(ScopePtr outer);
+	 RunProcess(const Alphabet& alphabet) :
+	       run_alphabet(alphabet) {
+	 }
+	 RunProcess(ProcessPtr p_alphabet) :
+	       p_alphabet(p_alphabet) {
+	 }
+	 virtual void print(std::ostream& out) const {
+	    out << "RUN " << get_alphabet();
+	 }
+	 virtual Alphabet acceptable() const {
+	    return get_alphabet();
+	 }
+      protected:
+	 virtual ProcessPtr internal_proceed(std::string& next_event) {
+	    return std::dynamic_pointer_cast<Process>(shared_from_this());
+	 }
+	 virtual Alphabet internal_get_alphabet() const {
+	    if (p_alphabet) {
+	       return p_alphabet->get_alphabet();
+	    } else {
+	       return run_alphabet;
+	    }
+	 }
+      private:
+	 const Alphabet run_alphabet;
+	 ProcessPtr p_alphabet; // process from which we take its alphabet
 
-	 // accessors
-	 bool lookup(const std::string& name,
-	       ProcessDefinitionPtr& process) const;
-	 ScopePtr get_outer() const;
-
-	 // mutators
-	 bool insert(const ProcessDefinitionPtr& process);
+	 virtual void initialize_dependencies() const {
+	    if (p_alphabet) {
+	       p_alphabet->add_dependant(
+		  std::dynamic_pointer_cast<const Process>
+		     (shared_from_this()));
+	    }
+	 }
    };
 
 } // namespace CSP

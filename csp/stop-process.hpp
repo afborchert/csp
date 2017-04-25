@@ -23,31 +23,56 @@
    SOFTWARE.
 */
 
-#ifndef CSP_TYPES_HPP
-#define CSP_TYPES_HPP
+/*
+   STOP process
+*/
 
+#ifndef CSP_STOP_PROCESS_HPP
+#define CSP_STOP_PROCESS_HPP
+
+#include <cassert>
+#include <iostream>
 #include <memory>
+#include <string>
+#include "alphabet.hpp"
+#include "process.hpp"
 
 namespace CSP {
 
-   class Event;
-   class EventSet;
-   class Object;
-   class PrefixedProcess;
-   class Process;
-   class ProcessDefinition;
-   class ProcessReference;
-   class Scope;
-   class SymTable;
-   using ConstProcessPtr = std::shared_ptr<const Process>;
-   using EventPtr = std::shared_ptr<Event>;
-   using EventSetPtr = std::shared_ptr<EventSet>;
-   using ObjectPtr = std::shared_ptr<Object>;
-   using PrefixedProcessPtr = std::shared_ptr<PrefixedProcess>;
-   using ProcessDefinitionPtr = std::shared_ptr<ProcessDefinition>;
-   using ProcessPtr = std::shared_ptr<Process>;
-   using ProcessReferencePtr = std::shared_ptr<ProcessReference>;
-   using ScopePtr = std::shared_ptr<Scope>;
+   class StopProcess: public Process {
+      public:
+	 StopProcess(const Alphabet& alphabet) :
+	       stop_alphabet(alphabet) {
+	 }
+	 StopProcess(ProcessPtr p_alphabet) :
+	       p_alphabet(p_alphabet) {
+	 }
+	 virtual void print(std::ostream& out) const {
+	    out << "STOP " << get_alphabet();
+	 }
+	 virtual Alphabet acceptable() const {
+	    return Alphabet();
+	 }
+      protected:
+	 virtual ProcessPtr internal_proceed(std::string& next_event) {
+	    return nullptr;
+	 }
+	 virtual Alphabet internal_get_alphabet() const {
+	    if (p_alphabet) {
+	       return p_alphabet->get_alphabet();
+	    } else {
+	       return stop_alphabet;
+	    }
+	 }
+      private:
+	 const Alphabet stop_alphabet;
+	 ProcessPtr p_alphabet; // process from which we take its alphabet
+
+	 virtual void initialize_dependencies() const {
+	    p_alphabet->add_dependant(
+	       std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	 }
+   };
 
 } // namespace CSP
 

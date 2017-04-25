@@ -27,6 +27,9 @@
 #include <cstdlib>
 #include <memory>
 #include "object.hpp"
+#include "process.hpp"
+#include "process-definition.hpp"
+#include "process-reference.hpp"
 #include "scope.hpp"
 #include "symtable.hpp"
 

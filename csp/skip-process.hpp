@@ -23,45 +23,61 @@
    SOFTWARE.
 */
 
-#ifndef CSP_SYMTABLE_HPP
-#define CSP_SYMTABLE_HPP
+/*
+   SKIP process
+*/
+
+#ifndef CSP_SKIP_PROCESS_HPP
+#define CSP_SKIP_PROCESS_HPP
 
 #include <cassert>
-#include <cstdlib>
 #include <iostream>
-#include <list>
-#include <map>
+#include <memory>
 #include <string>
-
+#include "alphabet.hpp"
 #include "process.hpp"
-#include "process-definition.hpp"
-#include "scope.hpp"
+#include "stop-process.hpp"
 
 namespace CSP {
 
-   /* instead of #include "process-reference.hpp"
-      which would lead to a reference cycle */
-   class ProcessReference;
-   using ProcessReferencePtr = std::shared_ptr<ProcessReference>;
-
-   class SymTable {
-      private:
-	 ScopePtr scope;
-	 std::list<ProcessReferencePtr> unresolved;
-
+   class SkipProcess: public Process {
       public:
-	 // constructors
-	 SymTable();
+	 SkipProcess(const Alphabet& alphabet) : skip_alphabet(alphabet) {
+	 }
+	 SkipProcess(ProcessPtr p_alphabet) : p_alphabet(p_alphabet) {
+	 }
+	 virtual void print(std::ostream& out) const {
+	    out << "SKIP " << get_alphabet();
+	 }
+	 virtual Alphabet acceptable() const {
+	    return Alphabet("_success_");
+	 }
+      protected:
+	 virtual ProcessPtr internal_proceed(std::string& next_event) {
+	    /* should usually not be used */
+	    if (next_event == "_success_") {
+	       return std::make_shared<StopProcess>(skip_alphabet);
+	    } else {
+	       return nullptr;
+	    }
+	 }
+	 virtual Alphabet internal_get_alphabet() const {
+	    if (p_alphabet) {
+	       return p_alphabet->get_alphabet() + Alphabet("_success_");
+	    } else {
+	       return skip_alphabet + Alphabet("_success_");
+	    }
+	 }
+      private:
+	 const Alphabet skip_alphabet;
+	 ProcessPtr p_alphabet; // process from which we take its alphabet
 
-	 // accessors
-	 bool lookup(const std::string name,
-	       ProcessPtr& process) const;
-
-	 // mutators
-	 void open();
-	 void close();
-	 bool insert(const ProcessDefinitionPtr& process);
-	 void add_unresolved(ProcessReferencePtr pref);
+	 virtual void initialize_dependencies() const {
+	    if (p_alphabet) {
+	       p_alphabet->add_dependant(
+		  std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	    }
+	 }
    };
 
 } // namespace CSP

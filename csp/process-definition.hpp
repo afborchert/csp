@@ -23,36 +23,54 @@
    SOFTWARE.
 */
 
-#ifndef CSP_SCOPE_HPP
-#define CSP_SCOPE_HPP
+/*
+   A process definition object behaves like its right-hand-side process
+   but it remembers its left-hand-side name for printing
+*/
 
-#include <map>
+#ifndef CSP_PROCESS_DEFINITION_HPP
+#define CSP_PROCESS_DEFINITION_HPP
+
+#include <iostream>
 #include <memory>
 #include <string>
-#include "process-definition.hpp"
+#include "alphabet.hpp"
+#include "process.hpp"
 
 namespace CSP {
 
-   class Scope;
-   using ScopePtr = std::shared_ptr<Scope>;
+   class ProcessDefinition;
+   using ProcessDefinitionPtr = std::shared_ptr<ProcessDefinition>;
 
-   class Scope {
-      private:
-	 using ProcMap = std::map<std::string, ProcessDefinitionPtr>;
-	 ProcMap processes;
-	 ScopePtr outer;
+   class ProcessDefinition: public Process {
       public:
-	 // constructors
-	 Scope();
-	 Scope(ScopePtr outer);
-
-	 // accessors
-	 bool lookup(const std::string& name,
-	       ProcessDefinitionPtr& process) const;
-	 ScopePtr get_outer() const;
-
-	 // mutators
-	 bool insert(const ProcessDefinitionPtr& process);
+	 ProcessDefinition(const std::string& name, ProcessPtr process) :
+	       name(name), process(process) {
+	    assert(process);
+	 }
+	 const std::string& get_name() const {
+	    return name;
+	 }
+	 virtual void print(std::ostream& out) const {
+	    out << name << " = "; process->print(out);
+	 }
+	 virtual Alphabet acceptable() const {
+	    return process->acceptable();
+	 }
+      protected:
+	 virtual ProcessPtr internal_proceed(std::string& event) {
+	    return process->proceed(event);
+	 }
+	 virtual Alphabet internal_get_alphabet() const {
+	    return process->get_alphabet();
+	 }
+      private:
+	 const std::string name;
+	 ProcessPtr process;
+	 virtual void initialize_dependencies() const {
+	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
+	       shared_from_this()));
+	 }
    };
 
 } // namespace CSP

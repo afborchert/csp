@@ -69,14 +69,29 @@ namespace CSP {
    class SymTable;
 }
 
+#include <memory>
+#include "event.hpp"
+#include "external-choice.hpp"
+#include "interleaving-processes.hpp"
+#include "internal-choice.hpp"
+#include "object.hpp"
+#include "parallel-processes.hpp"
+#include "prefixed-process.hpp"
+#include "process-definition.hpp"
+#include "process-reference.hpp"
+#include "process-sequence.hpp"
+#include "process.hpp"
+#include "run-process.hpp"
+#include "scanner.hpp"
+#include "selecting-process.hpp"
+#include "skip-process.hpp"
+#include "stop-process.hpp"
+#include "symtable.hpp"
+#include "yystype.hpp"
+#include "yytname.hpp"
+
 using namespace CSP;
 
-#include <memory>
-#include "yystype.hpp"
-#include "scanner.hpp"
-#include "yytname.hpp"
-#include "symtable.hpp"
-#include "object.hpp"
 %}
 
 %skeleton "lalr1.cc"

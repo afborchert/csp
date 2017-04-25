@@ -23,45 +23,56 @@
    SOFTWARE.
 */
 
-#ifndef CSP_SYMTABLE_HPP
-#define CSP_SYMTABLE_HPP
+/*
+   Extension of Process for selecting processes, i.e. process with
+   the form P1 | P2
+*/
+
+#ifndef CSP_SELECTING_PROCESS_HPP
+#define CSP_SELECTING_PROCESS_HPP
 
 #include <cassert>
-#include <cstdlib>
 #include <iostream>
-#include <list>
-#include <map>
+#include <memory>
 #include <string>
-
+#include "alphabet.hpp"
 #include "process.hpp"
-#include "process-definition.hpp"
-#include "scope.hpp"
 
 namespace CSP {
 
-   /* instead of #include "process-reference.hpp"
-      which would lead to a reference cycle */
-   class ProcessReference;
-   using ProcessReferencePtr = std::shared_ptr<ProcessReference>;
-
-   class SymTable {
-      private:
-	 ScopePtr scope;
-	 std::list<ProcessReferencePtr> unresolved;
-
+   class SelectingProcess: public Process {
       public:
-	 // constructors
-	 SymTable();
-
-	 // accessors
-	 bool lookup(const std::string name,
-	       ProcessPtr& process) const;
-
-	 // mutators
-	 void open();
-	 void close();
-	 bool insert(const ProcessDefinitionPtr& process);
-	 void add_unresolved(ProcessReferencePtr pref);
+	 SelectingProcess(ProcessPtr process, ProcessPtr pp) :
+	       choice(pp), other_choices(process) {
+	    assert(other_choices);
+	    assert(choice);
+	 }
+	 virtual void print(std::ostream& out) const {
+	    other_choices->print(out); out << " | "; choice->print(out);
+	 }
+	 virtual Alphabet acceptable() const {
+	    return choice->acceptable() + other_choices->acceptable();
+	 }
+      protected:
+	 virtual ProcessPtr internal_proceed(std::string& event) {
+	    ProcessPtr p = other_choices->proceed(event);
+	    if (!p) {
+	       p = choice->proceed(event);
+	    }
+	    return p;
+	 }
+	 virtual Alphabet internal_get_alphabet() const {
+	    return choice->get_alphabet() + other_choices->get_alphabet();
+	 }
+      private:
+	 ProcessPtr choice;
+	 ProcessPtr other_choices;
+	 virtual void initialize_dependencies() const {
+	    choice->add_dependant(std::dynamic_pointer_cast<const Process>(
+	       shared_from_this()));
+	    other_choices->add_dependant(
+	       std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	 }
    };
 
 } // namespace CSP

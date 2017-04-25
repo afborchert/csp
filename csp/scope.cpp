@@ -24,6 +24,8 @@
 */
 
 #include "object.hpp"
+#include "process.hpp"
+#include "process-definition.hpp"
 #include "scope.hpp"
 #include "symtable.hpp"
 

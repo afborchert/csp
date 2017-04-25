@@ -54,35 +54,48 @@ $(GeneratedCPPSourcesFromBison): %.tab.cpp: %.ypp
 depend:		$(CPPSources)
 		$(MAKEDEPEND) $(CPPFLAGS) $(CPPSources) $(MainCPPSources)
 # DO NOT DELETE
-parser.tab.o: parser.tab.cpp yystype.hpp object.hpp alphabet.hpp \
- symtable.hpp types.hpp uniformint.hpp scanner.hpp parser.hpp location.hh \
- position.hh parser.tab.hpp stack.hh yytname.hpp
+parser.tab.o: parser.tab.cpp event.hpp alphabet.hpp object.hpp \
+ external-choice.hpp process.hpp uniformint.hpp \
+ interleaving-processes.hpp internal-choice.hpp parallel-processes.hpp \
+ prefixed-process.hpp process-definition.hpp process-reference.hpp \
+ symtable.hpp scope.hpp process-sequence.hpp run-process.hpp scanner.hpp \
+ parser.hpp location.hh position.hh yystype.hpp parser.tab.hpp stack.hh \
+ selecting-process.hpp skip-process.hpp stop-process.hpp yytname.hpp
 yytname.o: yytname.cpp
 error.o: error.cpp error.hpp parser.hpp location.hh position.hh \
- yystype.hpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- uniformint.hpp parser.tab.hpp stack.hh
+ symtable.hpp process.hpp alphabet.hpp event.hpp object.hpp \
+ uniformint.hpp process-definition.hpp scope.hpp yystype.hpp \
+ parser.tab.hpp stack.hh
 scanner.o: scanner.cpp error.hpp parser.hpp location.hh position.hh \
- yystype.hpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- uniformint.hpp parser.tab.hpp stack.hh scanner.hpp
-scope.o: scope.cpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- uniformint.hpp scope.hpp
-symtable.o: symtable.cpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- uniformint.hpp scope.hpp
-testlex.o: testlex.cpp parser.hpp location.hh position.hh yystype.hpp \
- object.hpp alphabet.hpp symtable.hpp types.hpp uniformint.hpp \
- parser.tab.hpp stack.hh scanner.hpp yytname.hpp
+ symtable.hpp process.hpp alphabet.hpp event.hpp object.hpp \
+ uniformint.hpp process-definition.hpp scope.hpp yystype.hpp \
+ parser.tab.hpp stack.hh process-reference.hpp scanner.hpp
+scope.o: scope.cpp object.hpp process.hpp alphabet.hpp event.hpp \
+ uniformint.hpp process-definition.hpp scope.hpp symtable.hpp
+symtable.o: symtable.cpp object.hpp process.hpp alphabet.hpp event.hpp \
+ uniformint.hpp process-definition.hpp process-reference.hpp symtable.hpp \
+ scope.hpp
+testlex.o: testlex.cpp parser.hpp location.hh position.hh symtable.hpp \
+ process.hpp alphabet.hpp event.hpp object.hpp uniformint.hpp \
+ process-definition.hpp scope.hpp yystype.hpp parser.tab.hpp stack.hh \
+ scanner.hpp yytname.hpp
 testparser.o: testparser.cpp parser.hpp location.hh position.hh \
- yystype.hpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- uniformint.hpp parser.tab.hpp stack.hh scanner.hpp yytname.hpp
-trace.o: trace.cpp parser.hpp location.hh position.hh yystype.hpp \
- object.hpp alphabet.hpp symtable.hpp types.hpp uniformint.hpp \
+ symtable.hpp process.hpp alphabet.hpp event.hpp object.hpp \
+ uniformint.hpp process-definition.hpp scope.hpp yystype.hpp \
  parser.tab.hpp stack.hh scanner.hpp yytname.hpp
-testlex.o: testlex.cpp parser.hpp location.hh position.hh yystype.hpp \
- object.hpp alphabet.hpp symtable.hpp types.hpp uniformint.hpp \
- parser.tab.hpp stack.hh scanner.hpp yytname.hpp
+trace.o: trace.cpp parser.hpp location.hh position.hh symtable.hpp \
+ process.hpp alphabet.hpp event.hpp object.hpp uniformint.hpp \
+ process-definition.hpp scope.hpp yystype.hpp parser.tab.hpp stack.hh \
+ scanner.hpp yytname.hpp
+testlex.o: testlex.cpp parser.hpp location.hh position.hh symtable.hpp \
+ process.hpp alphabet.hpp event.hpp object.hpp uniformint.hpp \
+ process-definition.hpp scope.hpp yystype.hpp parser.tab.hpp stack.hh \
+ scanner.hpp yytname.hpp
 testparser.o: testparser.cpp parser.hpp location.hh position.hh \
- yystype.hpp object.hpp alphabet.hpp symtable.hpp types.hpp \
- uniformint.hpp parser.tab.hpp stack.hh scanner.hpp yytname.hpp
-trace.o: trace.cpp parser.hpp location.hh position.hh yystype.hpp \
- object.hpp alphabet.hpp symtable.hpp types.hpp uniformint.hpp \
+ symtable.hpp process.hpp alphabet.hpp event.hpp object.hpp \
+ uniformint.hpp process-definition.hpp scope.hpp yystype.hpp \
  parser.tab.hpp stack.hh scanner.hpp yytname.hpp
+trace.o: trace.cpp parser.hpp location.hh position.hh symtable.hpp \
+ process.hpp alphabet.hpp event.hpp object.hpp uniformint.hpp \
+ process-definition.hpp scope.hpp yystype.hpp parser.tab.hpp stack.hh \
+ scanner.hpp yytname.hpp

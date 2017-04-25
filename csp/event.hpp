@@ -23,28 +23,52 @@
    SOFTWARE.
 */
 
-/*
-   "parser.tab.hpp" cannot be #include-d without preparation.
-   Instead of "#include "parser.tab.hpp" we use "parser.hpp"
-   which includes everything that is necessary for "parser.tab.hpp"
-*/
+#ifndef CSP_EVENT_HPP
+#define CSP_EVENT_HPP
 
-#ifndef CSP_PARSER_HPP
-#define CSP_PARSER_HPP
+#include <iostream>
+#include <string>
+#include "alphabet.hpp"
+#include "object.hpp"
 
 namespace CSP {
 
-   class Scanner;
+   class Event: public Object {
+      public:
+	 Event(const std::string& name) : name(name) {
+	 }
+	 const std::string& get_name() const {
+	    return name;
+	 }
+	 virtual void print(std::ostream& out) const {
+	    out << name;
+	 }
+      private:
+	 const std::string name;
+   };
+
+   class EventSet: public Object {
+      public:
+	 EventSet() {
+	 }
+	 EventSet(const Alphabet& alphabet) : alphabet(alphabet) {
+	 }
+	 EventSet(const std::string& name) {
+	    alphabet.add(name);
+	 }
+	 virtual void print(std::ostream& out) const {
+	    out << alphabet;
+	 }
+	 const Alphabet& get_alphabet() const {
+	    return alphabet;
+	 }
+      private:
+	 Alphabet alphabet;
+   };
+
+   using EventPtr = std::shared_ptr<Event>;
+   using EventSetPtr = std::shared_ptr<EventSet>;
 
 } // namespace CSP
-
-#include "location.hh"
-
-/* regular includes */
-#include "symtable.hpp"
-#include "yystype.hpp"
-
-/* last include */
-#include "parser.tab.hpp"
 
 #endif

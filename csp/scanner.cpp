@@ -24,7 +24,10 @@
 */
 
 #include "error.hpp"
+#include "event.hpp"
 #include "object.hpp"
+#include "process.hpp"
+#include "process-reference.hpp"
 #include "scanner.hpp"
 
 namespace CSP {
