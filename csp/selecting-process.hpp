@@ -33,6 +33,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <string>
 #include "alphabet.hpp"
@@ -42,36 +43,56 @@ namespace CSP {
 
    class SelectingProcess: public Process {
       public:
-	 SelectingProcess(ProcessPtr process, ProcessPtr pp) :
-	       choice(pp), other_choices(process) {
-	    assert(other_choices);
+	 SelectingProcess(ProcessPtr choice) {
 	    assert(choice);
+	    choices.push_back(choice);
+	 }
+	 void add_choice(ProcessPtr choice) {
+	    assert(choice);
+	    choices.push_back(choice);
 	 }
 	 virtual void print(std::ostream& out) const {
-	    other_choices->print(out); out << " | "; choice->print(out);
+	    bool first = true;
+	    out << "(";
+	    for (auto choice: choices) {
+	       if (first) {
+		  first = false;
+	       } else {
+		  out << " | ";
+	       }
+	       choice->print(out);
+	    }
+	    out << ")";
 	 }
 	 virtual Alphabet acceptable() const {
-	    return choice->acceptable() + other_choices->acceptable();
+	    Alphabet set;
+	    for (auto choice: choices) {
+	       set = set + choice->acceptable();
+	    }
+	    return set;
 	 }
       protected:
 	 virtual ProcessPtr internal_proceed(std::string& event) {
-	    ProcessPtr p = other_choices->proceed(event);
-	    if (!p) {
-	       p = choice->proceed(event);
+	    for (auto choice: choices) {
+	       auto p = choice->proceed(event);
+	       if (p) return p;
 	    }
-	    return p;
+	    return nullptr;
 	 }
 	 virtual Alphabet internal_get_alphabet() const {
-	    return choice->get_alphabet() + other_choices->get_alphabet();
+	    Alphabet set;
+	    for (auto choice: choices) {
+	       set = set + choice->get_alphabet();
+	    }
+	    return set;
 	 }
       private:
-	 ProcessPtr choice;
-	 ProcessPtr other_choices;
+	 std::list<ProcessPtr> choices;
 	 virtual void initialize_dependencies() const {
-	    choice->add_dependant(std::dynamic_pointer_cast<const Process>(
-	       shared_from_this()));
-	    other_choices->add_dependant(
-	       std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	    for (auto choice: choices) {
+	       choice->add_dependant(std::dynamic_pointer_cast<const Process>(
+		  shared_from_this()));
+	    }
 	 }
    };
 

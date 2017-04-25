@@ -244,16 +244,21 @@ simple_process_expression: PROCESS
    ;
 
 choices: prefix_expression
+      {
+	 auto p = std::dynamic_pointer_cast<Process>($1);
+	 $$ = std::make_shared<SelectingProcess>(p);
+      }
    | choices OR prefix_expression
       {
-	 auto p1 = std::dynamic_pointer_cast<Process>($1);
+	 auto p1 = std::dynamic_pointer_cast<SelectingProcess>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
 	 auto intersection = p1->acceptable() * p2->acceptable();
 	 if (intersection.cardinality() > 0) {
 	    yyerror(&yylhs.location,
 	       "prefix events within a choice must be unique");
 	 }
-	 $$ = std::make_shared<SelectingProcess>(p1, p2);
+	 p1->add_choice(p2);
+	 $$ = p1;
       }
    ;
 
