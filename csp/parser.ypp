@@ -45,20 +45,21 @@
       ParallelProcesses = InterleavingProcesses |
 	 ParallelProcesses "||" InterleavingProcesses .
       InterleavingProcesses = ProcessChoices |
-	 InterleavingProcesses "|||" ProcessChoirces .
-      ProcessChoices = ExternalChoice |
-	 ProcessChoices "|" ExternalChoice .
+	 InterleavingProcesses "|||" ExternalChoice .
       ExternalChoice = InternalChoice |
 	 ExternalChoice "[]" InternalChoice .
-      InternalChoice = PrefixExpression |
-	 InternalChoice = "|~|" PrefixExpression .
-      PrefixExpression = SimpleProcessExpression |
-	 EVENT "->" PrefixExpression .
+      InternalChoice = SimpleProcessExpression |
+	 InternalChoice = "|~|" SimpleProcessExpression .
       SimpleProcessExpression = PROCESS |
 	 RUN Alphabet | RUN ALPHA PROCESS |
 	 STOP Alphabet | STOP ALPHA PROCESS |
 	 SKIP Alphabet | SKIP ALPHA PROCESS |
-	 "(" ProcessExpression ")" .
+	 "(" ProcessExpression ")" |
+	 "(" Choices ")" .
+      Choices = PrefixExpression |
+	 Choices "|" PrefixExpression .
+      PrefixExpression = EVENT "->" PrefixExpression |
+	 EVENT "->" ProcessExpression .
       Alphabet = "{" "}" | "{" AlphabetMembers "}" .
       AlphabetMembers = EVENT | AlphabetMembers "," EVENT .
 */
@@ -177,21 +178,12 @@ parallel_processes: interleaving_processes
       }
    ;
 
-interleaving_processes: process_choices
-   | interleaving_processes INTERLEAVES process_choices
+interleaving_processes: external_choice
+   | interleaving_processes INTERLEAVES external_choice
       {
 	 auto p1 = std::dynamic_pointer_cast<Process>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<InterleavingProcesses>(p1, p2);
-      }
-   ;
-
-process_choices: external_choice
-   | process_choices OR external_choice
-      {
-	 auto p1 = std::dynamic_pointer_cast<Process>($1);
-	 auto p2 = std::dynamic_pointer_cast<Process>($3);
-	 $$ = std::make_shared<SelectingProcess>(p1, p2);
       }
    ;
 
@@ -204,21 +196,12 @@ external_choice: internal_choice
       }
    ;
 
-internal_choice: prefix_expression
-   | internal_choice INTERNAL_CHOICE prefix_expression
+internal_choice: simple_process_expression
+   | internal_choice INTERNAL_CHOICE simple_process_expression
       {
 	 auto p1 = std::dynamic_pointer_cast<Process>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<InternalChoice>(p1, p2);
-      }
-   ;
-
-prefix_expression: simple_process_expression
-   | EVENT ARROW prefix_expression
-      {  
-	 auto event = std::dynamic_pointer_cast<Event>($1);
-	 auto process = std::dynamic_pointer_cast<Process>($3);
-	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
       }
    ;
 
@@ -255,6 +238,31 @@ simple_process_expression: PROCESS
       }
    | LPAREN process_expression RPAREN
       { $$ = $2; }
+   | LPAREN choices RPAREN
+      { $$ = $2; }
+   ;
+
+choices: prefix_expression
+   | choices OR prefix_expression
+      {
+	 auto p1 = std::dynamic_pointer_cast<Process>($1);
+	 auto p2 = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<SelectingProcess>(p1, p2);
+      }
+   ;
+
+prefix_expression: EVENT ARROW process_expression
+      {  
+	 auto event = std::dynamic_pointer_cast<Event>($1);
+	 auto process = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
+      }
+   | EVENT ARROW prefix_expression
+      {  
+	 auto event = std::dynamic_pointer_cast<Event>($1);
+	 auto process = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
+      }
    ;
 
 alphabet: LBRACE RBRACE

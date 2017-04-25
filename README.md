@@ -58,11 +58,15 @@ those with the highest precedence coming first:
 | `->`                 | prefix               | right-to-left   | 1.1.1
 | &#124;~&#124;        | non-deterministic or | left-to-right   | 3.2
 | `[]`                 | general choice       | left-to-right   | 3.3
-| &#124;               | choice               | left-to-right   | 1.1.3
 | &#124;&#124;&#124;   | interleaving         | left-to-right   | 3.6
 | &#124;&#124;         | concurrency          | left-to-right   | 2.3
 | `;`                  | sequence             | left-to-right   | 5.1
 | `=`                  | definition           | non-associative | 1.1
+
+The right-to-left prefix operator `->` (see section 1.1.1) is
+right-associative and must be used within parentheses, possibly
+in combination with the `|` operator (see section 1.1.3) which
+must be used with prefix expressions only.
 
 The sections refer to the book by C. A. R. Hoare.
 
@@ -84,17 +88,18 @@ The grammar represents a subset of CSP:
 
    _ParallelProcesses_ &#8594; _InterleavingProcesses_ | _ParallelProcesses_ `||` _InterleavingProcesses_
 
-   _InterleavingProcesses_ &#8594; _ProcessChoices_ | _InterleavingProcesses_ `|||` _ProcessChoirces_
+   _InterleavingProcesses_ &#8594; _ExternalChoice_ | _InterleavingProcesses_ `|||` _ExternalChoice_
 
-   _ProcessChoices_ &#8594; _ExternalChoice_ | _ProcessChoices_ `|` _ExternalChoice_
 
    _ExternalChoice_ &#8594; _InternalChoice_ | _ExternalChoice_ `[]` _InternalChoice_
 
    _InternalChoice_ &#8594; _PrefixExpression_ | _InternalChoice_ = `|~|` _PrefixExpression_
 
-   _PrefixExpression_ &#8594; _SimpleProcessExpression_ | *EVENT* `->` _PrefixExpression_
+   _SimpleProcessExpression_ &#8594; *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | `(` _ProcessExpression_ `)` | `(` _Choices_ `)`
 
-   _SimpleProcessExpression_ &#8594; *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | `(` _ProcessExpression_ `)`
+   _Choices_ &#8594; _PrefixExpression_ | _Choices_ `|` _PrefixExpression_
+
+   _PrefixExpression_ &#8594; *EVENT* `->` _ProcessExpression_ | *EVENT* `->` _PrefixExpression_
 
    _Alphabet_ &#8594; `{` `}` | `{` _AlphabetMembers_ `}`
 
