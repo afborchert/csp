@@ -131,8 +131,8 @@ section is given, then the example number within that section.
 ## 1.1.2 X1
 ```
 $ cat x1.csp
-// CSP, X1, p. 6
-CLOCK = tick -> CLOCK
+-- CSP 1.1.2, X1, p. 6
+CLOCK = (tick -> CLOCK)
 $ trace x1.csp
 Tracing: CLOCK = tick -> CLOCK
 Alphabet: {tick}
@@ -150,17 +150,11 @@ $
 ## 1.1.2 X2
 ```
 $ cat x2.csp
-// CSP, X2, p. 6
-VMS = coin -> choc -> VMS
+-- CSP 1.1.2 X2, p. 6
+VMS = (coin -> choc -> VMS)
 $ trace x2.csp
 Tracing: VMS = coin -> choc -> VMS
 Alphabet: {choc, coin}
-Acceptable: {coin}
-coin
-Process: choc -> VMS
-Acceptable: {choc}
-choc
-Process: VMS = coin -> choc -> VMS
 Acceptable: {coin}
 coin
 Process: choc -> VMS
@@ -179,8 +173,8 @@ all verbose output can be switched off:
 
 ```
 $ cat x3.csp
-/* CSP 1.1.2 X3 p. 7 */
-CH5A = in5p -> out2p -> out1p -> out2p -> CH5A
+-- CSP 1.1.2 X3 p. 7
+CH5A = (in5p -> out2p -> out1p -> out2p -> CH5A)
 $ echo in5p out2p out1p out2p | trace -apv x3.csp
 OK
 $ echo in5p out2p in5p out2p | trace -apv x3.csp
@@ -201,8 +195,8 @@ in braces.
 
 ```
 $ cat x1.csp
-/* 1.1.3 X1 p.8 */
-P = up -> STOP alpha P | right -> right -> up -> STOP alpha P
+-- CSP 1.1.3 X1 p.8
+P = (up -> STOP alpha P | right -> right -> up -> STOP alpha P)
 $ trace x1.csp
 Tracing: P = up -> STOP {right, up} | right -> right -> up -> STOP {right, up}
 Alphabet: {right, up}
@@ -227,10 +221,10 @@ error message is printed.
 ## 1.1.4 X1
 ```
 $ cat x1.csp
-/* 1.1.4 X1 p. 11 */
-DD = setorange -> O | setlemon -> L
- O = orange -> O | setlemon -> L | setorange -> O
- L = lemon -> L | setorange -> O | setlemon -> L
+-- CSP 1.1.4 X1 p. 11
+DD = (setorange -> O | setlemon -> L)
+O  = (orange -> O | setlemon -> L | setorange -> O)
+L  = (lemon -> L | setorange -> O | setlemon -> L)
 $ trace x1.csp
 Tracing: DD = setorange -> O | setlemon -> L
 Alphabet: {lemon, orange, setlemon, setorange}
@@ -257,10 +251,10 @@ $
 ## 2.2 X1
 ```
 $ cat x1.csp
-/* 2.2 X1 p. 46 */
+-- CSP 2.2 X1 p. 46
 P = GRCUST || VMCT
-GRCUST = toffee -> GRCUST | choc -> GRCUST | coin -> choc -> GRCUST
-VMCT = coin -> (choc -> VMCT | toffee -> VMCT) /* see 1.1.3 X3 p. 8 */
+GRCUST = (toffee -> GRCUST | choc -> GRCUST | coin -> choc -> GRCUST)
+VMCT = (coin -> (choc -> VMCT | toffee -> VMCT)) -- see CSP 1.1.3 X3 p. 8
 $ trace x1.csp
 Tracing: P = GRCUST || VMCT
 Alphabet: {choc, coin, toffee}
@@ -290,13 +284,16 @@ following example to specify the alphabet of _FOOLCUST_ explicitly:
 
 ```
 $ cat x2.csp
-/* 2.2 X2 p. 46 */
+-- CSP 2.2 X2 p. 46
 P = FOOLCUST || VMC
-FOOLCUST {in1p, in2p, out1p, small, large} = in2p -> large -> FOOLCUST | in1p -> large -> FOOLCUST
-/* VMC comes from 1.1.3 X4 p. 8
-   with design flaw: "WARNING: do not insert three pennies in a row" */
-VMC = in2p -> (large -> VMC | small -> out1p -> VMC) |
-      in1p -> (small -> VMC | in1p -> (large -> VMC | in1p -> STOP alpha VMC))
+
+FOOLCUST {in1p, in2p, out1p, small, large} =
+   (in2p -> large -> FOOLCUST | in1p -> large -> FOOLCUST)
+
+-- VMC comes from CSP 1.1.3 X4 p. 8 with design flaw:
+--    "WARNING: do not insert three pennies in a row"
+VMC = (in2p -> (large -> VMC | small -> out1p -> VMC) |
+      in1p -> (small -> VMC | in1p -> (large -> VMC | in1p -> STOP alpha VMC)))
 $ trace x2.csp
 Tracing: P = FOOLCUST || VMC
 Alphabet: {in1p, in2p, large, out1p, small}
