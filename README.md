@@ -134,14 +134,14 @@ $ cat x1.csp
 -- CSP 1.1.2, X1, p. 6
 CLOCK = (tick -> CLOCK)
 $ trace x1.csp
-Tracing: CLOCK = tick -> CLOCK
+Tracing: CLOCK = (tick -> CLOCK)
 Alphabet: {tick}
 Acceptable: {tick}
 tick
-Process: CLOCK = tick -> CLOCK
+Process: CLOCK = (tick -> CLOCK)
 Acceptable: {tick}
 tick
-Process: CLOCK = tick -> CLOCK
+Process: CLOCK = (tick -> CLOCK)
 Acceptable: {tick}
 OK
 $
@@ -153,14 +153,14 @@ $ cat x2.csp
 -- CSP 1.1.2 X2, p. 6
 VMS = (coin -> choc -> VMS)
 $ trace x2.csp
-Tracing: VMS = coin -> choc -> VMS
+Tracing: VMS = (coin -> choc -> VMS)
 Alphabet: {choc, coin}
 Acceptable: {coin}
 coin
 Process: choc -> VMS
 Acceptable: {choc}
 choc
-Process: VMS = coin -> choc -> VMS
+Process: VMS = (coin -> choc -> VMS)
 Acceptable: {coin}
 OK
 $
@@ -198,7 +198,7 @@ $ cat x1.csp
 -- CSP 1.1.3 X1 p.8
 P = (up -> STOP alpha P | right -> right -> up -> STOP alpha P)
 $ trace x1.csp
-Tracing: P = up -> STOP {right, up} | right -> right -> up -> STOP {right, up}
+Tracing: P = (up -> STOP {right, up} | right -> right -> up -> STOP {right, up})
 Alphabet: {right, up}
 Acceptable: {right, up}
 right
@@ -226,23 +226,23 @@ DD = (setorange -> O | setlemon -> L)
 O  = (orange -> O | setlemon -> L | setorange -> O)
 L  = (lemon -> L | setorange -> O | setlemon -> L)
 $ trace x1.csp
-Tracing: DD = setorange -> O | setlemon -> L
+Tracing: DD = (setorange -> O | setlemon -> L)
 Alphabet: {lemon, orange, setlemon, setorange}
 Acceptable: {setlemon, setorange}
 setlemon
-Process: L = lemon -> L | setorange -> O | setlemon -> L
+Process: L = (lemon -> L | setorange -> O | setlemon -> L)
 Acceptable: {lemon, setlemon, setorange}
 lemon
-Process: L = lemon -> L | setorange -> O | setlemon -> L
+Process: L = (lemon -> L | setorange -> O | setlemon -> L)
 Acceptable: {lemon, setlemon, setorange}
 lemon
-Process: L = lemon -> L | setorange -> O | setlemon -> L
+Process: L = (lemon -> L | setorange -> O | setlemon -> L)
 Acceptable: {lemon, setlemon, setorange}
 setorange
-Process: O = orange -> O | setlemon -> L | setorange -> O
+Process: O = (orange -> O | setlemon -> L | setorange -> O)
 Acceptable: {orange, setlemon, setorange}
 orange
-Process: O = orange -> O | setlemon -> L | setorange -> O
+Process: O = (orange -> O | setlemon -> L | setorange -> O)
 Acceptable: {orange, setlemon, setorange}
 OK
 $
@@ -260,13 +260,13 @@ Tracing: P = GRCUST || VMCT
 Alphabet: {choc, coin, toffee}
 Acceptable: {coin}
 coin
-Process: choc -> GRCUST || choc -> VMCT | toffee -> VMCT
+Process: choc -> GRCUST || (choc -> VMCT | toffee -> VMCT)
 Acceptable: {choc}
 choc
 Process: GRCUST || VMCT
 Acceptable: {coin}
 coin
-Process: choc -> GRCUST || choc -> VMCT | toffee -> VMCT
+Process: choc -> GRCUST || (choc -> VMCT | toffee -> VMCT)
 Acceptable: {choc}
 choc
 Process: GRCUST || VMCT
@@ -299,13 +299,13 @@ Tracing: P = FOOLCUST || VMC
 Alphabet: {in1p, in2p, large, out1p, small}
 Acceptable: {in1p, in2p}
 in2p
-Process: large -> FOOLCUST || large -> VMC | small -> out1p -> VMC
+Process: large -> FOOLCUST || (large -> VMC | small -> out1p -> VMC)
 Acceptable: {large}
 large
 Process: FOOLCUST || VMC
 Acceptable: {in1p, in2p}
 in1p
-Process: large -> FOOLCUST || small -> VMC | in1p -> large -> VMC | in1p -> STOP {in1p, in2p, large, out1p, small}
+Process: large -> FOOLCUST || (small -> VMC | in1p -> (large -> VMC | in1p -> STOP {in1p, in2p, large, out1p, small}))
 Acceptable: {}
 OK
 $
