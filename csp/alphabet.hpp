@@ -35,8 +35,8 @@ namespace CSP {
 
    class Alphabet {
       public:
-	 typedef std::set<std::string> Set;
-	 typedef Set::const_iterator Iterator;
+	 using Set = std::set<std::string>;
+	 using Iterator = Set::const_iterator;
 
 	 Alphabet() {
 	 }
@@ -141,14 +141,13 @@ namespace CSP {
 	 const Alphabet& alphabet) {
       out << '{';
       bool first = true;
-      for (Alphabet::Iterator it = alphabet.begin();
-	    it != alphabet.end(); ++it) {
+      for (auto& event: alphabet) {
 	 if (first) {
 	    first = false;
 	 } else {
 	    out << ", ";
 	 }
-	 out << *it;
+	 out << event;
       }
       out << '}';
       return out;

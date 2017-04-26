@@ -59,10 +59,11 @@ void SymTable::open() {
 
 void SymTable::close() {
    assert(scope);
-   for (auto it = unresolved.begin(); it != unresolved.end(); ++it) {
-      if (!(*it)->resolve()) {
-	 std::cerr << "unable to resolve " <<
-	    (*it)->get_name() << std::endl;
+   /* resolve all process references,
+      this is required in cases of mutual recursion */
+   for (auto pref: unresolved) {
+      if (!pref->resolve()) {
+	 std::cerr << "unable to resolve " << pref->get_name() << std::endl;
 	 exit(1);
       }
    }
