@@ -54,6 +54,11 @@ namespace CSP {
 	 virtual void print(std::ostream& out) const {
 	    out << event << " -> "; process->print(out);
 	 }
+	 virtual void expanded_print(std::ostream& out) const {
+	    /* add parentheses if we are at top-level,
+	       otherwise this is done by SelectingProcess */
+	    out << "("; print(out); out << ")";
+	 }
 	 virtual Alphabet acceptable() const {
 	    return Alphabet(event);
 	 }

@@ -75,7 +75,18 @@ namespace CSP {
 	 virtual ProcessPtr internal_proceed(std::string& event) {
 	    for (auto choice: choices) {
 	       auto p = choice->proceed(event);
-	       if (p) return p;
+	       if (p) {
+		  /* if we have a chain of prefixed processes,
+		     we return a SelectingProcess instead as
+		     PrefixedProcess objects are always enclosed
+		     by a SelectingProcess object;
+		     this helps to see parentheses when it is printed */
+		  auto pp = std::dynamic_pointer_cast<PrefixedProcess>(p);
+		  if (pp) {
+		     return std::make_shared<SelectingProcess>(pp);
+		  }
+		  return p;
+	       }
 	    }
 	    return nullptr;
 	 }

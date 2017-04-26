@@ -157,7 +157,7 @@ Tracing: VMS = (coin -> choc -> VMS)
 Alphabet: {choc, coin}
 Acceptable: {coin}
 coin
-Process: choc -> VMS
+Process: (choc -> VMS)
 Acceptable: {choc}
 choc
 Process: VMS = (coin -> choc -> VMS)
@@ -202,10 +202,10 @@ Tracing: P = (up -> STOP {right, up} | right -> right -> up -> STOP {right, up})
 Alphabet: {right, up}
 Acceptable: {right, up}
 right
-Process: right -> up -> STOP {right, up}
+Process: (right -> up -> STOP {right, up})
 Acceptable: {right}
 right
-Process: up -> STOP {right, up}
+Process: (up -> STOP {right, up})
 Acceptable: {up}
 up
 Process: STOP {right, up}
@@ -260,13 +260,13 @@ Tracing: P = GRCUST || VMCT
 Alphabet: {choc, coin, toffee}
 Acceptable: {coin}
 coin
-Process: choc -> GRCUST || (choc -> VMCT | toffee -> VMCT)
+Process: (choc -> GRCUST) || (choc -> VMCT | toffee -> VMCT)
 Acceptable: {choc}
 choc
 Process: GRCUST || VMCT
 Acceptable: {coin}
 coin
-Process: choc -> GRCUST || (choc -> VMCT | toffee -> VMCT)
+Process: (choc -> GRCUST) || (choc -> VMCT | toffee -> VMCT)
 Acceptable: {choc}
 choc
 Process: GRCUST || VMCT
@@ -299,13 +299,13 @@ Tracing: P = FOOLCUST || VMC
 Alphabet: {in1p, in2p, large, out1p, small}
 Acceptable: {in1p, in2p}
 in2p
-Process: large -> FOOLCUST || (large -> VMC | small -> out1p -> VMC)
+Process: (large -> FOOLCUST) || (large -> VMC | small -> out1p -> VMC)
 Acceptable: {large}
 large
 Process: FOOLCUST || VMC
 Acceptable: {in1p, in2p}
 in1p
-Process: large -> FOOLCUST || (small -> VMC | in1p -> (large -> VMC | in1p -> STOP {in1p, in2p, large, out1p, small}))
+Process: (large -> FOOLCUST) || (small -> VMC | in1p -> (large -> VMC | in1p -> STOP {in1p, in2p, large, out1p, small}))
 Acceptable: {}
 OK
 $
