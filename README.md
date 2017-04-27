@@ -78,6 +78,8 @@ The sections refer to the book by C. A. R. Hoare.
 ## Grammar
 The grammar represents a subset of CSP:
 
+   _Unit_ &#8594; _ProcessDefinitions_ | _ProcessExpression_ | _ProcessExpression_ _ProcessDefinitions_
+
    _ProcessDefinitions_ &#8594; _ProcessDefinition_ | _ProcessDefinitions_ _ProcessDefinition_
 
    _ProcessDefinition_ &#8594; *PROCESS* `=` _ProcessExpression_ | *PROCESS* _Alphabet_ `=` _ProcessExpression_

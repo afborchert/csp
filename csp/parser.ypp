@@ -124,11 +124,19 @@ using namespace CSP;
 
 start:
       { symtab.open(); }
-   process_definitions
+   unit
       {
 	 p = std::dynamic_pointer_cast<Process>($2);
 	 symtab.close();
       }
+   ;
+
+unit: process_definitions
+      { $$ = $1; }
+   | process_expression
+      { $$ = $1; }
+   | process_expression process_definitions
+      { $$ = $1; } // just remember the initial process
    ;
 
 process_definitions: process_definition
