@@ -44,6 +44,7 @@ Following identifiers and keywords are used by the grammar:
 | *PROCESS* | identifier that begins with an upper case letter | `[A-Z][A-Za-z0-9_]*`
 | *EVENT*   | identifier that begins with a lower case letter  | `[a-z][A-Za-z0-9_]*`
 | *ALPHA*   | keyword "alpha" (must be lower case)             | alpha
+| *CHAOS*   | keyword "CHAOS" (must be upper case)             | CHAOS
 | *RUN*     | keyword "RUN" (must be upper case)               | RUN
 | *STOP*    | keyword "STOP" (must be upper case)              | STOP
 | *SKIP*    | keyword "SKIP" (must be upper case)              | SKIP
@@ -100,7 +101,7 @@ The grammar represents a subset of CSP:
 
    _ConcealedProcessExpression_ &#8594; _SimpleProcessExpression_ | _SimpleProcessExpression_ `\` _Alphabet_
 
-   _SimpleProcessExpression_ &#8594; *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | `(` _ProcessExpression_ `)` | `(` _Choices_ `)`
+   _SimpleProcessExpression_ &#8594; *PROCESS* | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | `(` _ProcessExpression_ `)` | `(` _Choices_ `)`
 
    _Choices_ &#8594; _PrefixExpression_ | _Choices_ `|` _PrefixExpression_
 
