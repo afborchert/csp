@@ -1,0 +1,6 @@
+-- CSP 3.5 X1
+NOISYVM \ {clink, clunk}
+
+-- from CSP 2.3 X1
+NOISYVM {coin, choc, clink, clunk, coffee} =
+   (coin -> clink -> choc -> clunk -> NOISYVM)

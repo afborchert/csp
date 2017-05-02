@@ -54,13 +54,14 @@ $(GeneratedCPPSourcesFromBison): %.tab.cpp: %.ypp
 depend:		$(CPPSources)
 		$(MAKEDEPEND) $(CPPFLAGS) $(CPPSources)
 # DO NOT DELETE
-parser.tab.o: parser.tab.cpp error.hpp parser.hpp location.hh position.hh \
- symtable.hpp process.hpp alphabet.hpp event.hpp object.hpp \
- uniformint.hpp process-definition.hpp scope.hpp yystype.hpp \
- parser.tab.hpp stack.hh external-choice.hpp interleaving-processes.hpp \
- internal-choice.hpp parallel-processes.hpp prefixed-process.hpp \
- process-reference.hpp process-sequence.hpp run-process.hpp scanner.hpp \
- selecting-process.hpp skip-process.hpp stop-process.hpp yytname.hpp
+parser.tab.o: parser.tab.cpp chaos-process.hpp alphabet.hpp process.hpp \
+ event.hpp object.hpp uniformint.hpp concealed-process.hpp error.hpp \
+ parser.hpp location.hh position.hh symtable.hpp process-definition.hpp \
+ scope.hpp yystype.hpp parser.tab.hpp stack.hh external-choice.hpp \
+ interleaving-processes.hpp internal-choice.hpp parallel-processes.hpp \
+ prefixed-process.hpp process-reference.hpp process-sequence.hpp \
+ run-process.hpp scanner.hpp selecting-process.hpp skip-process.hpp \
+ stop-process.hpp yytname.hpp
 yytname.o: yytname.cpp
 error.o: error.cpp error.hpp parser.hpp location.hh position.hh \
  symtable.hpp process.hpp alphabet.hpp event.hpp object.hpp \

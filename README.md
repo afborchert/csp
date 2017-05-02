@@ -55,6 +55,7 @@ those with the highest precedence coming first:
 | Operator             | Description          | Associativity   | Section
 | -------------------- | -------------------- | --------------- | -------
 | `(`...`)`            | grouping             |                 |
+| `\`                  | concealment          | non-associative | 3.5
 | `->`                 | prefix               | right-to-left   | 1.1.1
 | &#124;~&#124;        | non-deterministic or | left-to-right   | 3.2
 | `[]`                 | general choice       | left-to-right   | 3.3
@@ -95,7 +96,9 @@ The grammar represents a subset of CSP:
 
    _ExternalChoice_ &#8594; _InternalChoice_ | _ExternalChoice_ `[]` _InternalChoice_
 
-   _InternalChoice_ &#8594; _SimpleProcessExpression_ | _InternalChoice_ = `|~|` _SimpleProcessExpression_
+   _InternalChoice_ &#8594; _ConcealedProcessExpression_ | _InternalChoice_ `|~|` _ConcealedProcessExpression_
+
+   _ConcealedProcessExpression_ &#8594; _SimpleProcessExpression_ | _SimpleProcessExpression_ `\` _Alphabet_
 
    _SimpleProcessExpression_ &#8594; *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | `(` _ProcessExpression_ `)` | `(` _Choices_ `)`
 

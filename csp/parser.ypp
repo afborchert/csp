@@ -30,6 +30,7 @@
       PROCESS    Identifier that begins with an upper case letter
       EVENT      Identifier that begins with a lower case letter
       ALPHA      keyword "alpha"
+      CHAOS      keyword "CHAOS"
       RUN        keyword "RUN"
       STOP       keyword "STOP"
       SKIP       keyword "SKIP"
@@ -48,9 +49,12 @@
 	 InterleavingProcesses "|||" ExternalChoice .
       ExternalChoice = InternalChoice |
 	 ExternalChoice "[]" InternalChoice .
-      InternalChoice = SimpleProcessExpression |
-	 InternalChoice = "|~|" SimpleProcessExpression .
+      InternalChoice = ConcealedProcessExpression |
+	 InternalChoice = "|~|" ConcealedProcessExpression .
+      ConcealedProcessExpression = SimpleProcessExpression |
+	 SimpleProcessExpression "\" Alphabet .
       SimpleProcessExpression = PROCESS |
+	 CHAOS Alphabet | CHAOS ALPHA PROCESS |
 	 RUN Alphabet | RUN ALPHA PROCESS |
 	 STOP Alphabet | STOP ALPHA PROCESS |
 	 SKIP Alphabet | SKIP ALPHA PROCESS |
@@ -71,6 +75,8 @@ namespace CSP {
 }
 
 #include <memory>
+#include "chaos-process.hpp"
+#include "concealed-process.hpp"
 #include "error.hpp"
 #include "event.hpp"
 #include "external-choice.hpp"
@@ -110,6 +116,7 @@ using namespace CSP;
 
 /* operators */
 %token ARROW OR EQUAL PARALLEL INTERLEAVES INTERNAL_CHOICE EXTERNAL_CHOICE
+%token CONCEAL
 
 /* delimiters */
 %token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
@@ -118,7 +125,7 @@ using namespace CSP;
 %token EVENT PROCESS
 
 /* keywords */
-%token ALPHA RUN SKIP STOP
+%token ALPHA CHAOS RUN SKIP STOP
 
 %%
 
@@ -205,8 +212,8 @@ external_choice: internal_choice
       }
    ;
 
-internal_choice: simple_process_expression
-   | internal_choice INTERNAL_CHOICE simple_process_expression
+internal_choice: concealed_process
+   | internal_choice INTERNAL_CHOICE concealed_process
       {
 	 auto p1 = std::dynamic_pointer_cast<Process>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
@@ -214,7 +221,31 @@ internal_choice: simple_process_expression
       }
    ;
 
+concealed_process: simple_process_expression
+   | simple_process_expression CONCEAL alphabet
+      {
+	 auto p = std::dynamic_pointer_cast<Process>($1);
+	 auto events = std::dynamic_pointer_cast<EventSet>($3);
+	 auto concealed = events->get_alphabet();
+	 if (concealed.cardinality() == 0) {
+	    $$ = $1; // concealment operator with an empty set has no effect
+	 } else {
+	    $$ = std::make_shared<ConcealedProcess>(p, concealed);
+	 }
+      }
+   ;
+
 simple_process_expression: PROCESS
+   | CHAOS alphabet
+      {
+	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
+	 $$ = std::make_shared<ChaosProcess>(evset->get_alphabet());
+      }
+   | CHAOS ALPHA PROCESS
+      {
+	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<ChaosProcess>(alpha_p);
+      }
    | RUN alphabet
       {
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
@@ -225,16 +256,6 @@ simple_process_expression: PROCESS
 	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<RunProcess>(alpha_p);
       }
-   | STOP alphabet
-      {
-	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
-	 $$ = std::make_shared<StopProcess>(evset->get_alphabet());
-      }
-   | STOP ALPHA PROCESS
-      {
-	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
-	 $$ = std::make_shared<StopProcess>(alpha_p);
-      }
    | SKIP alphabet
       {
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
@@ -244,6 +265,16 @@ simple_process_expression: PROCESS
       {
 	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<SkipProcess>(alpha_p);
+      }
+   | STOP alphabet
+      {
+	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
+	 $$ = std::make_shared<StopProcess>(evset->get_alphabet());
+      }
+   | STOP ALPHA PROCESS
+      {
+	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<StopProcess>(alpha_p);
       }
    | LPAREN process_expression RPAREN
       { $$ = $2; }

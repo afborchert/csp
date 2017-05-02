@@ -94,12 +94,14 @@ restart:
       while (is_letter(ch) || is_digit(ch)) {
 	 nextch();
       }
-      if (*tokenstr == "STOP") {
-	 token = parser::token::STOP;
+      if (*tokenstr == "CHAOS") {
+	 token = parser::token::CHAOS;
       } else if (*tokenstr == "RUN") {
 	 token = parser::token::RUN;
       } else if (*tokenstr == "SKIP") {
 	 token = parser::token::SKIP;
+      } else if (*tokenstr == "STOP") {
+	 token = parser::token::STOP;
       } else if (*tokenstr == "alpha") {
 	 token = parser::token::ALPHA;
       } else if (token == parser::token::EVENT) {
@@ -157,6 +159,8 @@ restart:
 	    nextch(); token = parser::token::COMMA; break;
 	 case ';':
 	    nextch(); token = parser::token::SEMICOLON; break;
+	 case '\\':
+	    nextch(); token = parser::token::CONCEAL; break;
 	 // composite punctuators
 	 case '-':
 	    nextch();
