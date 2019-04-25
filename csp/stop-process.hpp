@@ -69,8 +69,10 @@ namespace CSP {
 	 ProcessPtr p_alphabet; // process from which we take its alphabet
 
 	 virtual void initialize_dependencies() const {
-	    p_alphabet->add_dependant(
-	       std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	    if (p_alphabet) {
+	       p_alphabet->add_dependant(
+		  std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	    }
 	 }
    };
 
