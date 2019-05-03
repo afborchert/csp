@@ -42,6 +42,7 @@ namespace CSP {
 
 	 // mutators
 	 int get_token(semantic_type& yylval, location& yylloc);
+	 bool at_eof() const;
 
       private:
 	 SymTable& symtab;

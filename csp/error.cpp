@@ -30,7 +30,26 @@
 namespace CSP {
 
 void yyerror(location const* loc, char const* msg) {
-   std::cerr << *loc << ": " << msg << std::endl;
+   /* we have to output locations ourselves as the corresponding
+      output operator as provided by bison is broken */
+   auto filename = loc->begin.filename;
+   if (!filename) {
+      filename = loc->end.filename;
+   }
+   if (filename) {
+      std::cerr << *filename << ":";
+   }
+   auto end_col = loc->end.column > 0? loc->end.column - 1: 0;
+   if (loc->begin.line < loc->end.line) {
+      std::cerr << loc->begin.line << ':' << loc->begin.column <<
+	 '-' << loc->end.line << ':' << loc->end.column;
+   } else if (loc->begin.line < end_col) {
+      std::cerr << loc->begin.line << ':' << loc->begin.column <<
+	 '-' << end_col;
+   } else {
+      std::cerr << loc->begin.line << ':' << loc->begin.column;
+   }
+   std::cerr << ": " << msg << std::endl;
    exit(1);
 }
 

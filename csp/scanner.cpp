@@ -221,6 +221,10 @@ restart:
    return token;
 }
 
+bool Scanner::at_eof() const {
+   return eof;
+}
+
 // private methods ===========================================================
 
 /*

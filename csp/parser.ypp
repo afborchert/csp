@@ -134,6 +134,9 @@ start:
    unit
       {
 	 p = std::dynamic_pointer_cast<Process>($2);
+	 if (!scanner.at_eof()) {
+	    yyerror(&@$, "CSP program ends already here");
+	 }
 	 symtab.close();
       }
    ;
@@ -293,7 +296,7 @@ choices: prefix_expression
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
 	 auto intersection = p1->acceptable() * p2->acceptable();
 	 if (intersection.cardinality() > 0) {
-	    yyerror(&yylhs.location,
+	    yyerror(&@$,
 	       "prefix events within a choice must be unique");
 	 }
 	 p1->add_choice(p2);
