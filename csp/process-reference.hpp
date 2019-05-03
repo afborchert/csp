@@ -78,6 +78,14 @@ namespace CSP {
 	    }
 	 }
 	 virtual Alphabet acceptable() const {
+	    if (!get_alphabet()) {
+	       /* if our alphabet is empty, we simply return
+		  the empty set; this test avoids an endless
+		  recursion in case of constructs of the type
+		     P = P
+	       */
+	       return Alphabet();
+	    }
 	    if (!p) resolve();
 	    if (p) {
 	       return p->acceptable();
