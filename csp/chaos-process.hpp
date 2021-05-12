@@ -83,7 +83,7 @@ namespace CSP {
 	 void decide() const {
 	    if (state == undecided) {
 	       accepting_next = Alphabet();
-	       for (const auto& event: chaos_alphabet) {
+	       for (const auto& event: get_alphabet()) {
 		  if (prg.flip()) {
 		     accepting_next.add(event);
 		  }
