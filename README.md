@@ -193,8 +193,8 @@ $
 ```
 
 ## 1.1.3 X1
-Please note that the special processes *STOP*, *RUN*, or *SKIP*
-always require the specification of an alphabet. The alphabet
+Please note that the special processes *STOP*, *RUN*, *SKIP*,
+or *CHAOS* always require the specification of an alphabet. The alphabet
 can be specified with reference to another named process using
 the *alpha* keyword or by enumerating the events explicitly
 in braces.
