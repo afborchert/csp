@@ -122,9 +122,8 @@ namespace CSP {
 	    if (!alphabet_fixed) {
 	       if (new_alphabet - alphabet) {
 		  alphabet = alphabet + new_alphabet;
-		  for (ProcessList::iterator it = dependants.begin();
-			it != dependants.end(); ++ it) {
-		     (*it)->propagate_alphabet(alphabet);
+		  for (auto& d: dependants) {
+		     d->propagate_alphabet(alphabet);
 		  }
 	       }
 	    }
@@ -150,8 +149,7 @@ namespace CSP {
 	 bool alphabet_fixed = false; // changed only by set_alphabet
 	 mutable bool alphabet_initialized = false;
 	 mutable bool dependencies_initialized = false;
-	 typedef std::deque<ConstProcessPtr> ProcessList;
-	 mutable ProcessList dependants;
+	 mutable std::deque<ConstProcessPtr> dependants;
 	 virtual void initialize_dependencies() const {
 	 }
    };
