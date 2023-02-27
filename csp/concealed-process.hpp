@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -48,10 +48,10 @@ namespace CSP {
 	    assert(process);
 	    assert(concealed.cardinality() > 0); // otherwise not useful
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    process->print(out); out << " \\ " << concealed;
 	 }
-	 virtual Alphabet acceptable() const {
+	 Alphabet acceptable() const final {
 	    decide();
 	    if (next) {
 	       return next->acceptable() - concealed;
@@ -61,7 +61,7 @@ namespace CSP {
 	    }
 	 }
       protected:
-	 virtual ProcessPtr internal_proceed(std::string& event) {
+	 ProcessPtr internal_proceed(std::string& event) final {
 	    decide();
 	    ProcessPtr p = next;
 	    state = undecided;
@@ -74,7 +74,7 @@ namespace CSP {
 	    p->set_alphabet(process->get_alphabet() - concealed);
 	    return p;
 	 }
-	 virtual Alphabet internal_get_alphabet() const {
+	 Alphabet internal_get_alphabet() const final {
 	    return process->get_alphabet() - concealed;
 	 }
       private:

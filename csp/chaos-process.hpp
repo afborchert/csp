@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -47,15 +47,15 @@ namespace CSP {
 	 ChaosProcess(ProcessPtr p_alphabet) :
 	       p_alphabet(p_alphabet), state(undecided) {
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    out << "CHAOS " << get_alphabet();
 	 }
-	 virtual Alphabet acceptable() const {
+	 Alphabet acceptable() const final {
 	    decide();
 	    return accepting_next;
 	 }
       protected:
-	 virtual ProcessPtr internal_proceed(std::string& next_event) {
+	 ProcessPtr internal_proceed(std::string& next_event) final {
 	    decide();
 	    bool ok = accepting_next.is_member(next_event);
 	    state = undecided;
@@ -66,7 +66,7 @@ namespace CSP {
 	       return nullptr;
 	    }
 	 }
-	 virtual Alphabet internal_get_alphabet() const {
+	 Alphabet internal_get_alphabet() const final {
 	    if (p_alphabet) {
 	       return p_alphabet->get_alphabet();
 	    } else {
@@ -92,7 +92,7 @@ namespace CSP {
 	    }
 	 }
 
-	 virtual void initialize_dependencies() const {
+	 void initialize_dependencies() const final {
 	    if (p_alphabet) {
 	       p_alphabet->add_dependant(
 		  std::dynamic_pointer_cast<const Process>(shared_from_this()));

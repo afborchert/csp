@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -32,8 +32,8 @@
 #define CSP_SELECTING_PROCESS_HPP
 
 #include <cassert>
+#include <deque>
 #include <iostream>
-#include <list>
 #include <memory>
 #include <string>
 #include "alphabet.hpp"
@@ -51,7 +51,7 @@ namespace CSP {
 	    assert(choice);
 	    choices.push_back(choice);
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    bool first = true;
 	    out << "(";
 	    for (auto choice: choices) {
@@ -64,7 +64,7 @@ namespace CSP {
 	    }
 	    out << ")";
 	 }
-	 virtual Alphabet acceptable() const {
+	 Alphabet acceptable() const final {
 	    Alphabet set;
 	    for (auto choice: choices) {
 	       set = set + choice->acceptable();
@@ -72,7 +72,7 @@ namespace CSP {
 	    return set;
 	 }
       protected:
-	 virtual ProcessPtr internal_proceed(std::string& event) {
+	 ProcessPtr internal_proceed(std::string& event) final {
 	    for (auto choice: choices) {
 	       auto p = choice->proceed(event);
 	       if (p) {
@@ -90,7 +90,7 @@ namespace CSP {
 	    }
 	    return nullptr;
 	 }
-	 virtual Alphabet internal_get_alphabet() const {
+	 Alphabet internal_get_alphabet() const final {
 	    Alphabet set;
 	    for (auto choice: choices) {
 	       set = set + choice->get_alphabet();
@@ -98,8 +98,8 @@ namespace CSP {
 	    return set;
 	 }
       private:
-	 std::list<ProcessPtr> choices;
-	 virtual void initialize_dependencies() const {
+	 std::deque<ProcessPtr> choices;
+	 void initialize_dependencies() const final {
 	    for (auto choice: choices) {
 	       choice->add_dependant(std::dynamic_pointer_cast<const Process>(
 		  shared_from_this()));

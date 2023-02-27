@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -28,8 +28,8 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <deque>
 #include <iostream>
-#include <list>
 #include <map>
 #include <string>
 
@@ -47,7 +47,7 @@ namespace CSP {
    class SymTable {
       private:
 	 ScopePtr scope;
-	 std::list<ProcessReferencePtr> unresolved;
+	 std::deque<ProcessReferencePtr> unresolved;
 
       public:
 	 // constructors

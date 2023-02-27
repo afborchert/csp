@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -66,10 +66,10 @@ namespace CSP {
 	    if (!symtab.lookup(name, p)) return false;
 	    return true;
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    out << name;
 	 }
-	 virtual void expanded_print(std::ostream& out) const {
+	 void expanded_print(std::ostream& out) const override {
 	    if (!p) resolve();
 	    if (p) {
 	       p->print(out);
@@ -77,7 +77,7 @@ namespace CSP {
 	       out << name;
 	    }
 	 }
-	 virtual Alphabet acceptable() const {
+	 Alphabet acceptable() const final {
 	    if (!get_alphabet()) {
 	       /* if our alphabet is empty, we simply return
 		  the empty set; this test avoids an endless
@@ -94,14 +94,14 @@ namespace CSP {
 	    }
 	 }
       protected:
-	 virtual ProcessPtr internal_proceed(std::string& event) {
+	 ProcessPtr internal_proceed(std::string& event) final {
 	    if (p) {
 	       return p->proceed(event);
 	    } else {
 	       return nullptr;
 	    }
 	 }
-	 virtual Alphabet internal_get_alphabet() const {
+	 Alphabet internal_get_alphabet() const final {
 	    if (!p) resolve();
 	    if (p) {
 	       return p->get_alphabet();
@@ -113,7 +113,7 @@ namespace CSP {
 	 const std::string name;
 	 SymTable& symtab;
 	 mutable ProcessPtr p;
-	 virtual void initialize_dependencies() const {
+	 void initialize_dependencies() const final {
 	    if (!p) {
 	       resolve();
 	       if (!p) return;

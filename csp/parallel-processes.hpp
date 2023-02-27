@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -46,10 +46,10 @@ namespace CSP {
 	       process1(p1), process2(p2) {
 	    assert(process1); assert(process2);
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    process1->print(out); out << " || "; process2->print(out);
 	 }
-	 virtual Alphabet acceptable() const {
+	 Alphabet acceptable() const final {
 	    /* events are acceptable either
 	         if they are accepted by both, or
 		 if they do belong to the alphabet of one of the processes only
@@ -63,7 +63,7 @@ namespace CSP {
 	    return p1a * p2a + ex1 + ex2;
 	 }
       protected:
-	 virtual ProcessPtr internal_proceed(std::string& event) {
+	 ProcessPtr internal_proceed(std::string& event) final {
 	    ProcessPtr p1 = process1->proceed(event);
 	    ProcessPtr p2 = process2->proceed(event);
 	    if (p1 && p2) {
@@ -72,7 +72,7 @@ namespace CSP {
 	       return nullptr;
 	    }
 	 };
-	 virtual Alphabet internal_get_alphabet() const {
+	 Alphabet internal_get_alphabet() const final {
 	    return process1->get_alphabet() + process2->get_alphabet();
 	 }
       private:

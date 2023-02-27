@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -51,32 +51,32 @@ namespace CSP {
 	 const std::string& get_event() {
 	    return event;
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    out << event << " -> "; process->print(out);
 	 }
-	 virtual void expanded_print(std::ostream& out) const {
+	 void expanded_print(std::ostream& out) const override {
 	    /* add parentheses if we are at top-level,
 	       otherwise this is done by SelectingProcess */
 	    out << "("; print(out); out << ")";
 	 }
-	 virtual Alphabet acceptable() const {
+	 Alphabet acceptable() const final {
 	    return Alphabet(event);
 	 }
       protected:
-	 virtual ProcessPtr internal_proceed(std::string& next_event) {
+	 ProcessPtr internal_proceed(std::string& next_event) final {
 	    if (event == next_event) {
 	       return process;
 	    } else {
 	       return nullptr;
 	    }
 	 }
-	 virtual Alphabet internal_get_alphabet() const {
+	 Alphabet internal_get_alphabet() const final {
 	    return Alphabet(event) + process->get_alphabet();
 	 }
       private:
 	 const std::string event;
 	 ProcessPtr process;
-	 virtual void initialize_dependencies() const {
+	 void initialize_dependencies() const final {
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
 	 }

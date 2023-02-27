@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -27,8 +27,8 @@
 #define CSP_PROCESS_HPP
 
 #include <cassert>
+#include <deque>
 #include <iostream>
-#include <list>
 #include <memory>
 #include <string>
 
@@ -54,10 +54,7 @@ namespace CSP {
    class Process: public Object {
       public:
 	 // default constructor
-	 Process() :
-	    alphabet_fixed(false), alphabet_initialized(false),
-	    dependencies_initialized(false) {
-	 }
+	 Process() {}
 
 	 /* attempts to engage in the given event and
 	    returns a process which accepted that event;
@@ -150,10 +147,10 @@ namespace CSP {
 
       private:
 	 mutable Alphabet alphabet;
-	 bool alphabet_fixed; // do not change it
-	 mutable bool alphabet_initialized;
-	 mutable bool dependencies_initialized;
-	 typedef std::list<ConstProcessPtr> ProcessList;
+	 bool alphabet_fixed = false; // changed only by set_alphabet
+	 mutable bool alphabet_initialized = false;
+	 mutable bool dependencies_initialized = false;
+	 typedef std::deque<ConstProcessPtr> ProcessList;
 	 mutable ProcessList dependants;
 	 virtual void initialize_dependencies() const {
 	 }

@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -47,10 +47,10 @@ namespace CSP {
 	    assert(process1);
 	    assert(process2);
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    process1->print(out); out << " |~| "; process2->print(out);
 	 }
-	 virtual Alphabet acceptable() const {
+	 Alphabet acceptable() const final {
 	    /* if we get asked, we make up our mind */
 	    decide();
 	    if (nextmove == headforp1) {
@@ -60,7 +60,7 @@ namespace CSP {
 	    }
 	 }
       protected:
-	 virtual ProcessPtr internal_proceed(std::string& event) {
+	 ProcessPtr internal_proceed(std::string& event) final {
 	    decide();
 	    if (nextmove == headforp1) {
 	       nextmove = undecided;
@@ -70,7 +70,7 @@ namespace CSP {
 	       return process2->proceed(event);
 	    }
 	 }
-	 virtual Alphabet internal_get_alphabet() const {
+	 Alphabet internal_get_alphabet() const final {
 	    return process1->get_alphabet() + process2->get_alphabet();
 	 }
       private:
@@ -88,7 +88,7 @@ namespace CSP {
 	       }
 	    }
 	 }
-	 virtual void initialize_dependencies() const {
+	 void initialize_dependencies() const final {
 	    process1->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
 	    process2->add_dependant(

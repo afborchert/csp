@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2017 Andreas F. Borchert
+   Copyright (c) 2011-2022 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -40,7 +40,7 @@ namespace CSP {
 	 const std::string& get_name() const {
 	    return name;
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    out << name;
 	 }
       private:
@@ -56,7 +56,7 @@ namespace CSP {
 	 EventSet(const std::string& name) {
 	    alphabet.add(name);
 	 }
-	 virtual void print(std::ostream& out) const {
+	 void print(std::ostream& out) const override {
 	    out << alphabet;
 	 }
 	 const Alphabet& get_alphabet() const {
