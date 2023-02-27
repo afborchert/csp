@@ -42,7 +42,6 @@ namespace CSP {
 
 /* regular includes */
 #include "symtable.hpp"
-#include "yystype.hpp"
 
 /* last include */
 #include "parser.tab.hpp"
