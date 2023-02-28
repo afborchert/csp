@@ -116,9 +116,11 @@ The grammar represents a subset of CSP:
 
    _Process_ &#8594; *UCIDENT*
 
-   _Label_ &#8594; *LCIDENT*
+   _Label_ &#8594; _Identifier_
 
-   _Event_ &#8594; *LCIDENT*
+   _Event_ &#8594; _Identifier_
+
+   _Identifier_ &#8594; *LCIDENT* | _Identifier_ `.` *LCIDENT*
 
 # Usage
 The _trace_ command expects a filename as last argument and supports following flags:

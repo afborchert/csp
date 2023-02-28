@@ -16,27 +16,37 @@
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
    KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
    WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+   NONINFRINGEMENT. IN NO IDENTIFIER SHALL THE AUTHORS OR COPYRIGHT HOLDERS
    BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
    ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
    CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 */
 
-#ifndef CSP_EVENT_HPP
-#define CSP_EVENT_HPP
+#ifndef CSP_IDENTIFIER_HPP
+#define CSP_IDENTIFIER_HPP
 
 #include <iostream>
 #include <string>
-#include "alphabet.hpp"
+
 #include "object.hpp"
 
 namespace CSP {
 
-   class Event: public Object {
+   class Identifier;
+   using IdentifierPtr = std::shared_ptr<Identifier>;
+
+   class Identifier: public Object {
       public:
-	 Event(const std::string& name) : name(name) {
+	 Identifier(const std::string& name) : name(name) {
 	 }
+	 Identifier(IdentifierPtr qualifier, const std::string& name) :
+	       name(qualifier->get_name() + "." + name) {
+	 }
+	 Identifier(IdentifierPtr qualifier, IdentifierPtr name) :
+	       name(qualifier->get_name() + "." + name->get_name()) {
+	 }
+
 	 const std::string& get_name() const {
 	    return name;
 	 }
@@ -46,28 +56,6 @@ namespace CSP {
       private:
 	 const std::string name;
    };
-
-   class EventSet: public Object {
-      public:
-	 EventSet() {
-	 }
-	 EventSet(const Alphabet& alphabet) : alphabet(alphabet) {
-	 }
-	 EventSet(const std::string& name) {
-	    alphabet.add(name);
-	 }
-	 void print(std::ostream& out) const override {
-	    out << alphabet;
-	 }
-	 const Alphabet& get_alphabet() const {
-	    return alphabet;
-	 }
-      private:
-	 Alphabet alphabet;
-   };
-
-   using EventPtr = std::shared_ptr<Event>;
-   using EventSetPtr = std::shared_ptr<EventSet>;
 
 } // namespace CSP
 

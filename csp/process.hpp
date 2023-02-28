@@ -42,7 +42,6 @@ namespace CSP {
 }
 
 #include "alphabet.hpp"
-#include "event.hpp"
 #include "object.hpp"
 #include "uniformint.hpp"
 

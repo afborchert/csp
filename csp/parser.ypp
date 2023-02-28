@@ -68,8 +68,9 @@
 	 Event "->" ProcessExpression .
       Alphabet = "{" "}" | "{" AlphabetMembers "}" .
       AlphabetMembers = Event | AlphabetMembers "," Event .
-      Event = LCIDENT .
-      Label = LCIDENT .
+      Event = Identifier .
+      Label = Identifier .
+      Identifier = LCIDENT | Identifier "." LCIDENT .
       Process = UCIDENT .
 */
 
@@ -83,8 +84,9 @@ namespace CSP {
 #include "chaos-process.hpp"
 #include "concealed-process.hpp"
 #include "error.hpp"
-#include "event.hpp"
 #include "external-choice.hpp"
+#include "event-set.hpp"
+#include "identifier.hpp"
 #include "interleaving-processes.hpp"
 #include "internal-choice.hpp"
 #include "mapped-process.hpp"
@@ -126,7 +128,7 @@ using namespace CSP;
 %token CONCEAL
 
 /* delimiters */
-%token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON COLON
+%token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON COLON PERIOD
 
 /* identifiers */
 %token LCIDENT UCIDENT
@@ -249,7 +251,7 @@ labeled_process_expression: simple_process_expression
    | label COLON simple_process_expression
       {
 	 auto p = std::dynamic_pointer_cast<Process>($3);
-	 auto label = std::dynamic_pointer_cast<Event>($1)->get_name();
+	 auto label = std::dynamic_pointer_cast<Identifier>($1)->get_name();
 	 auto changer = std::make_shared<Qualifier>(label);
 	 $$ = std::make_shared<MappedProcess>(p, changer);
       }
@@ -322,13 +324,13 @@ choices: prefix_expression
 
 prefix_expression: event ARROW process_expression
       {  
-	 auto event = std::dynamic_pointer_cast<Event>($1);
+	 auto event = std::dynamic_pointer_cast<Identifier>($1);
 	 auto process = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
       }
    | event ARROW prefix_expression
       {  
-	 auto event = std::dynamic_pointer_cast<Event>($1);
+	 auto event = std::dynamic_pointer_cast<Identifier>($1);
 	 auto process = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
       }
@@ -341,21 +343,29 @@ alphabet: LBRACE RBRACE
    ;
 alphabet_members: event
       {
-	 auto event = std::dynamic_pointer_cast<Event>($1);
+	 auto event = std::dynamic_pointer_cast<Identifier>($1);
 	 $$ = std::make_shared<EventSet>(event->get_name());
       }
    | alphabet_members COMMA event
       {
 	 auto set = std::dynamic_pointer_cast<EventSet>($1);
-	 auto event = std::dynamic_pointer_cast<Event>($3);
+	 auto event = std::dynamic_pointer_cast<Identifier>($3);
 	 Alphabet a = set->get_alphabet();
 	 a.add(event->get_name());
 	 $$ = std::make_shared<EventSet>(a);
       }
    ;
 
-event: LCIDENT;
-label: LCIDENT;
+event: identifier;
+label: identifier;
+identifier: LCIDENT
+   | identifier PERIOD LCIDENT
+      {
+	 auto qualifier = std::dynamic_pointer_cast<Identifier>($1);
+	 auto ident = std::dynamic_pointer_cast<Identifier>($3);
+	 $$ = std::make_shared<Identifier>(qualifier, ident);
+      }
+   ;
 process: UCIDENT;
 
 %%

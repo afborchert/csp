@@ -24,7 +24,7 @@
 */
 
 #include "error.hpp"
-#include "event.hpp"
+#include "identifier.hpp"
 #include "object.hpp"
 #include "process.hpp"
 #include "process-reference.hpp"
@@ -105,7 +105,7 @@ restart:
       } else if (*tokenstr == "alpha") {
 	 token = parser::token::ALPHA;
       } else if (token == parser::token::LCIDENT) {
-	 yylval = std::make_shared<Event>(*tokenstr);
+	 yylval = std::make_shared<Identifier>(*tokenstr);
       } else {
 	 auto p = std::make_shared<ProcessReference>(*tokenstr, symtab);
 	 p->register_ref();
@@ -161,6 +161,8 @@ restart:
 	    nextch(); token = parser::token::SEMICOLON; break;
 	 case ':':
 	    nextch(); token = parser::token::COLON; break;
+	 case '.':
+	    nextch(); token = parser::token::PERIOD; break;
 	 case '\\':
 	    nextch(); token = parser::token::CONCEAL; break;
 	 // composite punctuators
