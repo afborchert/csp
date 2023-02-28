@@ -26,11 +26,15 @@
 #ifndef CSP_SYMBOL_CHANGER_HPP
 #define CSP_SYMBOL_CHANGER_HPP
 
-#include <functional>
+#include <cassert>
+#include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include "alphabet.hpp"
+#include "identifier.hpp"
+#include "object.hpp"
 
 /* function that maps symbols, see CSP 2.6 */
 
@@ -38,8 +42,10 @@ namespace CSP {
 
    class SymbolChanger;
    using SymbolChangerPtr = std::shared_ptr<SymbolChanger>;
+   class FunctionDefinition;
+   using FunctionDefinitionPtr = std::shared_ptr<FunctionDefinition>;
 
-   class SymbolChanger {
+   class SymbolChanger: public Object {
       public:
 	 std::string map(std::string event) {
 	    if (event[0] == '_') {
@@ -71,18 +77,89 @@ namespace CSP {
 	 virtual std::string internal_reverse_map(std::string) = 0;
    };
 
-   class Identity: public SymbolChanger {
-      private:
-	 std::string get_name(std::string name) final {
+   /* see CSP 2.6 */
+   class FunctionDefinition: public SymbolChanger {
+      public:
+	 FunctionDefinition(std::string name) : name(name) {
+	 }
+	 bool add_mapping(std::string event1, std::string event2) {
+	    auto [it1, ok1] = map.insert(std::make_pair(event1, event2));
+	    if (!ok1) return false;
+	    auto [it2, ok2] = reversed_map.insert(std::make_pair(event2,
+	       event1));
+	    if (!ok2) {
+	       map.erase(it1); return false;
+	    }
+	    return true;
+	 }
+	 bool add_mapping(IdentifierPtr event1, IdentifierPtr event2) {
+	    return add_mapping(event1->get_name(), event2->get_name());
+	 }
+
+	 std::string get_name() {
 	    return name;
 	 }
 
+      private:
+	 std::string name;
+	 std::map<std::string, std::string> map;
+	 std::map<std::string, std::string> reversed_map;
+
+	 std::string get_name(std::string name) final {
+	    return this->name;
+	 }
+
 	 std::string internal_map(std::string event) final {
-	    return event;
+	    auto it = map.find(event);
+	    if (it != map.end()) {
+	       return it->second;
+	    } else {
+	       return event;
+	    }
 	 }
 
 	 std::string internal_reverse_map(std::string event) final {
-	    return event;
+	    auto it = reversed_map.find(event);
+	    if (it != reversed_map.end()) {
+	       return it->second;
+	    } else {
+	       return event;
+	    }
+	 }
+
+	 void print(std::ostream& out) const final {
+	    for (auto [event1, event2]: map) {
+	       out << name << "(" << event1 << ") = " << event2 << std::endl;
+	    }
+	 }
+   };
+
+   /* see CSP 2.6.1 */
+   class Inverse: public SymbolChanger {
+      public: Inverse(SymbolChangerPtr f) : f(f) {
+	 assert(f);
+	 auto f_ = std::dynamic_pointer_cast<Inverse>(f);
+	 if (f_) {
+	    f = f_->f;
+	 }
+      }
+      private:
+	 SymbolChangerPtr f;
+
+	 std::string get_name(std::string name) final {
+	    return f->get_name(name) + "^-1";
+	 }
+
+	 std::string internal_map(std::string event) final {
+	    return f->reverse_map(event);
+	 }
+
+	 std::string internal_reverse_map(std::string event) final {
+	    return f->map(event);
+	 }
+
+	 void print(std::ostream& out) const final {
+	    f->print(out); out << "^-1";
 	 }
    };
 
@@ -104,6 +181,10 @@ namespace CSP {
 
 	 std::string internal_reverse_map(std::string event) final {
 	    return event.substr(label.size() + 1);
+	 }
+
+	 void print(std::ostream& out) const final {
+	    out << "f_" << label;
 	 }
    };
 

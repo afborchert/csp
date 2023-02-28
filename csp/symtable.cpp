@@ -26,6 +26,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <memory>
+
 #include "object.hpp"
 #include "process.hpp"
 #include "process-definition.hpp"
@@ -39,12 +40,26 @@ SymTable::SymTable() : scope(nullptr) {
 }
 
 // accessors
-bool SymTable::lookup(const std::string name,
-      ProcessPtr& process) const {
+bool SymTable::lookup(const std::string name, ProcessPtr& process) const {
    ProcessDefinitionPtr pdef;
    if (scope) {
       bool found = scope->lookup(name, pdef);
       if (found) process = pdef;
+      return found;
+   } else {
+      return false;
+   }
+}
+
+bool SymTable::lookup(const std::string name, FunctionDefinitionPtr& f) {
+   FunctionDefinitionPtr fdef;
+   if (scope) {
+      bool found = scope->lookup(name, fdef);
+      if (!found) {
+	 fdef = std::make_shared<FunctionDefinition>(name);
+	 bool ok = insert(fdef); assert(ok);
+      }
+      f = fdef;
       return found;
    } else {
       return false;
@@ -71,9 +86,13 @@ void SymTable::close() {
    scope = outer;
 }
 
-bool SymTable::insert(const ProcessDefinitionPtr& process) {
+bool SymTable::insert(ProcessDefinitionPtr process) {
    assert(scope);
    return scope->insert(process);
+}
+bool SymTable::insert(FunctionDefinitionPtr f) {
+   assert(scope);
+   return scope->insert(f);
 }
 void SymTable::add_unresolved(ProcessReferencePtr pref) {
    assert(pref);

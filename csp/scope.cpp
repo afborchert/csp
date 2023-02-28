@@ -36,20 +36,31 @@ Scope::Scope() : outer(nullptr) {
 Scope::Scope(ScopePtr outer) : outer(outer) {
 }
 
-// accessors
-bool Scope::lookup(const std::string& name,
-      ProcessDefinitionPtr& process) const {
-   ProcMap::const_iterator it = processes.find(name);
-   if (it == processes.end()) {
+template<typename Map, typename T>
+static bool do_lookup(Map& map, ScopePtr outer,
+      const std::string& name, T& object) {
+   auto it = map.find(name);
+   if (it == map.end()) {
       if (outer) {
-	 return outer->lookup(name, process);
+	 return outer->lookup(name, object);
       } else {
 	 return false;
       }
    } else {
-      process = it->second;
+      object = it->second;
       return true;
    }
+}
+
+// accessors
+bool Scope::lookup(const std::string& name,
+      ProcessDefinitionPtr& process) const {
+   return do_lookup(processes, outer, name, process);
+}
+
+bool Scope::lookup(const std::string& name,
+      FunctionDefinitionPtr& function) const {
+   return do_lookup(functions, outer, name, function);
 }
 
 ScopePtr Scope::get_outer() const {
@@ -57,11 +68,16 @@ ScopePtr Scope::get_outer() const {
 }
 
 // mutators
-bool Scope::insert(const ProcessDefinitionPtr& process) {
-   std::pair<ProcMap::iterator, bool> result =
-      processes.insert(ProcMap::value_type(process->get_name(),
-	 process));
-   return result.second;
+bool Scope::insert(ProcessDefinitionPtr process) {
+   auto [it, ok] = processes.insert(std::make_pair(process->get_name(),
+      process));
+   return ok;
+}
+
+bool Scope::insert(FunctionDefinitionPtr function) {
+   auto [it, ok] = functions.insert(std::make_pair(function->get_name(),
+      function));
+   return ok;
 }
 
 } // namespace CSP

@@ -36,6 +36,7 @@
 #include "process.hpp"
 #include "process-definition.hpp"
 #include "scope.hpp"
+#include "symbol-changer.hpp"
 
 namespace CSP {
 
@@ -54,13 +55,14 @@ namespace CSP {
 	 SymTable();
 
 	 // accessors
-	 bool lookup(const std::string name,
-	       ProcessPtr& process) const;
+	 bool lookup(std::string name, ProcessPtr& process) const;
+	 bool lookup(std::string name, FunctionDefinitionPtr& process);
 
 	 // mutators
 	 void open();
 	 void close();
-	 bool insert(const ProcessDefinitionPtr& process);
+	 bool insert(ProcessDefinitionPtr process);
+	 bool insert(FunctionDefinitionPtr function);
 	 void add_unresolved(ProcessReferencePtr pref);
    };
 

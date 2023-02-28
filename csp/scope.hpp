@@ -30,6 +30,7 @@
 #include <memory>
 #include <string>
 #include "process-definition.hpp"
+#include "symbol-changer.hpp"
 
 namespace CSP {
 
@@ -38,9 +39,10 @@ namespace CSP {
 
    class Scope {
       private:
-	 using ProcMap = std::map<std::string, ProcessDefinitionPtr>;
-	 ProcMap processes;
 	 ScopePtr outer;
+	 std::map<std::string, ProcessDefinitionPtr> processes;
+	 std::map<std::string, FunctionDefinitionPtr> functions;
+
       public:
 	 // constructors
 	 Scope();
@@ -49,10 +51,13 @@ namespace CSP {
 	 // accessors
 	 bool lookup(const std::string& name,
 	       ProcessDefinitionPtr& process) const;
+	 bool lookup(const std::string& name,
+	       FunctionDefinitionPtr& function) const;
 	 ScopePtr get_outer() const;
 
 	 // mutators
-	 bool insert(const ProcessDefinitionPtr& process);
+	 bool insert(ProcessDefinitionPtr process);
+	 bool insert(FunctionDefinitionPtr function);
    };
 
 } // namespace CSP
