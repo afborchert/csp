@@ -23,59 +23,56 @@
    SOFTWARE.
 */
 
-/*
-   Sequence of processes, i.e. processes of the form P1; P2
-*/
+#ifndef CSP_MAPPED_PROCESS_HPP
+#define CSP_MAPPED_PROCESS_HPP
 
-#ifndef CSP_PROCESS_SEQUENCE_HPP
-#define CSP_PROCESS_SEQUENCE_HPP
-
-#include <cassert>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
+
 #include "alphabet.hpp"
 #include "process.hpp"
+#include "symbol-changer.hpp"
 
 namespace CSP {
 
-   class ProcessSequence: public Process {
+   class MappedProcess;
+   using MappedProcessPtr = std::shared_ptr<MappedProcess>;
+
+   class MappedProcess: public Process {
       public:
-	 ProcessSequence(ProcessPtr p, ProcessPtr q) :
-	       process1(p), process2(q) {
-	    assert(process1);
-	    assert(process2);
+	 MappedProcess(ProcessPtr process, SymbolChangerPtr f) :
+	       f(f), process(process) {
+	    assert(process);
 	 }
 	 void print(std::ostream& out) const override {
-	    process1->print(out); out << "; "; process2->print(out);
+	    std::ostringstream os; process->print(os);
+	    out << f->get_name(os.str());
 	 }
 	 Alphabet acceptable() const final {
-	    if (process1->accepts_success()) {
-	       return process2->acceptable();
-	    } else {
-	       return process1->acceptable();
-	    }
+	    return f->map(process->acceptable());
 	 }
       protected:
 	 ProcessPtr internal_proceed(const std::string& event) final {
-	    if (process1->accepts_success()) {
-	       return process2->proceed(event);
-	    } else {
-	       return std::make_shared<ProcessSequence>(
-		  process1->proceed(event), process2);
-	    }
+	    auto p = process->proceed(f->reverse_map(event));
+	    return std::make_shared<MappedProcess>(p, f);
 	 }
 	 Alphabet internal_get_alphabet() const final {
-	    return process1->get_alphabet() + process2->get_alphabet();
+	    /* mapping is done through map_alphabet below */
+	    return process->get_alphabet();
 	 }
       private:
-	 ProcessPtr process1;
-	 ProcessPtr process2;
+	 SymbolChangerPtr f;
+	 ProcessPtr process;
+
+	 Alphabet map_alphabet(const Alphabet& alphabet) const final {
+	    return f->map(alphabet);
+	 }
+
 	 void initialize_dependencies() const final {
-	    process1->add_dependant(std::dynamic_pointer_cast<const Process>(
+	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
-	    process2->add_dependant(
-	       std::dynamic_pointer_cast<const Process>(shared_from_this()));
 	 }
    };
 

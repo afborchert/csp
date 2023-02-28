@@ -41,8 +41,8 @@ Following identifiers and keywords are used by the grammar:
 
 | Symbol    | Description                                      | Regular expression
 | --------- | ------------------------------------------------ | --------------------
-| *PROCESS* | identifier that begins with an upper case letter | `[A-Z][A-Za-z0-9_]*`
-| *EVENT*   | identifier that begins with a lower case letter  | `[a-z][A-Za-z0-9_]*`
+| *UCIDENT* | identifier that begins with an upper case letter | `[A-Z][A-Za-z0-9_]*`
+| *LCIDENT* | identifier that begins with a lower case letter  | `[a-z][A-Za-z0-9_]*`
 | *ALPHA*   | keyword "alpha" (must be lower case)             | alpha
 | *CHAOS*   | keyword "CHAOS" (must be upper case)             | CHAOS
 | *RUN*     | keyword "RUN" (must be upper case)               | RUN
@@ -56,6 +56,7 @@ those with the highest precedence coming first:
 | Operator             | Description          | Associativity   | Section
 | -------------------- | -------------------- | --------------- | -------
 | `(`...`)`            | grouping             |                 |
+| `:`                  | labeling             | non-associative | 2.6.2
 | `\`                  | concealment          | non-associative | 3.5
 | `->`                 | prefix               | right-to-left   | 1.1.1
 | &#124;~&#124;        | non-deterministic or | left-to-right   | 3.2
@@ -84,7 +85,7 @@ The grammar represents a subset of CSP:
 
    _ProcessDefinitions_ &#8594; _ProcessDefinition_ | _ProcessDefinitions_ _ProcessDefinition_
 
-   _ProcessDefinition_ &#8594; *PROCESS* `=` _ProcessExpression_ | *PROCESS* _Alphabet_ `=` _ProcessExpression_
+   _ProcessDefinition_ &#8594; _Process_ `=` _ProcessExpression_ | _Process_ _Alphabet_ `=` _ProcessExpression_
 
    _ProcessExpression_ &#8594; _ProcessSequence_
 
@@ -99,17 +100,25 @@ The grammar represents a subset of CSP:
 
    _InternalChoice_ &#8594; _ConcealedProcessExpression_ | _InternalChoice_ `|~|` _ConcealedProcessExpression_
 
-   _ConcealedProcessExpression_ &#8594; _SimpleProcessExpression_ | _SimpleProcessExpression_ `\` _Alphabet_
+   _ConcealedProcessExpression_ &#8594; _LabeledProcessExpression_ | _LabeledProcessExpression_ `\` _Alphabet_
 
-   _SimpleProcessExpression_ &#8594; *PROCESS* | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* *PROCESS* | *RUN* _Alphabet_ | *RUN* *ALPHA* *PROCESS* | *STOP* _Alphabet_ | *STOP* *ALPHA* *PROCESS* | *SKIP* _Alphabet_ | *SKIP* *ALPHA* *PROCESS* | `(` _ProcessExpression_ `)` | `(` _Choices_ `)`
+   _LabeledProcessExpression_ &#8594; _SimpleProcessExpression_ | _Label_ `:` _SimpleProcessExpression_
+
+   _SimpleProcessExpression_ &#8594; _Process_ | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* _Process_ | *RUN* _Alphabet_ | *RUN* *ALPHA* _Process_ | *STOP* _Alphabet_ | *STOP* *ALPHA* _Process_ | *SKIP* _Alphabet_ | *SKIP* *ALPHA* _Process_ | `(` _ProcessExpression_ `)` | `(` _Choices_ `)`
 
    _Choices_ &#8594; _PrefixExpression_ | _Choices_ `|` _PrefixExpression_
 
-   _PrefixExpression_ &#8594; *EVENT* `->` _ProcessExpression_ | *EVENT* `->` _PrefixExpression_
+   _PrefixExpression_ &#8594; _Event_ `->` _ProcessExpression_ | _Event_ `->` _PrefixExpression_
 
    _Alphabet_ &#8594; `{` `}` | `{` _AlphabetMembers_ `}`
 
-   _AlphabetMembers_ &#8594; *EVENT* | _AlphabetMembers_ `,` *EVENT*
+   _AlphabetMembers_ &#8594; _Event_ | _AlphabetMembers_ `,` _Event_
+
+   _Process_ &#8594; *UCIDENT*
+
+   _Label_ &#8594; *LCIDENT*
+
+   _Event_ &#8594; *LCIDENT*
 
 # Usage
 The _trace_ command expects a filename as last argument and supports following flags:
@@ -119,20 +128,23 @@ The _trace_ command expects a filename as last argument and supports following f
 * `-p` do not print the current process before the next event is read from the input
 * `-v` do not print the set of acceptable events before the next event is read from the input
 
-Typically, _trace_ is used interactively. Hence, helpful verbose output is given,
-i.e. the entire alphabet at the beginning, and before the next event is read from the input,
-the current process is printed and the set of acceptable events. If one of the acceptable
-events is chosen, _trace_ continues. If an unacceptable event is selected, _trace_
-terminates with an error message. If the input ends or the process terminates successfully,
-"OK" is printed and _trace_ terminates.
+Typically, _trace_ is used interactively. Hence, helpful verbose output
+is given, i.e. the entire alphabet at the beginning, and before the
+next event is read from the input, the current process is printed and
+the set of acceptable events. If one of the acceptable events is
+chosen, _trace_ continues. If an unacceptable event is selected,
+_trace_ terminates with an error message. If the input ends or the
+process terminates successfully, "OK" is printed and _trace_
+terminates.
 
-If _trace_ is to be used non-interactively, it is best to use either the `-apv` flag
-combination that suppresses all the verbose output, or to use `-aepv` where all accepted
-events are printed.
+If _trace_ is to be used non-interactively, it is best to use either
+the `-apv` flag combination that suppresses all the verbose output, or
+to use `-aepv` where all accepted events are printed.
 
 # Examples
-Following examples are all taken from C. A. R. Hoare's book. First the corresponding
-section is given, then the example number within that section.
+Following examples are all taken from C. A. R. Hoare's book. First the
+corresponding section is given, then the example number within that
+section.
 
 ## 1.1.2 X1
 ```
@@ -313,6 +325,31 @@ Acceptable: {in1p, in2p}
 in1p
 Process: (large -> FOOLCUST) || (small -> VMC | in1p -> (large -> VMC | in1p -> STOP {in1p, in2p, large, out1p, small}))
 Acceptable: {}
+OK
+$
+```
+
+## 2.6.2 X1
+Processes can be labeled using the `:` operator. This allows
+to have two independent vending machines, labeled `left` and `right`:
+
+```
+$ cat x1.csp
+(left:VMS) || (right:VMS)
+VMS = (coin -> choc -> VMS)
+$ trace x1.csp
+Tracing: left:VMS || right:VMS
+Alphabet: {left.choc, left.coin, right.choc, right.coin}
+Acceptable: {left.coin, right.coin}
+left.coin
+Process: left:(choc -> VMS) || right:VMS
+Acceptable: {left.choc, right.coin}
+right.coin
+Process: left:(choc -> VMS) || right:(choc -> VMS)
+Acceptable: {left.choc, right.choc}
+left.choc
+Process: left:VMS || right:(choc -> VMS)
+Acceptable: {left.coin, right.choc}
 OK
 $
 ```

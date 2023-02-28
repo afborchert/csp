@@ -63,7 +63,7 @@ namespace CSP {
 	    return p1a * p2a + ex1 + ex2;
 	 }
       protected:
-	 ProcessPtr internal_proceed(std::string& event) final {
+	 ProcessPtr internal_proceed(const std::string& event) final {
 	    ProcessPtr p1 = process1->proceed(event);
 	    ProcessPtr p2 = process2->proceed(event);
 	    if (p1 && p2) {

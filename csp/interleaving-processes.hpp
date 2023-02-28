@@ -55,7 +55,7 @@ namespace CSP {
 	    return process1->acceptable() + process2->acceptable();
 	 }
       protected:
-	 ProcessPtr internal_proceed(std::string& event) final {
+	 ProcessPtr internal_proceed(const std::string& event) final {
 	    Alphabet a1 = process1->acceptable();
 	    Alphabet a2 = process2->acceptable();
 	    bool ok1 = a1.is_member(event);

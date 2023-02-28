@@ -87,9 +87,9 @@ restart:
    if (is_letter(ch)) {
       tokenstr = std::make_unique<std::string>();
       if (is_lower(ch)) {
-	 token = parser::token::EVENT;
+	 token = parser::token::LCIDENT;
       } else {
-	 token = parser::token::PROCESS;
+	 token = parser::token::UCIDENT;
       }
       while (is_letter(ch) || is_digit(ch)) {
 	 nextch();
@@ -104,7 +104,7 @@ restart:
 	 token = parser::token::STOP;
       } else if (*tokenstr == "alpha") {
 	 token = parser::token::ALPHA;
-      } else if (token == parser::token::EVENT) {
+      } else if (token == parser::token::LCIDENT) {
 	 yylval = std::make_shared<Event>(*tokenstr);
       } else {
 	 auto p = std::make_shared<ProcessReference>(*tokenstr, symtab);
@@ -159,6 +159,8 @@ restart:
 	    nextch(); token = parser::token::COMMA; break;
 	 case ';':
 	    nextch(); token = parser::token::SEMICOLON; break;
+	 case ':':
+	    nextch(); token = parser::token::COLON; break;
 	 case '\\':
 	    nextch(); token = parser::token::CONCEAL; break;
 	 // composite punctuators

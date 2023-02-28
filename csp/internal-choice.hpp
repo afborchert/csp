@@ -60,7 +60,7 @@ namespace CSP {
 	    }
 	 }
       protected:
-	 ProcessPtr internal_proceed(std::string& event) final {
+	 ProcessPtr internal_proceed(const std::string& event) final {
 	    decide();
 	    if (nextmove == headforp1) {
 	       nextmove = undecided;

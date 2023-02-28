@@ -53,7 +53,7 @@ namespace CSP {
 	    return Alphabet("_success_");
 	 }
       protected:
-	 ProcessPtr internal_proceed(std::string& next_event) final {
+	 ProcessPtr internal_proceed(const std::string& next_event) final {
 	    /* should usually not be used */
 	    if (next_event == "_success_") {
 	       return std::make_shared<StopProcess>(skip_alphabet);

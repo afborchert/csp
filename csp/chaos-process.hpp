@@ -55,7 +55,7 @@ namespace CSP {
 	    return accepting_next;
 	 }
       protected:
-	 ProcessPtr internal_proceed(std::string& next_event) final {
+	 ProcessPtr internal_proceed(const std::string& next_event) final {
 	    decide();
 	    bool ok = accepting_next.is_member(next_event);
 	    state = undecided;

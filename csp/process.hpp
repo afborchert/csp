@@ -61,7 +61,7 @@ namespace CSP {
 	    null is returned if the event was not accepted;
 	    the same process is returned if the event
 	    does not belong to the alphabet of this process */
-	 ProcessPtr proceed(std::string& event) {
+	 ProcessPtr proceed(const std::string& event) {
 	    if (get_alphabet().is_member(event)) {
 	       /* use internal polymorphic function
 	          to process this event */
@@ -99,6 +99,7 @@ namespace CSP {
 		  of the alphabet */
 	       propagate_alphabet(internal_get_alphabet() -
 		  Alphabet("_success_"));
+	       alphabet = map_alphabet(alphabet);
 	    }
 	    return alphabet;
 	 }
@@ -115,6 +116,27 @@ namespace CSP {
 	    alphabet_initialized = true;
 	 }
 
+	 /* add a process to the list of dependants whose
+	    alphabet depends on this process */
+	 void add_dependant(ConstProcessPtr p) {
+	    dependants.push_back(p);
+	 }
+
+      private:
+	 /* internal implementation of proceed
+	    which no longer needs to check if event belongs to
+	    our alphabet and that depends on the actual process */
+	 virtual ProcessPtr internal_proceed(const std::string& event) = 0;
+
+	 /* construct initial alphabet */
+	 virtual Alphabet internal_get_alphabet() const = 0;
+
+	 mutable Alphabet alphabet;
+	 bool alphabet_fixed = false; // changed only by set_alphabet
+	 mutable bool alphabet_initialized = false;
+	 mutable bool dependencies_initialized = false;
+	 mutable std::deque<ConstProcessPtr> dependants;
+
 	 /* set implicitly the alphabet of this process;
 	    this is suppressed if the alphabet was explicitly
 	    set before */
@@ -129,27 +151,10 @@ namespace CSP {
 	    }
 	 }
 
-	 /* add a process to the list of dependants whose
-	    alphabet depends on this process */
-	 void add_dependant(ConstProcessPtr p) {
-	    dependants.push_back(p);
+	 virtual Alphabet map_alphabet(const Alphabet& alphabet) const {
+	    return alphabet;
 	 }
 
-      protected:
-	 /* internal implementation of proceed
-	    which no longer needs to check if event belongs to
-	    our alphabet and that depends on the actual process */
-	 virtual ProcessPtr internal_proceed(std::string& event) = 0;
-
-	 /* construct initial alphabet */
-	 virtual Alphabet internal_get_alphabet() const = 0;
-
-      private:
-	 mutable Alphabet alphabet;
-	 bool alphabet_fixed = false; // changed only by set_alphabet
-	 mutable bool alphabet_initialized = false;
-	 mutable bool dependencies_initialized = false;
-	 mutable std::deque<ConstProcessPtr> dependants;
 	 virtual void initialize_dependencies() const {
 	 }
    };

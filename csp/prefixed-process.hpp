@@ -63,7 +63,7 @@ namespace CSP {
 	    return Alphabet(event);
 	 }
       protected:
-	 ProcessPtr internal_proceed(std::string& next_event) final {
+	 ProcessPtr internal_proceed(const std::string& next_event) final {
 	    if (event == next_event) {
 	       return process;
 	    } else {

@@ -54,7 +54,7 @@ namespace CSP {
 	    return Alphabet();
 	 }
       protected:
-	 ProcessPtr internal_proceed(std::string& next_event) final {
+	 ProcessPtr internal_proceed(const std::string& next_event) final {
 	    return nullptr;
 	 }
 	 Alphabet internal_get_alphabet() const final {

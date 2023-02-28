@@ -27,8 +27,8 @@
    Parser for a subset of CSP:
 
    Terminals:
-      PROCESS    Identifier that begins with an upper case letter
-      EVENT      Identifier that begins with a lower case letter
+      UCIDENT    Identifier that begins with an upper case letter
+      LCIDENT    Identifier that begins with a lower case letter
       ALPHA      keyword "alpha"
       CHAOS      keyword "CHAOS"
       RUN        keyword "RUN"
@@ -38,8 +38,8 @@
    Productions:
       ProcessDefinitions = ProcessDefinition |
 	 ProcessDefinitions ProcessDefinition .
-      ProcessDefinition = PROCESS "=" ProcessExpression |
-	 PROCESS Alphabet "=" ProcessExpression .
+      ProcessDefinition = Process "=" ProcessExpression |
+	 Process Alphabet "=" ProcessExpression .
       ProcessExpression = ProcessSequence .
       ProcessSequence = ParallelProcesses |
 	 ProcessSequence ";" ParallelProcesses .
@@ -51,21 +51,26 @@
 	 ExternalChoice "[]" InternalChoice .
       InternalChoice = ConcealedProcessExpression |
 	 InternalChoice = "|~|" ConcealedProcessExpression .
-      ConcealedProcessExpression = SimpleProcessExpression |
-	 SimpleProcessExpression "\" Alphabet .
-      SimpleProcessExpression = PROCESS |
-	 CHAOS Alphabet | CHAOS ALPHA PROCESS |
-	 RUN Alphabet | RUN ALPHA PROCESS |
-	 STOP Alphabet | STOP ALPHA PROCESS |
-	 SKIP Alphabet | SKIP ALPHA PROCESS |
+      ConcealedProcessExpression = LabeledProcessExpression |
+	 LabeledProcessExpression "\" Alphabet .
+      LabeledProcessExpression = SimpleProcessExpression |
+	 Label COLON SimpleProcessExpression .
+      SimpleProcessExpression = Process |
+	 CHAOS Alphabet | CHAOS ALPHA Process |
+	 RUN Alphabet | RUN ALPHA Process |
+	 STOP Alphabet | STOP ALPHA Process |
+	 SKIP Alphabet | SKIP ALPHA Process |
 	 "(" ProcessExpression ")" |
 	 "(" Choices ")" .
       Choices = PrefixExpression |
 	 Choices "|" PrefixExpression .
-      PrefixExpression = EVENT "->" PrefixExpression |
-	 EVENT "->" ProcessExpression .
+      PrefixExpression = LCIDENT "->" PrefixExpression |
+	 Event "->" ProcessExpression .
       Alphabet = "{" "}" | "{" AlphabetMembers "}" .
-      AlphabetMembers = EVENT | AlphabetMembers "," EVENT .
+      AlphabetMembers = Event | AlphabetMembers "," Event .
+      Event = LCIDENT .
+      Label = LCIDENT .
+      Process = UCIDENT .
 */
 
 %{
@@ -82,6 +87,7 @@ namespace CSP {
 #include "external-choice.hpp"
 #include "interleaving-processes.hpp"
 #include "internal-choice.hpp"
+#include "mapped-process.hpp"
 #include "object.hpp"
 #include "parallel-processes.hpp"
 #include "prefixed-process.hpp"
@@ -94,6 +100,7 @@ namespace CSP {
 #include "selecting-process.hpp"
 #include "skip-process.hpp"
 #include "stop-process.hpp"
+#include "symbol-changer.hpp"
 #include "symtable.hpp"
 #include "yytname.hpp"
 
@@ -119,10 +126,10 @@ using namespace CSP;
 %token CONCEAL
 
 /* delimiters */
-%token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
+%token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON COLON
 
 /* identifiers */
-%token EVENT PROCESS
+%token LCIDENT UCIDENT
 
 /* keywords */
 %token ALPHA CHAOS RUN SKIP STOP
@@ -155,7 +162,7 @@ process_definitions: process_definition
       { $$ = $1; } // just remember the very first process definition
    ;
 
-process_definition: PROCESS EQUAL process_expression
+process_definition: process EQUAL process_expression
       {
 	 auto pn = std::dynamic_pointer_cast<ProcessReference>($1);
 	 auto gp = std::dynamic_pointer_cast<Process>($3);
@@ -164,7 +171,7 @@ process_definition: PROCESS EQUAL process_expression
 	 $$ = process;
       }
    ;
-process_definition: PROCESS alphabet EQUAL process_expression
+process_definition: process alphabet EQUAL process_expression
       {
 	 auto pn = std::dynamic_pointer_cast<ProcessReference>($1);
 	 auto gp = std::dynamic_pointer_cast<Process>($4);
@@ -224,8 +231,8 @@ internal_choice: concealed_process
       }
    ;
 
-concealed_process: simple_process_expression
-   | simple_process_expression CONCEAL alphabet
+concealed_process: labeled_process_expression
+   | labeled_process_expression CONCEAL alphabet
       {
 	 auto p = std::dynamic_pointer_cast<Process>($1);
 	 auto events = std::dynamic_pointer_cast<EventSet>($3);
@@ -238,13 +245,22 @@ concealed_process: simple_process_expression
       }
    ;
 
-simple_process_expression: PROCESS
+labeled_process_expression: simple_process_expression
+   | label COLON simple_process_expression
+      {
+	 auto p = std::dynamic_pointer_cast<Process>($3);
+	 auto label = std::dynamic_pointer_cast<Event>($1)->get_name();
+	 auto changer = std::make_shared<Qualifier>(label);
+	 $$ = std::make_shared<MappedProcess>(p, changer);
+      }
+   ;
+simple_process_expression: process
    | CHAOS alphabet
       {
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
 	 $$ = std::make_shared<ChaosProcess>(evset->get_alphabet());
       }
-   | CHAOS ALPHA PROCESS
+   | CHAOS ALPHA process
       {
 	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<ChaosProcess>(alpha_p);
@@ -254,7 +270,7 @@ simple_process_expression: PROCESS
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
 	 $$ = std::make_shared<RunProcess>(evset->get_alphabet());
       }
-   | RUN ALPHA PROCESS
+   | RUN ALPHA process
       {
 	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<RunProcess>(alpha_p);
@@ -264,7 +280,7 @@ simple_process_expression: PROCESS
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
 	 $$ = std::make_shared<SkipProcess>(evset->get_alphabet());
       }
-   | SKIP ALPHA PROCESS
+   | SKIP ALPHA process
       {
 	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<SkipProcess>(alpha_p);
@@ -274,7 +290,7 @@ simple_process_expression: PROCESS
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
 	 $$ = std::make_shared<StopProcess>(evset->get_alphabet());
       }
-   | STOP ALPHA PROCESS
+   | STOP ALPHA process
       {
 	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<StopProcess>(alpha_p);
@@ -304,13 +320,13 @@ choices: prefix_expression
       }
    ;
 
-prefix_expression: EVENT ARROW process_expression
+prefix_expression: event ARROW process_expression
       {  
 	 auto event = std::dynamic_pointer_cast<Event>($1);
 	 auto process = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
       }
-   | EVENT ARROW prefix_expression
+   | event ARROW prefix_expression
       {  
 	 auto event = std::dynamic_pointer_cast<Event>($1);
 	 auto process = std::dynamic_pointer_cast<Process>($3);
@@ -323,12 +339,12 @@ alphabet: LBRACE RBRACE
    | LBRACE alphabet_members RBRACE
       { $$ = $2; }
    ;
-alphabet_members: EVENT
+alphabet_members: event
       {
 	 auto event = std::dynamic_pointer_cast<Event>($1);
 	 $$ = std::make_shared<EventSet>(event->get_name());
       }
-   | alphabet_members COMMA EVENT
+   | alphabet_members COMMA event
       {
 	 auto set = std::dynamic_pointer_cast<EventSet>($1);
 	 auto event = std::dynamic_pointer_cast<Event>($3);
@@ -337,5 +353,9 @@ alphabet_members: EVENT
 	 $$ = std::make_shared<EventSet>(a);
       }
    ;
+
+event: LCIDENT;
+label: LCIDENT;
+process: UCIDENT;
 
 %%

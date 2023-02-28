@@ -1,0 +1,2 @@
+(left:VMS) || (right:VMS)
+VMS = (coin -> choc -> VMS)

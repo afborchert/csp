@@ -54,7 +54,7 @@ namespace CSP {
 	    return get_alphabet();
 	 }
       protected:
-	 ProcessPtr internal_proceed(std::string& next_event) final {
+	 ProcessPtr internal_proceed(const std::string& next_event) final {
 	    return std::dynamic_pointer_cast<Process>(shared_from_this());
 	 }
 	 Alphabet internal_get_alphabet() const final {

@@ -21,7 +21,7 @@ Binaries := testlex testparser trace
 MAKEDEPEND := perl ../gcc-makedepend/gcc-makedepend.pl
 
 CXX :=		g++
-CXXSTD :=	-std=c++14
+CXXSTD :=	-std=c++17
 CXXFLAGS :=	-Wall -g
 LDFLAGS :=
 CPPFLAGS +=	-I. $(CXXSTD)
@@ -60,7 +60,8 @@ parser.tab.o: parser.tab.cpp chaos-process.hpp alphabet.hpp process.hpp \
  parser.tab.hpp external-choice.hpp interleaving-processes.hpp \
  internal-choice.hpp parallel-processes.hpp prefixed-process.hpp \
  process-reference.hpp process-sequence.hpp run-process.hpp scanner.hpp \
- selecting-process.hpp skip-process.hpp stop-process.hpp yytname.hpp
+ selecting-process.hpp skip-process.hpp stop-process.hpp \
+ symbol-changer.hpp yytname.hpp
 yytname.o: yytname.cpp
 error.o: error.cpp error.hpp parser.hpp location.hh symtable.hpp \
  process.hpp alphabet.hpp event.hpp object.hpp uniformint.hpp \
