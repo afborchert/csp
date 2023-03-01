@@ -10,8 +10,8 @@ operators can be implemented in LISP. This package is such an
 implementation, albeit based on C++ and yacc, that supports a small
 subset of CSP. A utility is provided that allows to interactively follow
 possible traces or to check non-interactively for a process _P_ if a
-trace is member of _traces_(_P_), which in case of non-deterministic
-processes, did not happen to be refused.
+trace is member of _traces_(_P_) if, in case of non-deterministic
+processes, it did not happen to be refused.
 
 ## Downloading and building
 
