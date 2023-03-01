@@ -60,7 +60,7 @@ bool SymTable::lookup(const std::string name, FunctionDefinitionPtr& f) {
 	 bool ok = insert(fdef); assert(ok);
       }
       f = fdef;
-      return found;
+      return true;
    } else {
       return false;
    }

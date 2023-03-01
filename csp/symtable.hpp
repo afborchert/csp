@@ -56,7 +56,7 @@ namespace CSP {
 
 	 // accessors
 	 bool lookup(std::string name, ProcessPtr& process) const;
-	 bool lookup(std::string name, FunctionDefinitionPtr& process);
+	 bool lookup(std::string name, FunctionDefinitionPtr& function);
 
 	 // mutators
 	 void open();
