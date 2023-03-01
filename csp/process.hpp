@@ -144,7 +144,7 @@ namespace CSP {
 	       if (new_alphabet - alphabet) {
 		  alphabet = alphabet + new_alphabet;
 		  for (auto& d: dependants) {
-		     d->propagate_alphabet(alphabet);
+		     d->propagate_alphabet(map_alphabet(alphabet));
 		  }
 	       }
 	    }
@@ -158,10 +158,13 @@ namespace CSP {
 	 }
    };
 
-   inline std::ostream& operator<<(std::ostream& out,
-	 const ProcessPtr& p) {
+   inline std::ostream& operator<<(std::ostream& out, ProcessPtr p) {
       ObjectPtr object(p);
       object->expanded_print(out); return out;
+   }
+
+   inline std::ostream& operator<<(std::ostream& out, ConstProcessPtr p) {
+      p->expanded_print(out); return out;
    }
 
 } // namespace CSP

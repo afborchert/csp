@@ -10,7 +10,8 @@ operators can be implemented in LISP. This package is such an
 implementation, albeit based on C++ and yacc, that supports a small
 subset of CSP. A utility is provided that allows to interactively follow
 possible traces or to check non-interactively for a process _P_ if a
-trace is member of _traces_(_P_).
+trace is member of _traces_(_P_), which in case of non-deterministic
+processes, did not happen to be refused.
 
 ## Downloading and building
 
@@ -21,7 +22,7 @@ git clone --recursive https://github.com/afborchert/csp.git
 ```
 
 To build it, you need _bison_ 3.x and a recent _g++_ with
-C++14 support:
+C++17 support:
 
 ```
 cd csp/csp
@@ -81,9 +82,15 @@ The sections refer to the book by C. A. R. Hoare.
 ## Grammar
 The grammar represents a subset of CSP:
 
-   _Unit_ &#8594; _ProcessDefinitions_ | _ProcessExpression_ | _ProcessExpression_ _ProcessDefinitions_
+   _Unit_ &#8594; _MainProcess_ | _MainProcess_ _Definitions_
 
-   _ProcessDefinitions_ &#8594; _ProcessDefinition_ | _ProcessDefinitions_ _ProcessDefinition_
+   _MainProcess_ &#8594; _ProcessDefinition_ | _ProcessExpression_
+
+   _Definitions_ &#8594; _Definition_ | _Definitions_ _Definition_
+
+   _Definition_ &#8594; _FunctionDefinition_ | _ProcessDefinition_
+
+   _FunctionDefinition_ &#8594; _Identifier_ `(` _Identifier_ `)` `=` _Identifier_
 
    _ProcessDefinition_ &#8594; _Process_ `=` _ProcessExpression_ | _Process_ _Alphabet_ `=` _ProcessExpression_
 
@@ -104,7 +111,7 @@ The grammar represents a subset of CSP:
 
    _LabeledProcessExpression_ &#8594; _SimpleProcessExpression_ | _Label_ `:` _SimpleProcessExpression_
 
-   _SimpleProcessExpression_ &#8594; _Process_ | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* _Process_ | *RUN* _Alphabet_ | *RUN* *ALPHA* _Process_ | *STOP* _Alphabet_ | *STOP* *ALPHA* _Process_ | *SKIP* _Alphabet_ | *SKIP* *ALPHA* _Process_ | `(` _ProcessExpression_ `)` | `(` _Choices_ `)`
+   _SimpleProcessExpression_ &#8594; _Process_ | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* _Process_ | *RUN* _Alphabet_ | *RUN* *ALPHA* _Process_ | *STOP* _Alphabet_ | *STOP* *ALPHA* _Process_ | *SKIP* _Alphabet_ | *SKIP* *ALPHA* _Process_ | `(` _ProcessExpression_ `)` | `(` _Choices_ `)` | _Identifier_ `(` _ProcessExpression_ `)`
 
    _Choices_ &#8594; _PrefixExpression_ | _Choices_ `|` _PrefixExpression_
 
@@ -329,6 +336,43 @@ Process: (large -> FOOLCUST) || (small -> VMC | in1p -> (large -> VMC | in1p -> 
 Acceptable: {}
 OK
 $
+```
+
+## 2.6 X1
+The alphabet of processes can be mapped through functions.
+In the following example, `f` updates the prices for `VMC`.
+Note that all mapping functions implicitly return the same event
+unless another mapping has been specified through an equation.
+Functions must be injective.
+
+```
+$ cat x1.csp
+-- CSP 2.6 X1
+NEWVMC = f(VMC)
+
+f(in2p) = in10p
+f(in1p) = in5p
+f(out1p) = out5p
+-- defined implicitly:
+-- f(large) = large
+-- f(small) = small
+
+-- VMC comes from CSP 1.1.3 X4 p. 8 with design flaw:
+--    "WARNING: do not insert three pennies in a row"
+VMC = (in2p -> (large -> VMC | small -> out1p -> VMC) |
+      in1p -> (small -> VMC | in1p -> (large -> VMC | in1p -> STOP alpha VMC)))
+$ trace x1.csp
+Tracing: NEWVMC = f(VMC)
+Alphabet: {in10p, in5p, large, out5p, small}
+Acceptable: {in10p, in5p}
+in5p
+Process: f((small -> VMC | in1p -> (large -> VMC | in1p -> STOP {in1p, in2p, large, out1p, small})))
+Acceptable: {in5p, small}
+small
+Process: f(VMC)
+Acceptable: {in10p, in5p}
+OK
+$ 
 ```
 
 ## 2.6.2 X1

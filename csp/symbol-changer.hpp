@@ -106,7 +106,7 @@ namespace CSP {
 	 std::map<std::string, std::string> reversed_map;
 
 	 std::string get_name(std::string name) final {
-	    return this->name;
+	    return this->name + "(" + name + ")";
 	 }
 
 	 std::string internal_map(std::string event) final {

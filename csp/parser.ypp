@@ -36,8 +36,12 @@
       SKIP       keyword "SKIP"
 
    Productions:
-      ProcessDefinitions = ProcessDefinition |
-	 ProcessDefinitions ProcessDefinition .
+      Unit = MainProcess Definitions .
+      MainProcess = ProcessDefinition | ProcessExpression .
+      Definitions = Definition |
+	 Definitions Definition .
+      Definition = FunctionDefinition | ProcessDefinition .
+      FunctionDefinition = Identifier "(" Identifier ")" = Identifier .
       ProcessDefinition = Process "=" ProcessExpression |
 	 Process Alphabet "=" ProcessExpression .
       ProcessExpression = ProcessSequence .
@@ -61,7 +65,8 @@
 	 STOP Alphabet | STOP ALPHA Process |
 	 SKIP Alphabet | SKIP ALPHA Process |
 	 "(" ProcessExpression ")" |
-	 "(" Choices ")" .
+	 "(" Choices ")" |
+	 Identifier "(" ProcessExpression ")" .
       Choices = PrefixExpression |
 	 Choices "|" PrefixExpression .
       PrefixExpression = LCIDENT "->" PrefixExpression |
@@ -150,7 +155,8 @@ start:
       }
    ;
 
-unit: main_process definitions
+unit: main_process
+   | main_process definitions
    ;
 
 main_process: process_definition | process_expression
@@ -316,6 +322,14 @@ simple_process_expression: process
       { $$ = $2; }
    | LPAREN choices RPAREN
       { $$ = $2; }
+   | identifier LPAREN process_expression RPAREN
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto p = std::dynamic_pointer_cast<Process>($3);
+	 FunctionDefinitionPtr f;
+	 bool ok = symtab.lookup(id->get_name(), f); assert(ok);
+	 $$ = std::make_shared<MappedProcess>(p, f);
+      }
    ;
 
 choices: prefix_expression

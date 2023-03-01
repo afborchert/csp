@@ -57,14 +57,13 @@ namespace CSP {
 	 Alphabet acceptable() const final {
 	    return process->acceptable();
 	 }
-      protected:
+      private:
 	 ProcessPtr internal_proceed(const std::string& event) final {
 	    return process->proceed(event);
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return process->get_alphabet();
 	 }
-      private:
 	 const std::string name;
 	 ProcessPtr process;
 	 void initialize_dependencies() const final {
