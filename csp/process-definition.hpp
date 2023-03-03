@@ -35,24 +35,21 @@
 #include <memory>
 #include <string>
 #include "alphabet.hpp"
-#include "process.hpp"
+#include "named-process.hpp"
 
 namespace CSP {
 
    class ProcessDefinition;
    using ProcessDefinitionPtr = std::shared_ptr<ProcessDefinition>;
 
-   class ProcessDefinition: public Process {
+   class ProcessDefinition: public NamedProcess {
       public:
 	 ProcessDefinition(const std::string& name, ProcessPtr process) :
-	       name(name), process(process) {
+	       NamedProcess(name), process(process) {
 	    assert(process);
 	 }
-	 const std::string& get_name() const {
-	    return name;
-	 }
 	 void print(std::ostream& out) const override {
-	    out << name << " = "; process->print(out);
+	    out << get_name() << " = "; process->print(out);
 	 }
 	 Alphabet acceptable() const final {
 	    return process->acceptable();
@@ -64,7 +61,6 @@ namespace CSP {
 	 Alphabet internal_get_alphabet() const final {
 	    return process->get_alphabet();
 	 }
-	 const std::string name;
 	 ProcessPtr process;
 	 void initialize_dependencies() const final {
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(

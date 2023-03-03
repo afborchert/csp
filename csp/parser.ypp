@@ -31,9 +31,10 @@
       LCIDENT    Identifier that begins with a lower case letter
       ALPHA      keyword "alpha"
       CHAOS      keyword "CHAOS"
+      MU         keyword "mu"
       RUN        keyword "RUN"
-      STOP       keyword "STOP"
       SKIP       keyword "SKIP"
+      STOP       keyword "STOP"
 
    Productions:
       Unit = MainProcess Definitions .
@@ -66,10 +67,14 @@
 	 SKIP Alphabet | SKIP ALPHA Process |
 	 "(" ProcessExpression ")" |
 	 "(" Choices ")" |
-	 Identifier "(" ProcessExpression ")" .
+	 Identifier "(" ProcessExpression ")" |
+	 MuHeader "(" Choices ")" .
+      MuHeader = MU Process "." |
+	 MU Process ":" Alphabet "." |
+	 MU Process ":" ALPHA Process "." .
       Choices = PrefixExpression |
 	 Choices "|" PrefixExpression .
-      PrefixExpression = LCIDENT "->" PrefixExpression |
+      PrefixExpression = Identifier "->" PrefixExpression |
 	 Event "->" ProcessExpression .
       Alphabet = "{" "}" | "{" AlphabetMembers "}" .
       AlphabetMembers = Event | AlphabetMembers "," Event .
@@ -102,6 +107,7 @@ namespace CSP {
 #include "process-reference.hpp"
 #include "process-sequence.hpp"
 #include "process.hpp"
+#include "recursive-process.hpp"
 #include "run-process.hpp"
 #include "scanner.hpp"
 #include "selecting-process.hpp"
@@ -139,7 +145,7 @@ using namespace CSP;
 %token LCIDENT UCIDENT
 
 /* keywords */
-%token ALPHA CHAOS RUN SKIP STOP
+%token ALPHA CHAOS RUN SKIP STOP MU
 
 %%
 
@@ -329,6 +335,43 @@ simple_process_expression: process
 	 FunctionDefinitionPtr f;
 	 bool ok = symtab.lookup(id->get_name(), f); assert(ok);
 	 $$ = std::make_shared<MappedProcess>(p, f);
+      }
+   | mu_header LPAREN choices RPAREN
+      {
+	 auto p = std::dynamic_pointer_cast<RecursiveProcess>($1);
+	 auto pe = std::dynamic_pointer_cast<Process>($3);
+	 p->set_process(pe);
+	 symtab.close();
+	 $$ = p;
+      }
+   ;
+
+mu_header: MU process PERIOD
+      {
+	 auto pn = std::dynamic_pointer_cast<ProcessReference>($2);
+	 auto p = std::make_shared<RecursiveProcess>(pn->get_name());
+	 symtab.open();
+	 symtab.insert(p);
+	 $$ = p;
+      }
+   | MU process COLON alphabet PERIOD
+      {
+	 auto pn = std::dynamic_pointer_cast<ProcessReference>($2);
+	 auto evset = std::dynamic_pointer_cast<EventSet>($4);
+	 auto p = std::make_shared<RecursiveProcess>(pn->get_name(),
+	    evset->get_alphabet());
+	 symtab.open();
+	 symtab.insert(p);
+	 $$ = p;
+      }
+   | MU process COLON ALPHA process PERIOD
+      {
+	 auto pn = std::dynamic_pointer_cast<ProcessReference>($2);
+	 auto alpha_p = std::dynamic_pointer_cast<ProcessReference>($5);
+	 auto p = std::make_shared<RecursiveProcess>(pn->get_name(), alpha_p);
+	 symtab.open();
+	 symtab.insert(p);
+	 $$ = p;
       }
    ;
 

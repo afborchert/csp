@@ -41,19 +41,17 @@ namespace CSP {
 }
 
 #include "alphabet.hpp"
-#include "process.hpp"
+#include "named-process.hpp"
 #include "symtable.hpp"
 
 namespace CSP {
 
-   class ProcessReference: public Process {
+   class ProcessReference: public NamedProcess {
       public:
 	 ProcessReference(const std::string& name, SymTable& symtab) :
-	       name(name), symtab(symtab) {
+	       NamedProcess(name), symtab(symtab) {
 	 }
-	 const std::string& get_name() const {
-	    return name;
-	 }
+
 	 void register_ref() {
 	    if (!resolve()) {
 	       symtab.add_unresolved(
@@ -63,18 +61,18 @@ namespace CSP {
 	 }
 	 bool resolve() const {
 	    if (p) return true;
-	    if (!symtab.lookup(name, p)) return false;
+	    if (!symtab.lookup(get_name(), p)) return false;
 	    return true;
 	 }
 	 void print(std::ostream& out) const override {
-	    out << name;
+	    out << get_name();
 	 }
 	 void expanded_print(std::ostream& out) const override {
 	    if (!p) resolve();
 	    if (p) {
 	       p->print(out);
 	    } else {
-	       out << name;
+	       out << get_name();
 	    }
 	 }
 	 Alphabet acceptable() const final {
@@ -110,9 +108,8 @@ namespace CSP {
 	    }
 	 }
       private:
-	 const std::string name;
 	 SymTable& symtab;
-	 mutable ProcessPtr p;
+	 mutable NamedProcessPtr p;
 	 void initialize_dependencies() const final {
 	    if (!p) {
 	       resolve();

@@ -56,34 +56,35 @@ depend:		$(CPPSources)
 # DO NOT DELETE
 parser.tab.o: parser.tab.cpp chaos-process.hpp alphabet.hpp process.hpp \
  object.hpp uniformint.hpp concealed-process.hpp error.hpp parser.hpp \
- location.hh symtable.hpp process-definition.hpp scope.hpp \
- symbol-changer.hpp identifier.hpp parser.tab.hpp external-choice.hpp \
- event-set.hpp interleaving-processes.hpp internal-choice.hpp \
- mapped-process.hpp parallel-processes.hpp prefixed-process.hpp \
- process-reference.hpp process-sequence.hpp run-process.hpp scanner.hpp \
- selecting-process.hpp skip-process.hpp stop-process.hpp yytname.hpp
+ location.hh symtable.hpp named-process.hpp scope.hpp symbol-changer.hpp \
+ identifier.hpp parser.tab.hpp external-choice.hpp event-set.hpp \
+ interleaving-processes.hpp internal-choice.hpp mapped-process.hpp \
+ parallel-processes.hpp prefixed-process.hpp process-definition.hpp \
+ process-reference.hpp process-sequence.hpp recursive-process.hpp \
+ run-process.hpp scanner.hpp selecting-process.hpp skip-process.hpp \
+ stop-process.hpp yytname.hpp
 yytname.o: yytname.cpp
 error.o: error.cpp error.hpp parser.hpp location.hh symtable.hpp \
- process.hpp alphabet.hpp object.hpp uniformint.hpp \
- process-definition.hpp scope.hpp symbol-changer.hpp identifier.hpp \
- parser.tab.hpp
+ named-process.hpp process.hpp alphabet.hpp object.hpp uniformint.hpp \
+ scope.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp
 scanner.o: scanner.cpp error.hpp parser.hpp location.hh symtable.hpp \
- process.hpp alphabet.hpp object.hpp uniformint.hpp \
- process-definition.hpp scope.hpp symbol-changer.hpp identifier.hpp \
- parser.tab.hpp process-reference.hpp scanner.hpp
-scope.o: scope.cpp object.hpp process.hpp alphabet.hpp uniformint.hpp \
- process-definition.hpp scope.hpp symbol-changer.hpp identifier.hpp \
- symtable.hpp
+ named-process.hpp process.hpp alphabet.hpp object.hpp uniformint.hpp \
+ scope.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp \
+ process-reference.hpp scanner.hpp
+scope.o: scope.cpp named-process.hpp process.hpp alphabet.hpp object.hpp \
+ uniformint.hpp scope.hpp symbol-changer.hpp identifier.hpp symtable.hpp
 symtable.o: symtable.cpp object.hpp process.hpp alphabet.hpp \
- uniformint.hpp process-definition.hpp process-reference.hpp symtable.hpp \
- scope.hpp symbol-changer.hpp identifier.hpp
-testlex.o: testlex.cpp parser.hpp location.hh symtable.hpp process.hpp \
- alphabet.hpp object.hpp uniformint.hpp process-definition.hpp scope.hpp \
- symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp yytname.hpp
+ uniformint.hpp process-definition.hpp named-process.hpp \
+ process-reference.hpp symtable.hpp scope.hpp symbol-changer.hpp \
+ identifier.hpp
+testlex.o: testlex.cpp parser.hpp location.hh symtable.hpp \
+ named-process.hpp process.hpp alphabet.hpp object.hpp uniformint.hpp \
+ scope.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp \
+ yytname.hpp
 testparser.o: testparser.cpp parser.hpp location.hh symtable.hpp \
- process.hpp alphabet.hpp object.hpp uniformint.hpp \
- process-definition.hpp scope.hpp symbol-changer.hpp identifier.hpp \
- parser.tab.hpp scanner.hpp yytname.hpp
-trace.o: trace.cpp parser.hpp location.hh symtable.hpp process.hpp \
- alphabet.hpp object.hpp uniformint.hpp process-definition.hpp scope.hpp \
+ named-process.hpp process.hpp alphabet.hpp object.hpp uniformint.hpp \
+ scope.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp \
+ yytname.hpp
+trace.o: trace.cpp parser.hpp location.hh symtable.hpp named-process.hpp \
+ process.hpp alphabet.hpp object.hpp uniformint.hpp scope.hpp \
  symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp yytname.hpp

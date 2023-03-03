@@ -26,6 +26,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <memory>
+#include <utility>
 
 #include "object.hpp"
 #include "process.hpp"
@@ -40,8 +41,8 @@ SymTable::SymTable() : scope(nullptr) {
 }
 
 // accessors
-bool SymTable::lookup(const std::string name, ProcessPtr& process) const {
-   ProcessDefinitionPtr pdef;
+bool SymTable::lookup(const std::string name, NamedProcessPtr& process) const {
+   NamedProcessPtr pdef;
    if (scope) {
       bool found = scope->lookup(name, pdef);
       if (found) process = pdef;
@@ -74,19 +75,31 @@ void SymTable::open() {
 
 void SymTable::close() {
    assert(scope);
-   /* resolve all process references,
+   /* resolve all process references if we are closing the out-most scope,
       this is required in cases of mutual recursion */
+   std::deque<ProcessReferencePtr> survivors;
    for (auto pref: unresolved) {
       if (!pref->resolve()) {
-	 std::cerr << "unable to resolve " << pref->get_name() << std::endl;
-	 exit(1);
+	 survivors.push_back(pref);
       }
    }
+   std::swap(unresolved, survivors);
    ScopePtr outer = scope->get_outer();
+   if (!outer) {
+      /* give error messages for all unresolved names */
+      unsigned errors = 0;
+      for (auto pref: unresolved) {
+	 std::cerr << "unable to resolve " << pref->get_name() << std::endl;
+	 ++errors;
+      }
+      if (errors) {
+	 std::exit(1);
+      }
+   }
    scope = outer;
 }
 
-bool SymTable::insert(ProcessDefinitionPtr process) {
+bool SymTable::insert(NamedProcessPtr process) {
    assert(scope);
    return scope->insert(process);
 }

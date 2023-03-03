@@ -23,9 +23,8 @@
    SOFTWARE.
 */
 
+#include "named-process.hpp"
 #include "object.hpp"
-#include "process.hpp"
-#include "process-definition.hpp"
 #include "scope.hpp"
 #include "symtable.hpp"
 
@@ -54,7 +53,7 @@ static bool do_lookup(Map& map, ScopePtr outer,
 
 // accessors
 bool Scope::lookup(const std::string& name,
-      ProcessDefinitionPtr& process) const {
+      NamedProcessPtr& process) const {
    return do_lookup(processes, outer, name, process);
 }
 
@@ -68,7 +67,7 @@ ScopePtr Scope::get_outer() const {
 }
 
 // mutators
-bool Scope::insert(ProcessDefinitionPtr process) {
+bool Scope::insert(NamedProcessPtr process) {
    auto [it, ok] = processes.insert(std::make_pair(process->get_name(),
       process));
    return ok;

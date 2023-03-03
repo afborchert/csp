@@ -104,6 +104,8 @@ restart:
 	 token = parser::token::STOP;
       } else if (*tokenstr == "alpha") {
 	 token = parser::token::ALPHA;
+      } else if (*tokenstr == "mu") {
+	 token = parser::token::MU;
       } else if (token == parser::token::LCIDENT) {
 	 yylval = std::make_shared<Identifier>(*tokenstr);
       } else {
