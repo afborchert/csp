@@ -46,6 +46,7 @@ Following identifiers and keywords are used by the grammar:
 | *LCIDENT* | identifier that begins with a lower case letter  | `[a-z][A-Za-z0-9_]*`
 | *ALPHA*   | keyword "alpha" (must be lower case)             | alpha
 | *CHAOS*   | keyword "CHAOS" (must be upper case)             | CHAOS
+| *MU*      | keyword "mu" (must be lower case)                | mu
 | *RUN*     | keyword "RUN" (must be upper case)               | RUN
 | *STOP*    | keyword "STOP" (must be upper case)              | STOP
 | *SKIP*    | keyword "SKIP" (must be upper case)              | SKIP
@@ -111,7 +112,9 @@ The grammar represents a subset of CSP:
 
    _LabeledProcessExpression_ &#8594; _SimpleProcessExpression_ | _Label_ `:` _SimpleProcessExpression_
 
-   _SimpleProcessExpression_ &#8594; _Process_ | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* _Process_ | *RUN* _Alphabet_ | *RUN* *ALPHA* _Process_ | *STOP* _Alphabet_ | *STOP* *ALPHA* _Process_ | *SKIP* _Alphabet_ | *SKIP* *ALPHA* _Process_ | `(` _ProcessExpression_ `)` | `(` _Choices_ `)` | _Identifier_ `(` _ProcessExpression_ `)`
+   _SimpleProcessExpression_ &#8594; _Process_ | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* _Process_ | *RUN* _Alphabet_ | *RUN* *ALPHA* _Process_ | *STOP* _Alphabet_ | *STOP* *ALPHA* _Process_ | *SKIP* _Alphabet_ | *SKIP* *ALPHA* _Process_ | `(` _ProcessExpression_ `)` | `(` _Choices_ `)` | _Identifier_ `(` _ProcessExpression_ `)` | _MuHeader_ `(` _Choices_ `)`
+
+   _MuHeader_ &#8594; *MU* _Process_ `.` | *MU* _Process_ `:` _Alphabet_ `.` | *MU* _Process_ `:` *ALPHA* _Process_ `.`
 
    _Choices_ &#8594; _PrefixExpression_ | _Choices_ `|` _PrefixExpression_
 
@@ -158,17 +161,17 @@ section.
 ## 1.1.2 X1
 ```
 $ cat x1.csp
--- CSP 1.1.2, X1, p. 6
-CLOCK = (tick -> CLOCK)
+-- CSP 1.1.2, X1, p. 28
+CLOCK = mu X: {tick}. (tick -> X)
 $ trace x1.csp
-Tracing: CLOCK = (tick -> CLOCK)
+Tracing: CLOCK = mu X:{tick}.(tick -> X)
 Alphabet: {tick}
 Acceptable: {tick}
 tick
-Process: CLOCK = (tick -> CLOCK)
+Process: mu X:{tick}.(tick -> X)
 Acceptable: {tick}
 tick
-Process: CLOCK = (tick -> CLOCK)
+Process: mu X:{tick}.(tick -> X)
 Acceptable: {tick}
 OK
 $
@@ -177,7 +180,7 @@ $
 ## 1.1.2 X2
 ```
 $ cat x2.csp
--- CSP 1.1.2 X2, p. 6
+-- CSP 1.1.2 X2, p. 28
 VMS = (coin -> choc -> VMS)
 $ trace x2.csp
 Tracing: VMS = (coin -> choc -> VMS)

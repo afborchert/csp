@@ -1,2 +1,2 @@
--- CSP 1.1.2 X2, p. 6
+-- CSP 1.1.2 X2, p. 28
 VMS = (coin -> choc -> VMS)
