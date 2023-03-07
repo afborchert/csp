@@ -182,8 +182,13 @@ function_definition: identifier LPAREN identifier RPAREN EQUAL identifier
 	 auto id = std::dynamic_pointer_cast<Identifier>($1);
 	 auto event1 = std::dynamic_pointer_cast<Identifier>($3);
 	 auto event2 = std::dynamic_pointer_cast<Identifier>($6);
-	 FunctionDefinitionPtr function;
-	 bool ok = symtab.lookup(id->get_name(), function); assert(ok);
+	 auto function = symtab.lookup<FunctionDefinition>(id->get_name());
+	 if (!function) {
+	    function = std::make_shared<FunctionDefinition>(id->get_name());
+	    assert(function);
+	    bool ok = symtab.insert(id->get_name(), function);
+	    assert(ok);
+	 }
 	 if (!function->add_mapping(event1, event2)) {
 	    yyerror(&@$, "function definition violates injectivity");
 	 }
@@ -196,7 +201,10 @@ process_definition: process EQUAL process_expression
 	 auto pn = std::dynamic_pointer_cast<ProcessReference>($1);
 	 auto gp = std::dynamic_pointer_cast<Process>($3);
 	 auto process = std::make_shared<ProcessDefinition>(pn->get_name(), gp);
-	 symtab.insert(process);
+	 bool ok = symtab.insert(pn->get_name(), process);
+	 if (!ok) {
+	    yyerror(&@$, "process defined multiple times");
+	 }
 	 $$ = process;
       }
    ;
@@ -207,7 +215,10 @@ process_definition: process alphabet EQUAL process_expression
 	 auto process = std::make_shared<ProcessDefinition>(pn->get_name(), gp);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
 	 process->set_alphabet(evset->get_alphabet());
-	 symtab.insert(process);
+	 bool ok = symtab.insert(pn->get_name(), process);
+	 if (!ok) {
+	    yyerror(&@$, "process defined multiple times");
+	 }
 	 $$ = process;
       }
    ;
@@ -332,8 +343,14 @@ simple_process_expression: process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($1);
 	 auto p = std::dynamic_pointer_cast<Process>($3);
-	 FunctionDefinitionPtr f;
-	 bool ok = symtab.lookup(id->get_name(), f); assert(ok);
+	 auto f = symtab.lookup<FunctionDefinition>(id->get_name());
+	 if (!f) {
+	    f = std::make_shared<FunctionDefinition>(id->get_name());
+	    bool ok = symtab.insert(id->get_name(), f);
+	    if (!ok) {
+	       yyerror(&@$, "conflicting references");
+	    }
+	 }
 	 $$ = std::make_shared<MappedProcess>(p, f);
       }
    | mu_header LPAREN choices RPAREN
@@ -351,7 +368,7 @@ mu_header: MU process PERIOD
 	 auto pn = std::dynamic_pointer_cast<ProcessReference>($2);
 	 auto p = std::make_shared<RecursiveProcess>(pn->get_name());
 	 symtab.open();
-	 symtab.insert(p);
+	 bool ok = symtab.insert(pn->get_name(), p); assert(ok);
 	 $$ = p;
       }
    | MU process COLON alphabet PERIOD
@@ -361,7 +378,7 @@ mu_header: MU process PERIOD
 	 auto p = std::make_shared<RecursiveProcess>(pn->get_name(),
 	    evset->get_alphabet());
 	 symtab.open();
-	 symtab.insert(p);
+	 bool ok = symtab.insert(pn->get_name(), p); assert(ok);
 	 $$ = p;
       }
    | MU process COLON ALPHA process PERIOD
@@ -370,7 +387,7 @@ mu_header: MU process PERIOD
 	 auto alpha_p = std::dynamic_pointer_cast<ProcessReference>($5);
 	 auto p = std::make_shared<RecursiveProcess>(pn->get_name(), alpha_p);
 	 symtab.open();
-	 symtab.insert(p);
+	 bool ok = symtab.insert(pn->get_name(), p); assert(ok);
 	 $$ = p;
       }
    ;

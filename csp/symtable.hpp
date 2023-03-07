@@ -29,40 +29,80 @@
 #include <cassert>
 #include <cstdlib>
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <string>
+#include <utility>
 
-#include "named-process.hpp"
 #include "scope.hpp"
 #include "symbol-changer.hpp"
 
 namespace CSP {
 
-   /* instead of #include "process-reference.hpp"
-      which would lead to a reference cycle */
-   class ProcessReference;
-   using ProcessReferencePtr = std::shared_ptr<ProcessReference>;
-
    class SymTable {
       private:
 	 ScopePtr scope;
-	 std::deque<ProcessReferencePtr> unresolved;
+	 struct Reference {
+	    Reference(std::string name, std::function<bool()> resolve) :
+		  name(std::move(name)), resolve(std::move(resolve)) {
+	    }
+	    const std::string name;
+	    std::function<bool()> resolve;
+	 };
+	 std::deque<Reference> unresolved;
 
       public:
 	 // constructors
-	 SymTable();
+	 SymTable() = default;
 
 	 // accessors
-	 bool lookup(std::string name, NamedProcessPtr& process) const;
-	 bool lookup(std::string name, FunctionDefinitionPtr& function);
+	 template <typename T>
+	 std::shared_ptr<T> lookup(const std::string& name) const {
+	    return scope->lookup<T>(name);
+	 }
 
 	 // mutators
-	 void open();
-	 void close();
-	 bool insert(NamedProcessPtr process);
-	 bool insert(FunctionDefinitionPtr function);
-	 void add_unresolved(ProcessReferencePtr pref);
+	 void open() {
+	    auto inner = std::make_shared<Scope>(scope);
+	    scope = inner;
+	 }
+	 void close() {
+	    assert(scope);
+	    /* resolve all references if we are closing
+	       the out-most scope, this is required in cases
+	       of mutual recursion */
+	    std::deque<Reference> survivors;
+	    for (auto&& ref: unresolved) {
+	       if (!ref.resolve()) {
+		  survivors.push_back(ref);
+	       }
+	    }
+	    std::swap(unresolved, survivors);
+	    ScopePtr outer = scope->get_outer();
+	    if (!outer) {
+	       /* give error messages for all unresolved names */
+	       unsigned errors = 0;
+	       for (auto ref: unresolved) {
+		  std::cerr << "unable to resolve " <<
+		     ref.name << std::endl;
+		  ++errors;
+	       }
+	       if (errors) {
+		  std::exit(1);
+	       }
+	    }
+	    scope = outer;
+	 }
+
+	 bool insert(const std::string& name, ObjectPtr object) {
+	    assert(scope);
+	    return scope->insert(name, object);
+	 }
+	 void add_unresolved(std::string name, std::function<bool()> resolve) {
+	    unresolved.emplace_back(std::move(name), std::move(resolve));
+	 }
    };
 
 } // namespace CSP

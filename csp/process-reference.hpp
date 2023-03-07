@@ -54,21 +54,22 @@ namespace CSP {
 
 	 void register_ref() {
 	    if (!resolve()) {
-	       symtab.add_unresolved(
-		  std::dynamic_pointer_cast<ProcessReference>(
-		     shared_from_this()));
+	       symtab.add_unresolved(get_name(),
+		  [this]() {
+		     return this->resolve();
+		  });
 	    }
 	 }
 	 bool resolve() const {
 	    if (p) return true;
-	    if (!symtab.lookup(get_name(), p)) return false;
+	    p = symtab.lookup<NamedProcess>(get_name());
+	    if (!p) return false;
 	    return true;
 	 }
 	 void print(std::ostream& out) const override {
 	    out << get_name();
 	 }
 	 void expanded_print(std::ostream& out) const override {
-	    if (!p) resolve();
 	    if (p) {
 	       p->print(out);
 	    } else {
@@ -116,7 +117,7 @@ namespace CSP {
 	       if (!p) return;
 	    }
 	    p->add_dependant(std::dynamic_pointer_cast<const Process>(
-	       shared_from_this()));
+	       Process::shared_from_this()));
 	 }
    };
 

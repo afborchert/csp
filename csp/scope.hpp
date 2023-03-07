@@ -40,24 +40,36 @@ namespace CSP {
    class Scope {
       private:
 	 ScopePtr outer;
-	 std::map<std::string, NamedProcessPtr> processes;
-	 std::map<std::string, FunctionDefinitionPtr> functions;
+	 std::map<std::string, ObjectPtr> objects;
 
       public:
 	 // constructors
-	 Scope();
-	 Scope(ScopePtr outer);
+	 Scope() = default;
+	 Scope(ScopePtr outer) : outer(outer) {}
 
 	 // accessors
-	 bool lookup(const std::string& name,
-	       NamedProcessPtr& process) const;
-	 bool lookup(const std::string& name,
-	       FunctionDefinitionPtr& function) const;
-	 ScopePtr get_outer() const;
+	 template <typename T>
+	 std::shared_ptr<T> lookup(const std::string& name) const {
+	    auto it = objects.find(name);
+	    if (it == objects.end()) {
+	       if (outer) {
+		  return outer->lookup<T>(name);
+	       } else {
+		  return nullptr;
+	       }
+	    }
+	    return std::dynamic_pointer_cast<T>(it->second);
+	 }
+
+	 ScopePtr get_outer() const {
+	    return outer;
+	 }
 
 	 // mutators
-	 bool insert(NamedProcessPtr process);
-	 bool insert(FunctionDefinitionPtr function);
+	 bool insert(const std::string& name, ObjectPtr object) {
+	    auto [it, ok] = objects.insert(std::make_pair(name, object));
+	    return ok;
+	 }
    };
 
 } // namespace CSP
