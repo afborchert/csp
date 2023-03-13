@@ -64,6 +64,10 @@ namespace CSP {
 	    if (p) return true;
 	    p = symtab.lookup<NamedProcess>(get_name());
 	    if (!p) return false;
+	    for (auto c: channels) {
+	       p->add_channel(c);
+	       channels.clear();
+	    }
 	    return true;
 	 }
 	 void print(std::ostream& out) const override {
@@ -92,7 +96,20 @@ namespace CSP {
 	       return Alphabet();
 	    }
 	 }
-      protected:
+
+	 void add_channel(ChannelPtr c) override {
+	    if (p || resolve()) {
+	       p->add_channel(c);
+	    } else {
+	       channels.push_back(c);
+	    }
+	 }
+
+      private:
+	 SymTable& symtab;
+	 mutable NamedProcessPtr p;
+	 mutable std::deque<ChannelPtr> channels;
+
 	 ProcessPtr internal_proceed(const std::string& event) final {
 	    if (p) {
 	       return p->proceed(event);
@@ -108,9 +125,6 @@ namespace CSP {
 	       return Alphabet();
 	    }
 	 }
-      private:
-	 SymTable& symtab;
-	 mutable NamedProcessPtr p;
 	 void initialize_dependencies() const final {
 	    if (!p) {
 	       resolve();

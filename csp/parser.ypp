@@ -91,6 +91,7 @@ namespace CSP {
 }
 
 #include <memory>
+#include "channel.hpp"
 #include "chaos-process.hpp"
 #include "concealed-process.hpp"
 #include "error.hpp"
@@ -174,7 +175,41 @@ definitions: definition
       { $$ = $1; } // just remember the very first definition
    ;
 
-definition: function_definition | process_definition
+definition: function_definition
+   | process_definition
+   | channel_definition
+   ;
+
+channel_definition: ALPHA identifier EQUAL alphabet
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($2);
+	 auto evset = std::dynamic_pointer_cast<EventSet>($4);
+	 auto channel = symtab.lookup<Channel>(id->get_name());
+	 if (!channel) {
+	    channel = std::make_shared<Channel>(id->get_name());
+	    if (!symtab.insert(id->get_name(), channel)) {
+	       yyerror(&@$, "conflicting definitions");
+	    }
+	 }
+	 channel->set_alphabet(evset->get_alphabet());
+	 $$ = channel;
+      }
+   | ALPHA identifier LPAREN process RPAREN EQUAL alphabet
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($2);
+	 auto pn = std::dynamic_pointer_cast<ProcessReference>($4);
+	 auto evset = std::dynamic_pointer_cast<EventSet>($7);
+	 auto channel = symtab.lookup<Channel>(id->get_name());
+	 if (!channel) {
+	    channel = std::make_shared<Channel>(id->get_name());
+	    if (!symtab.insert(id->get_name(), channel)) {
+	       yyerror(&@$, "conflicting definitions");
+	    }
+	 }
+	 channel->set_alphabet(pn->get_name(), evset->get_alphabet());
+	 pn->add_channel(channel);
+	 $$ = channel;
+      }
    ;
 
 function_definition: identifier LPAREN identifier RPAREN EQUAL identifier

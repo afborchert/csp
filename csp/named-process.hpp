@@ -26,6 +26,10 @@
 #ifndef CSP_NAMED_PROCESS_HPP
 #define CSP_NAMED_PROCESS_HPP
 
+#include <memory>
+#include <string>
+
+#include "channel.hpp"
 #include "process.hpp"
 
 namespace CSP {
@@ -44,6 +48,10 @@ namespace CSP {
 
       private:
 	 const std::string name;
+
+	 Alphabet get_channel_alphabet(ChannelPtr c) const override {
+	    return c->get_alphabet(name);
+	 }
    };
 
 } // namespace CSP

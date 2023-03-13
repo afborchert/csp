@@ -90,11 +90,20 @@ namespace CSP {
 	    return events.size() > 0;
 	 }
 
+	 /* inclusion */
+	 Alphabet& operator+=(const std::string& event) {
+	    add(event);
+	    return *this;
+	 }
+	 Alphabet& operator+=(const Alphabet& a) {
+	    events.insert(a.begin(), a.end());
+	    return *this;
+	 }
+
 	 /* union */
 	 Alphabet operator+(const Alphabet& other) const {
 	    Set result;
-	    std::insert_iterator<Set> inserter =
-	       std::inserter(result, result.end());
+	    auto inserter = std::inserter(result, result.end());
 	    std::set_union(events.begin(), events.end(),
 	       other.events.begin(), other.events.end(),
 	       inserter);
@@ -104,8 +113,7 @@ namespace CSP {
 	 /* difference */
 	 Alphabet operator-(const Alphabet& other) const {
 	    Set result;
-	    std::insert_iterator<Set> inserter =
-	       std::inserter(result, result.end());
+	    auto inserter = std::inserter(result, result.end());
 	    std::set_difference(events.begin(), events.end(),
 	       other.events.begin(), other.events.end(),
 	       inserter);
@@ -115,8 +123,7 @@ namespace CSP {
 	 /* intersection */
 	 Alphabet operator*(const Alphabet& other) const {
 	    Set result;
-	    std::insert_iterator<Set> inserter =
-	       std::inserter(result, result.end());
+	    auto inserter = std::inserter(result, result.end());
 	    std::set_intersection(events.begin(), events.end(),
 	       other.events.begin(), other.events.end(),
 	       inserter);
@@ -126,8 +133,7 @@ namespace CSP {
 	 /* symmetric difference */
 	 Alphabet operator/(const Alphabet& other) const {
 	    Set result;
-	    std::insert_iterator<Set> inserter =
-	       std::inserter(result, result.end());
+	    auto inserter = std::inserter(result, result.end());
 	    std::set_symmetric_difference(events.begin(), events.end(),
 	       other.events.begin(), other.events.end(),
 	       inserter);

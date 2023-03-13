@@ -42,6 +42,7 @@ namespace CSP {
 }
 
 #include "alphabet.hpp"
+#include "channel.hpp"
 #include "object.hpp"
 #include "uniformint.hpp"
 
@@ -94,6 +95,12 @@ namespace CSP {
 	    }
 	    if (!alphabet_initialized) {
 	       alphabet_initialized = true;
+	       for (auto c: channels) {
+		  auto prefix = c->get_name() + ".";
+		  for (auto msg: get_channel_alphabet(c)) {
+		     alphabet += prefix + msg;
+		  }
+	       }
 	       /* do not propagate implicitly success as member
 		  of the alphabet */
 	       propagate_alphabet(internal_get_alphabet() -
@@ -121,6 +128,10 @@ namespace CSP {
 	    dependants.push_back(p);
 	 }
 
+	 virtual void add_channel(ChannelPtr c) {
+	    channels.push_back(c);
+	 }
+
       private:
 	 /* internal implementation of proceed
 	    which no longer needs to check if event belongs to
@@ -135,6 +146,11 @@ namespace CSP {
 	 mutable bool alphabet_initialized = false;
 	 mutable bool dependencies_initialized = false;
 	 mutable std::deque<ConstProcessPtr> dependants;
+	 std::deque<ChannelPtr> channels; // channels this process depends on
+
+	 virtual Alphabet get_channel_alphabet(ChannelPtr c) const {
+	    return c->get_alphabet();
+	 }
 
 	 /* set implicitly the alphabet of this process;
 	    this is suppressed if the alphabet was explicitly

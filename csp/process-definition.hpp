@@ -34,6 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
 #include "named-process.hpp"
 
@@ -54,14 +55,20 @@ namespace CSP {
 	 Alphabet acceptable() const final {
 	    return process->acceptable();
 	 }
+
+	 void add_channel(ChannelPtr c) override {
+	    process->add_channel(c);
+	 }
+
       private:
+	 ProcessPtr process;
+
 	 ProcessPtr internal_proceed(const std::string& event) final {
 	    return process->proceed(event);
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return process->get_alphabet();
 	 }
-	 ProcessPtr process;
 	 void initialize_dependencies() const final {
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
