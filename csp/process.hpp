@@ -96,10 +96,7 @@ namespace CSP {
 	    if (!alphabet_initialized) {
 	       alphabet_initialized = true;
 	       for (auto c: channels) {
-		  auto prefix = c->get_name() + ".";
-		  for (auto msg: get_channel_alphabet(c)) {
-		     alphabet += prefix + msg;
-		  }
+		  alphabet += get_channel_alphabet(c);
 	       }
 	       /* do not propagate implicitly success as member
 		  of the alphabet */
