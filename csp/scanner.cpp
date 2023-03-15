@@ -84,9 +84,9 @@ restart:
       }
    }
    tokenloc.begin = oldpos;
-   if (is_letter(ch)) {
+   if (is_letter(ch) || is_digit(ch)) {
       tokenstr = std::make_unique<std::string>();
-      if (is_lower(ch)) {
+      if (is_lower(ch) || is_digit(ch)) {
 	 token = parser::token::LCIDENT;
       } else {
 	 token = parser::token::UCIDENT;
