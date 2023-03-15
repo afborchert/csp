@@ -188,15 +188,15 @@ definition: function_definition
    | channel_definition
    ;
 
-channel_definition: ALPHA identifier EQUAL alphabet
+channel_definition: ALPHA identifier EQUAL alphabet_expression
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($4);
 	 auto channel = get_channel(&@$, symtab, id->get_name());
 	 channel->set_alphabet(evset->get_alphabet());
-	 $$ = channel;
+	 $$ = evset;
       }
-   | ALPHA identifier LPAREN process RPAREN EQUAL alphabet
+   | ALPHA identifier LPAREN process RPAREN EQUAL alphabet_expression
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto pn = std::dynamic_pointer_cast<ProcessReference>($4);
@@ -204,8 +204,12 @@ channel_definition: ALPHA identifier EQUAL alphabet
 	 auto channel = get_channel(&@$, symtab, id->get_name());
 	 channel->set_alphabet(pn->get_name(), evset->get_alphabet());
 	 pn->add_channel(channel);
-	 $$ = channel;
+	 $$ = evset;
       }
+   ;
+
+alphabet_expression: alphabet
+   | channel_definition
    ;
 
 function_definition: identifier LPAREN identifier RPAREN EQUAL identifier
