@@ -71,13 +71,14 @@ namespace CSP {
 	    process = p;
 	 }
 
-	 Alphabet acceptable() const final {
-	    return process->acceptable();
+	 Alphabet acceptable(Bindings& bindings) const final {
+	    return process->acceptable(bindings);
 	 }
 
       private:
-	 ProcessPtr internal_proceed(const std::string& event) final {
-	    return process->proceed(event);
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
+	    return process->proceed(event, bindings);
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    if (p_alphabet) {
@@ -102,4 +103,3 @@ namespace CSP {
 } // namespace CSP
 
 #endif
-

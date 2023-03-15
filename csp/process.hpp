@@ -42,6 +42,7 @@ namespace CSP {
 }
 
 #include "alphabet.hpp"
+#include "bindings.hpp"
 #include "channel.hpp"
 #include "object.hpp"
 #include "uniformint.hpp"
@@ -61,11 +62,11 @@ namespace CSP {
 	    null is returned if the event was not accepted;
 	    the same process is returned if the event
 	    does not belong to the alphabet of this process */
-	 ProcessPtr proceed(const std::string& event) {
+	 ProcessPtr proceed(const std::string& event, Bindings& bindings) {
 	    if (get_alphabet().is_member(event)) {
 	       /* use internal polymorphic function
 	          to process this event */
-	       return internal_proceed(event);
+	       return internal_proceed(event, bindings);
 	    } else {
 	       /* if it is not in our alphabet
 		  we are not interested in it */
@@ -76,12 +77,12 @@ namespace CSP {
 	 /* retrieve the set of symbols which would be
 	    accepted next by this process;
 	    the empty set is returned in case of STOP */
-	 virtual Alphabet acceptable() const = 0;
+	 virtual Alphabet acceptable(Bindings& bindings) const = 0;
 
 	 /* returns true iff success is accepted,
 	    i.e. in case of a SKIP process */
-	 bool accepts_success() const {
-	    return acceptable().is_member("_success_");
+	 bool accepts_success(Bindings& bindings) const {
+	    return acceptable(bindings).is_member("_success_");
 	 }
 
 	 /* retrieve the alphabet of this process;
@@ -133,7 +134,8 @@ namespace CSP {
 	 /* internal implementation of proceed
 	    which no longer needs to check if event belongs to
 	    our alphabet and that depends on the actual process */
-	 virtual ProcessPtr internal_proceed(const std::string& event) = 0;
+	 virtual ProcessPtr internal_proceed(const std::string& event,
+	    Bindings& bindings) = 0;
 
 	 /* construct initial alphabet */
 	 virtual Alphabet internal_get_alphabet() const = 0;

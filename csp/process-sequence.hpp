@@ -34,6 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
 #include "process.hpp"
 
@@ -49,28 +50,30 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    process1->print(out); out << "; "; process2->print(out);
 	 }
-	 Alphabet acceptable() const final {
-	    if (process1->accepts_success()) {
-	       return process2->acceptable();
+	 Alphabet acceptable(Bindings& bindings) const final {
+	    if (process1->accepts_success(bindings)) {
+	       return process2->acceptable(bindings);
 	    } else {
-	       return process1->acceptable();
+	       return process1->acceptable(bindings);
 	    }
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& event) final {
-	    if (process1->accepts_success()) {
-	       return process2->proceed(event);
+
+      private:
+	 ProcessPtr process1;
+	 ProcessPtr process2;
+
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
+	    if (process1->accepts_success(bindings)) {
+	       return process2->proceed(event, bindings);
 	    } else {
 	       return std::make_shared<ProcessSequence>(
-		  process1->proceed(event), process2);
+		  process1->proceed(event, bindings), process2);
 	    }
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return process1->get_alphabet() + process2->get_alphabet();
 	 }
-      private:
-	 ProcessPtr process1;
-	 ProcessPtr process2;
 	 void initialize_dependencies() const final {
 	    process1->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));

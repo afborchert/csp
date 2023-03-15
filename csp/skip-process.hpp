@@ -34,6 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
 #include "process.hpp"
 #include "stop-process.hpp"
@@ -49,11 +50,16 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    out << "SKIP " << get_alphabet();
 	 }
-	 Alphabet acceptable() const final {
+	 Alphabet acceptable(Bindings& bindings) const final {
 	    return Alphabet("_success_");
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& next_event) final {
+
+      private:
+	 const Alphabet skip_alphabet;
+	 ProcessPtr p_alphabet; // process from which we take its alphabet
+
+	 ProcessPtr internal_proceed(const std::string& next_event,
+	       Bindings& bindings) final {
 	    /* should usually not be used */
 	    if (next_event == "_success_") {
 	       return std::make_shared<StopProcess>(skip_alphabet);
@@ -68,10 +74,6 @@ namespace CSP {
 	       return skip_alphabet + Alphabet("_success_");
 	    }
 	 }
-      private:
-	 const Alphabet skip_alphabet;
-	 ProcessPtr p_alphabet; // process from which we take its alphabet
-
 	 void initialize_dependencies() const final {
 	    if (p_alphabet) {
 	       p_alphabet->add_dependant(

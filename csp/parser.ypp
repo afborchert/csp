@@ -91,6 +91,8 @@ namespace CSP {
 }
 
 #include <memory>
+
+#include "bindings.hpp"
 #include "channel.hpp"
 #include "chaos-process.hpp"
 #include "concealed-process.hpp"
@@ -108,6 +110,7 @@ namespace CSP {
 #include "process-reference.hpp"
 #include "process-sequence.hpp"
 #include "process.hpp"
+#include "reading-process.hpp"
 #include "recursive-process.hpp"
 #include "run-process.hpp"
 #include "scanner.hpp"
@@ -116,6 +119,7 @@ namespace CSP {
 #include "stop-process.hpp"
 #include "symbol-changer.hpp"
 #include "symtable.hpp"
+#include "writing-process.hpp"
 #include "yytname.hpp"
 
 using namespace CSP;
@@ -141,6 +145,7 @@ using namespace CSP;
 
 /* delimiters */
 %token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON COLON PERIOD
+%token QM EM /* '?' and '!' */
 
 /* identifiers */
 %token LCIDENT UCIDENT
@@ -370,9 +375,9 @@ simple_process_expression: process
 	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<StopProcess>(alpha_p);
       }
-   | LPAREN process_expression RPAREN
+   | open_expression process_expression close_expression
       { $$ = $2; }
-   | LPAREN choices RPAREN
+   | open_expression choices close_expression
       { $$ = $2; }
    | identifier LPAREN process_expression RPAREN
       {
@@ -436,7 +441,9 @@ choices: prefix_expression
       {
 	 auto p1 = std::dynamic_pointer_cast<SelectingProcess>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
-	 auto intersection = p1->acceptable() * p2->acceptable();
+	 Bindings bindings;
+	 auto intersection = p1->acceptable(bindings) *
+	    p2->acceptable(bindings);
 	 if (intersection.cardinality() > 0) {
 	    yyerror(&@$,
 	       "prefix events within a choice must be unique");
@@ -446,18 +453,50 @@ choices: prefix_expression
       }
    ;
 
-prefix_expression: event ARROW process_expression
+prefix_expression: identifier ARROW prefix_or_process_expression
       {  
 	 auto event = std::dynamic_pointer_cast<Identifier>($1);
 	 auto process = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
       }
-   | event ARROW prefix_expression
-      {  
-	 auto event = std::dynamic_pointer_cast<Identifier>($1);
-	 auto process = std::dynamic_pointer_cast<Process>($3);
-	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
+   | input_operation ARROW prefix_or_process_expression
+      {
+	 auto rp = std::dynamic_pointer_cast<ReadingProcess>($1);
+	 auto p = std::dynamic_pointer_cast<Process>($3);
+	 rp->set_process(p);
+	 symtab.close();
+	 $$ = rp;
       }
+   | identifier EM identifier ARROW prefix_or_process_expression
+      {
+	 auto channel = std::dynamic_pointer_cast<Identifier>($1);
+	 auto id = std::dynamic_pointer_cast<Identifier>($3);
+	 auto p = std::dynamic_pointer_cast<Process>($5);
+	 auto key = symtab.lookup<BindingsKey>(id->get_name());
+	 if (key) {
+	    $$ = std::make_shared<WritingProcess>(channel->get_name(), key, p);
+	 } else {
+	    auto event = channel->get_name() + "." + id->get_name();
+	    $$ = std::make_shared<PrefixedProcess>(event, p);
+	 }
+      }
+   ;
+
+input_operation: identifier QM identifier
+      {
+	 symtab.open();
+	 auto channel = std::dynamic_pointer_cast<Identifier>($1);
+	 auto variable = std::dynamic_pointer_cast<Identifier>($3);
+	 auto p = std::make_shared<ReadingProcess>(channel->get_name(),
+	    variable->get_name());
+	 auto key = std::make_shared<BindingsKey>(p, variable->get_name());
+	 p->set_key(key);
+	 symtab.insert(variable->get_name(), key);
+	 $$ = p;
+      }
+   ;
+prefix_or_process_expression: process_expression
+   | prefix_expression
    ;
 
 alphabet: LBRACE RBRACE
@@ -479,6 +518,11 @@ alphabet_members: event
 	 $$ = std::make_shared<EventSet>(a);
       }
    ;
+
+open_expression: LPAREN
+      { symtab.open(); }
+close_expression: RPAREN
+      { symtab.close(); }
 
 event: identifier;
 label: identifier;

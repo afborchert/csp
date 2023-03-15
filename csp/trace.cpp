@@ -29,6 +29,8 @@
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
+
+#include "bindings.hpp"
 #include "parser.hpp"
 #include "process.hpp"
 #include "scanner.hpp"
@@ -103,6 +105,7 @@ int main(int argc, char** argv) {
 	 }
 	 exit(0);
       }
+      Bindings bindings;
       if (opt_p) {
 	 std::cout << "Tracing: " << process << std::endl;
       }
@@ -110,18 +113,19 @@ int main(int argc, char** argv) {
 	 std::cout << "Alphabet: " << process->get_alphabet() << std::endl;
       }
       if (opt_v) {
-	 std::cout << "Acceptable: " << process->acceptable() << std::endl;
+	 std::cout << "Acceptable: " <<
+	    process->acceptable(bindings) << std::endl;
       }
-      if (!process->accepts_success()) {
+      if (!process->accepts_success(bindings)) {
 	 std::string event;
 	 while (std::cin >> event) {
 	    if (process->get_alphabet().is_member(event)) {
-	       process = process->proceed(event);
+	       process = process->proceed(event, bindings);
 	       if (!process) {
 		  std::cerr << "cannot accept " << event << std::endl;
 		  exit(1);
 	       }
-	       if (process->accepts_success()) break;
+	       if (process->accepts_success(bindings)) break;
 	       if (opt_e) {
 		  std::cout << event << std::endl;
 	       }
@@ -129,8 +133,8 @@ int main(int argc, char** argv) {
 		  std::cout << "Process: " << process << std::endl;
 	       }
 	       if (opt_v) {
-		  std::cout << "Acceptable: " << process->acceptable() <<
-		     std::endl;
+		  std::cout << "Acceptable: " <<
+		     process->acceptable(bindings) << std::endl;
 	       }
 	    } else {
 	       std::cout << "Not in alphabet: " << event << std::endl;

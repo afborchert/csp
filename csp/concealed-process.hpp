@@ -35,6 +35,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
 #include "process.hpp"
 #include "uniformint.hpp"
@@ -51,32 +52,16 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    process->print(out); out << " \\ " << concealed;
 	 }
-	 Alphabet acceptable() const final {
-	    decide();
+	 Alphabet acceptable(Bindings& bindings) const final {
+	    decide(bindings);
 	    if (next) {
-	       return next->acceptable() - concealed;
+	       return next->acceptable(bindings) - concealed;
 	    } else {
 	       /* too bad -- we have turned into STOP */
 	       return Alphabet();
 	    }
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& event) final {
-	    decide();
-	    ProcessPtr p = next;
-	    state = undecided;
 
-	    if (!p) {
-	       return nullptr;
-	    }
-	    p = std::make_shared<ConcealedProcess>(p->proceed(event),
-	       concealed);
-	    p->set_alphabet(process->get_alphabet() - concealed);
-	    return p;
-	 }
-	 Alphabet internal_get_alphabet() const final {
-	    return process->get_alphabet() - concealed;
-	 }
       private:
 	 ProcessPtr process;
 	 Alphabet concealed;
@@ -84,7 +69,25 @@ namespace CSP {
 	 mutable enum {undecided, decided} state;
 	 mutable UniformIntDistribution prg;
 	 mutable ProcessPtr next; // defined if state == decided
-	 void decide() const {
+
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
+	    decide(bindings);
+	    ProcessPtr p = next;
+	    state = undecided;
+
+	    if (!p) {
+	       return nullptr;
+	    }
+	    p = std::make_shared<ConcealedProcess>(p->proceed(event, bindings),
+	       concealed);
+	    p->set_alphabet(process->get_alphabet() - concealed);
+	    return p;
+	 }
+	 Alphabet internal_get_alphabet() const final {
+	    return process->get_alphabet() - concealed;
+	 }
+	 void decide(Bindings& bindings) const {
 	    if (state == undecided) {
 	       /* as noted in 3.5.2 the implementation of this operator
 		  is inherently non-deterministic and thereby possibly
@@ -96,7 +99,7 @@ namespace CSP {
 	       unsigned int count = 0;
 	       ProcessPtr p = process;
 	       while (p && count++ < 1000) {
-		  Alphabet acceptable = p->acceptable();
+		  Alphabet acceptable = p->acceptable(bindings);
 		  if (acceptable.cardinality() == 0) {
 		     /* deadlock */
 		     next = nullptr; state = decided; return;
@@ -108,7 +111,7 @@ namespace CSP {
 		     next = p; state = decided;
 		     return;
 		  }
-		  p = p->proceed(event);
+		  p = p->proceed(event, bindings);
 	       }
 	       /* emergency break from a possibly otherwise endless loop;
 	          the only option we have here is to turn into STOP */

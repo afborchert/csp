@@ -167,6 +167,10 @@ restart:
 	    nextch(); token = parser::token::PERIOD; break;
 	 case '\\':
 	    nextch(); token = parser::token::CONCEAL; break;
+	 case '?':
+	    nextch(); token = parser::token::QM; break;
+	 case '!':
+	    nextch(); token = parser::token::EM; break;
 	 // composite punctuators
 	 case '-':
 	    nextch();

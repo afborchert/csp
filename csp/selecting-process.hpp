@@ -36,8 +36,12 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
+#include "prefixed-process.hpp"
 #include "process.hpp"
+#include "reading-process.hpp"
+#include "writing-process.hpp"
 
 namespace CSP {
 
@@ -64,24 +68,30 @@ namespace CSP {
 	    }
 	    out << ")";
 	 }
-	 Alphabet acceptable() const final {
+	 Alphabet acceptable(Bindings& bindings) const final {
 	    Alphabet set;
 	    for (auto choice: choices) {
-	       set = set + choice->acceptable();
+	       set = set + choice->acceptable(bindings);
 	    }
 	    return set;
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& event) final {
+
+      private:
+	 std::deque<ProcessPtr> choices;
+
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
 	    for (auto choice: choices) {
-	       auto p = choice->proceed(event);
+	       auto p = choice->proceed(event, bindings);
 	       if (p) {
 		  /* if we have a chain of prefixed processes,
 		     we return a SelectingProcess instead as
 		     PrefixedProcess objects are always enclosed
 		     by a SelectingProcess object;
 		     this helps to see parentheses when it is printed */
-		  auto pp = std::dynamic_pointer_cast<PrefixedProcess>(p);
+		  ProcessPtr pp = std::dynamic_pointer_cast<PrefixedProcess>(p);
+		  if (!pp) pp = std::dynamic_pointer_cast<ReadingProcess>(p);
+		  if (!pp) pp = std::dynamic_pointer_cast<WritingProcess>(p);
 		  if (pp) {
 		     return std::make_shared<SelectingProcess>(pp);
 		  }
@@ -97,8 +107,6 @@ namespace CSP {
 	    }
 	    return set;
 	 }
-      private:
-	 std::deque<ProcessPtr> choices;
 	 void initialize_dependencies() const final {
 	    for (auto choice: choices) {
 	       choice->add_dependant(std::dynamic_pointer_cast<const Process>(

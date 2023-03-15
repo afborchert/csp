@@ -34,6 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
 #include "process.hpp"
 #include "uniformint.hpp"
@@ -50,35 +51,37 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    process1->print(out); out << " |~| "; process2->print(out);
 	 }
-	 Alphabet acceptable() const final {
+	 Alphabet acceptable(Bindings& bindings) const final {
 	    /* if we get asked, we make up our mind */
 	    decide();
 	    if (nextmove == headforp1) {
-	       return process1->acceptable();
+	       return process1->acceptable(bindings);
 	    } else {
-	       return process2->acceptable();
+	       return process2->acceptable(bindings);
 	    }
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& event) final {
-	    decide();
-	    if (nextmove == headforp1) {
-	       nextmove = undecided;
-	       return process1->proceed(event);
-	    } else {
-	       nextmove = undecided;
-	       return process2->proceed(event);
-	    }
-	 }
-	 Alphabet internal_get_alphabet() const final {
-	    return process1->get_alphabet() + process2->get_alphabet();
-	 }
+
       private:
 	 /* if asked, we tell our next decision */
 	 mutable enum {undecided, headforp1, headforp2} nextmove;
 	 mutable UniformIntDistribution prg;
 	 ProcessPtr process1;
 	 ProcessPtr process2;
+
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
+	    decide();
+	    if (nextmove == headforp1) {
+	       nextmove = undecided;
+	       return process1->proceed(event, bindings);
+	    } else {
+	       nextmove = undecided;
+	       return process2->proceed(event, bindings);
+	    }
+	 }
+	 Alphabet internal_get_alphabet() const final {
+	    return process1->get_alphabet() + process2->get_alphabet();
+	 }
 	 void decide() const {
 	    if (nextmove == undecided) {
 	       if (prg.flip()) {

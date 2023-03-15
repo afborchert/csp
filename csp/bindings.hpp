@@ -23,57 +23,47 @@
    SOFTWARE.
 */
 
-/*
-   A process definition object behaves like its right-hand-side process
-   but it remembers its left-hand-side name for printing
-*/
+#ifndef CSP_BINDINGS_HPP
+#define CSP_BINDINGS_HPP
 
-#ifndef CSP_PROCESS_DEFINITION_HPP
-#define CSP_PROCESS_DEFINITION_HPP
-
+#include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
-#include <string>
+#include <unordered_map>
 
-#include "alphabet.hpp"
-#include "named-process.hpp"
+#include "object.hpp"
 
 namespace CSP {
+   /* we do not include "process.hpp" to avoid a reference cycle */
+   class Process;
+   using ProcessPtr = std::shared_ptr<Process>;
 
-   class ProcessDefinition;
-   using ProcessDefinitionPtr = std::shared_ptr<ProcessDefinition>;
+   struct BindingsKey: public Object {
+      BindingsKey(ProcessPtr p, std::string name) :
+	    p(p), name(name) {
+      }
+      ProcessPtr p;
+      std::string name;
+      void print(std::ostream& out) const override {
+	 out << name;
+      }
+   };
+   using BindingsKeyPtr = std::shared_ptr<BindingsKey>;
 
-   class ProcessDefinition: public NamedProcess {
+   class Bindings {
       public:
-	 ProcessDefinition(const std::string& name, ProcessPtr process) :
-	       NamedProcess(name), process(process) {
-	    assert(process);
+	 void set(BindingsKeyPtr key, std::string message) {
+	    assert(key);
+	    b.insert_or_assign(key, std::move(message));
 	 }
-	 void print(std::ostream& out) const override {
-	    out << get_name() << " = "; process->print(out);
+	 std::string get(BindingsKeyPtr key) const {
+	    auto it = b.find(key);
+	    assert(it != b.end());
+	    return it->second;
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
-	    return process->acceptable(bindings);
-	 }
-
-	 void add_channel(ChannelPtr c) override {
-	    process->add_channel(c);
-	 }
-
       private:
-	 ProcessPtr process;
-
-	 ProcessPtr internal_proceed(const std::string& event,
-	       Bindings& bindings) final {
-	    return process->proceed(event, bindings);
-	 }
-	 Alphabet internal_get_alphabet() const final {
-	    return process->get_alphabet();
-	 }
-	 void initialize_dependencies() const final {
-	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
-	       shared_from_this()));
-	 }
+	 std::unordered_map<BindingsKeyPtr, std::string> b;
    };
 
 } // namespace CSP

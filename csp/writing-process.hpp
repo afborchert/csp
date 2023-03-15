@@ -24,50 +24,67 @@
 */
 
 /*
-   A process definition object behaves like its right-hand-side process
-   but it remembers its left-hand-side name for printing
+   Extension of Process for processes that are prefixed with
+   an output operation of the form
+
+      channel!variable -> P
 */
 
-#ifndef CSP_PROCESS_DEFINITION_HPP
-#define CSP_PROCESS_DEFINITION_HPP
+#ifndef CSP_WRITING_PROCESS_HPP
+#define CSP_WRITING_PROCESS_HPP
 
+#include <cassert>
 #include <iostream>
 #include <memory>
 #include <string>
 
 #include "alphabet.hpp"
-#include "named-process.hpp"
+#include "bindings.hpp"
+#include "process.hpp"
 
 namespace CSP {
 
-   class ProcessDefinition;
-   using ProcessDefinitionPtr = std::shared_ptr<ProcessDefinition>;
-
-   class ProcessDefinition: public NamedProcess {
+   class WritingProcess: public Process {
       public:
-	 ProcessDefinition(const std::string& name, ProcessPtr process) :
-	       NamedProcess(name), process(process) {
+	 WritingProcess(const std::string& channel,
+	       BindingsKeyPtr key, ProcessPtr process) :
+	       channel(channel), key(key), process(process) {
 	    assert(process);
 	 }
+	 const std::string& get_channel() {
+	    return channel;
+	 }
 	 void print(std::ostream& out) const override {
-	    out << get_name() << " = "; process->print(out);
+	    out << channel << "!" << key->name << " -> ";
+	    process->print(out);
+	 }
+	 void expanded_print(std::ostream& out) const override {
+	    /* add parentheses if we are at top-level,
+	       otherwise this is done by SelectingProcess */
+	    out << "("; print(out); out << ")";
 	 }
 	 Alphabet acceptable(Bindings& bindings) const final {
-	    return process->acceptable(bindings);
-	 }
-
-	 void add_channel(ChannelPtr c) override {
-	    process->add_channel(c);
+	    auto message = bindings.get(key);
+	    auto event = channel + "." + message;
+	    return Alphabet(event);
 	 }
 
       private:
+	 const std::string channel;
+	 BindingsKeyPtr key;
 	 ProcessPtr process;
 
-	 ProcessPtr internal_proceed(const std::string& event,
+	 ProcessPtr internal_proceed(const std::string& next_event,
 	       Bindings& bindings) final {
-	    return process->proceed(event, bindings);
+	    auto message = bindings.get(key);
+	    auto event = channel + "." + message;
+	    if (next_event == event) return process;
+	    return nullptr;
 	 }
 	 Alphabet internal_get_alphabet() const final {
+	    /* the rest of the alphabet is constructed through
+	       output operations and channel declarations */
+	    assert(process);
 	    return process->get_alphabet();
 	 }
 	 void initialize_dependencies() const final {
@@ -79,3 +96,5 @@ namespace CSP {
 } // namespace CSP
 
 #endif
+
+

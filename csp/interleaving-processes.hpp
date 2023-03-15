@@ -35,6 +35,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
 #include "process.hpp"
 #include "uniformint.hpp"
@@ -51,13 +52,20 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    process1->print(out); out << " ||| "; process2->print(out);
 	 }
-	 Alphabet acceptable() const final {
-	    return process1->acceptable() + process2->acceptable();
+	 Alphabet acceptable(Bindings& bindings) const final {
+	    return process1->acceptable(bindings) +
+	       process2->acceptable(bindings);
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& event) final {
-	    Alphabet a1 = process1->acceptable();
-	    Alphabet a2 = process2->acceptable();
+
+      private:
+	 ProcessPtr process1;
+	 ProcessPtr process2;
+	 UniformIntDistribution prg;
+
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
+	    Alphabet a1 = process1->acceptable(bindings);
+	    Alphabet a2 = process2->acceptable(bindings);
 	    bool ok1 = a1.is_member(event);
 	    bool ok2 = a2.is_member(event);
 	    if (ok1 && ok2) {
@@ -69,10 +77,10 @@ namespace CSP {
 	    }
 	    if (ok1) {
 	       return std::make_shared<InterleavingProcesses>(
-			process1->proceed(event), process2);
+			process1->proceed(event, bindings), process2);
 	    } else if (ok2) {
 	       return std::make_shared<InterleavingProcesses>(
-			process1, process2->proceed(event));
+			process1, process2->proceed(event, bindings));
 	    } else {
 	       return nullptr;
 	    }
@@ -80,10 +88,6 @@ namespace CSP {
 	 Alphabet internal_get_alphabet() const final {
 	    return process1->get_alphabet() + process2->get_alphabet();
 	 }
-      private:
-	 ProcessPtr process1;
-	 ProcessPtr process2;
-	 UniformIntDistribution prg;
 	 void initialize_dependencies() const final {
 	    process1->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));

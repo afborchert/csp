@@ -50,21 +50,23 @@ namespace CSP {
 	    std::ostringstream os; process->print(os);
 	    out << f->get_name(os.str());
 	 }
-	 Alphabet acceptable() const final {
-	    return f->map(process->acceptable());
+	 Alphabet acceptable(Bindings& bindings) const final {
+	    return f->map(process->acceptable(bindings));
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& event) final {
-	    auto p = process->proceed(f->reverse_map(event));
+
+      private:
+	 SymbolChangerPtr f;
+	 ProcessPtr process;
+
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
+	    auto p = process->proceed(f->reverse_map(event), bindings);
 	    return std::make_shared<MappedProcess>(p, f);
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    /* mapping is done through map_alphabet below */
 	    return process->get_alphabet();
 	 }
-      private:
-	 SymbolChangerPtr f;
-	 ProcessPtr process;
 
 	 Alphabet map_alphabet(const Alphabet& alphabet) const final {
 	    return f->map(alphabet);

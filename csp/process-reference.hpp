@@ -80,7 +80,7 @@ namespace CSP {
 	       out << get_name();
 	    }
 	 }
-	 Alphabet acceptable() const final {
+	 Alphabet acceptable(Bindings& bindings) const final {
 	    if (!get_alphabet()) {
 	       /* if our alphabet is empty, we simply return
 		  the empty set; this test avoids an endless
@@ -91,7 +91,7 @@ namespace CSP {
 	    }
 	    if (!p) resolve();
 	    if (p) {
-	       return p->acceptable();
+	       return p->acceptable(bindings);
 	    } else {
 	       return Alphabet();
 	    }
@@ -110,9 +110,10 @@ namespace CSP {
 	 mutable NamedProcessPtr p;
 	 mutable std::deque<ChannelPtr> channels;
 
-	 ProcessPtr internal_proceed(const std::string& event) final {
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
 	    if (p) {
-	       return p->proceed(event);
+	       return p->proceed(event, bindings);
 	    } else {
 	       return nullptr;
 	    }

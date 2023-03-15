@@ -35,6 +35,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
 #include "process.hpp"
 
@@ -49,23 +50,28 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    process1->print(out); out << " || "; process2->print(out);
 	 }
-	 Alphabet acceptable() const final {
+	 Alphabet acceptable(Bindings& bindings) const final {
 	    /* events are acceptable either
 	         if they are accepted by both, or
 		 if they do belong to the alphabet of one of the processes only
 		    and are acceptable by the corresponding process
 	    */
 	    Alphabet sd = process1->get_alphabet() / process2->get_alphabet();
-	    Alphabet p1a = process1->acceptable();
-	    Alphabet p2a = process2->acceptable();
+	    Alphabet p1a = process1->acceptable(bindings);
+	    Alphabet p2a = process2->acceptable(bindings);
 	    Alphabet ex1 = sd * p1a;
 	    Alphabet ex2 = sd * p2a;
 	    return p1a * p2a + ex1 + ex2;
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& event) final {
-	    ProcessPtr p1 = process1->proceed(event);
-	    ProcessPtr p2 = process2->proceed(event);
+
+      private:
+	 ProcessPtr process1;
+	 ProcessPtr process2;
+
+	 ProcessPtr internal_proceed(const std::string& event,
+	       Bindings& bindings) final {
+	    ProcessPtr p1 = process1->proceed(event, bindings);
+	    ProcessPtr p2 = process2->proceed(event, bindings);
 	    if (p1 && p2) {
 	       return std::make_shared<ParallelProcesses>(p1, p2);
 	    } else {
@@ -75,9 +81,6 @@ namespace CSP {
 	 Alphabet internal_get_alphabet() const final {
 	    return process1->get_alphabet() + process2->get_alphabet();
 	 }
-      private:
-	 ProcessPtr process1;
-	 ProcessPtr process2;
    };
 
 } // namespace CSP

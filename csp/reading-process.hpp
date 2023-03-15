@@ -24,14 +24,14 @@
 */
 
 /*
-   Extension of Process for prefixed processes, i.e. processes of
-   the form
+   Extension of Process for processes that are prefixed with
+   an input operation of the form
 
-      event -> P
+      channel?variable -> P
 */
 
-#ifndef CSP_PREFIXED_PROCESS_HPP
-#define CSP_PREFIXED_PROCESS_HPP
+#ifndef CSP_READING_PROCESS_HPP
+#define CSP_READING_PROCESS_HPP
 
 #include <cassert>
 #include <iostream>
@@ -43,17 +43,29 @@
 
 namespace CSP {
 
-   class PrefixedProcess: public Process {
+   class ReadingProcess: public Process {
       public:
-	 PrefixedProcess(const std::string& event, ProcessPtr process) :
-	       event(event), process(process) {
-	    assert(process);
+	 ReadingProcess(const std::string& channel,
+	       const std::string& variable) :
+	       channel(channel), variable(variable) {
 	 }
-	 const std::string& get_event() {
-	    return event;
+	 void set_key(BindingsKeyPtr k) {
+	    assert(k && !key);
+	    key = k;
+	 }
+	 void set_process(ProcessPtr p) {
+	    assert(p && !process);
+	    process = p;
+	 }
+	 const std::string& get_channel() {
+	    return channel;
 	 }
 	 void print(std::ostream& out) const override {
-	    out << event << " -> "; process->print(out);
+	    if (process) {
+	       out << channel << "?" << variable << " -> " << process;
+	    } else {
+	       out << channel << "?" << variable << " -> ...";
+	    }
 	 }
 	 void expanded_print(std::ostream& out) const override {
 	    /* add parentheses if we are at top-level,
@@ -61,23 +73,41 @@ namespace CSP {
 	    out << "("; print(out); out << ")";
 	 }
 	 Alphabet acceptable(Bindings& bindings) const final {
-	    return Alphabet(event);
+	    if (!acceptable_computed) {
+	       std::string prefix = channel + ".";
+	       auto prefix_len = prefix.length();
+	       for (auto event: get_alphabet()) {
+		  if (event.substr(0, prefix_len) == prefix) {
+		     a += event;
+		  }
+	       }
+	    }
+	    return a;
 	 }
 
       private:
-	 const std::string event;
+	 const std::string channel;
+	 const std::string variable;
 	 ProcessPtr process;
+	 BindingsKeyPtr key;
+	 mutable bool acceptable_computed = false;
+	 mutable Alphabet a; // return value for acceptable
 
 	 ProcessPtr internal_proceed(const std::string& next_event,
 	       Bindings& bindings) final {
-	    if (event == next_event) {
-	       return process;
-	    } else {
-	       return nullptr;
-	    }
+	    std::string prefix = channel + ".";
+	    auto prefix_len = prefix.length();
+	    if (next_event.substr(0, prefix_len) != prefix) return nullptr;
+	    auto message = next_event.substr(prefix_len);
+	    assert(key);
+	    bindings.set(key, message);
+	    return process;
 	 }
 	 Alphabet internal_get_alphabet() const final {
-	    return Alphabet(event) + process->get_alphabet();
+	    /* the rest of the alphabet is constructed through
+	       output operations and channel declarations */
+	    assert(process);
+	    return process->get_alphabet();
 	 }
 	 void initialize_dependencies() const final {
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
@@ -88,3 +118,4 @@ namespace CSP {
 } // namespace CSP
 
 #endif
+

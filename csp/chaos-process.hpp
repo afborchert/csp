@@ -34,6 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 #include "alphabet.hpp"
 #include "process.hpp"
 
@@ -50,12 +51,20 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    out << "CHAOS " << get_alphabet();
 	 }
-	 Alphabet acceptable() const final {
+	 Alphabet acceptable(Bindings& bindings) const final {
 	    decide();
 	    return accepting_next;
 	 }
-      protected:
-	 ProcessPtr internal_proceed(const std::string& next_event) final {
+
+      private:
+	 const Alphabet chaos_alphabet;
+	 ProcessPtr p_alphabet; // process from which we take its alphabet
+	 mutable enum {undecided, decided} state;
+	 mutable UniformIntDistribution prg;
+	 mutable Alphabet accepting_next; // defined if state == decided
+
+	 ProcessPtr internal_proceed(const std::string& next_event,
+	       Bindings& bindings) final {
 	    decide();
 	    bool ok = accepting_next.is_member(next_event);
 	    state = undecided;
@@ -73,13 +82,6 @@ namespace CSP {
 	       return chaos_alphabet;
 	    }
 	 }
-      private:
-	 const Alphabet chaos_alphabet;
-	 ProcessPtr p_alphabet; // process from which we take its alphabet
-	 mutable enum {undecided, decided} state;
-	 mutable UniformIntDistribution prg;
-	 mutable Alphabet accepting_next; // defined if state == decided
-
 	 void decide() const {
 	    if (state == undecided) {
 	       accepting_next = Alphabet();
@@ -91,7 +93,6 @@ namespace CSP {
 	       state = decided;
 	    }
 	 }
-
 	 void initialize_dependencies() const final {
 	    if (p_alphabet) {
 	       p_alphabet->add_dependant(
