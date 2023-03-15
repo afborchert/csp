@@ -54,9 +54,11 @@ namespace CSP {
 
 	 void register_ref() {
 	    if (!resolve()) {
+	       auto p = std::dynamic_pointer_cast<ProcessReference>(
+		  shared_from_this());
 	       symtab.add_unresolved(get_name(),
-		  [this]() {
-		     return this->resolve();
+		  [p]() {
+		     return p->resolve();
 		  });
 	    }
 	 }
@@ -97,7 +99,7 @@ namespace CSP {
 	    }
 	 }
 
-	 void add_channel(ChannelPtr c) override {
+	 void add_channel(ChannelPtr c) const override {
 	    if (p || resolve()) {
 	       p->add_channel(c);
 	    } else {

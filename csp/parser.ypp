@@ -124,6 +124,9 @@ namespace CSP {
 
 using namespace CSP;
 
+ChannelPtr get_channel(location const* loc, SymTable& symtab,
+      const std::string& name);
+
 %}
 
 %skeleton "lalr1.cc"
@@ -189,13 +192,7 @@ channel_definition: ALPHA identifier EQUAL alphabet
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($4);
-	 auto channel = symtab.lookup<Channel>(id->get_name());
-	 if (!channel) {
-	    channel = std::make_shared<Channel>(id->get_name());
-	    if (!symtab.insert(id->get_name(), channel)) {
-	       yyerror(&@$, "conflicting definitions");
-	    }
-	 }
+	 auto channel = get_channel(&@$, symtab, id->get_name());
 	 channel->set_alphabet(evset->get_alphabet());
 	 $$ = channel;
       }
@@ -204,13 +201,7 @@ channel_definition: ALPHA identifier EQUAL alphabet
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto pn = std::dynamic_pointer_cast<ProcessReference>($4);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($7);
-	 auto channel = symtab.lookup<Channel>(id->get_name());
-	 if (!channel) {
-	    channel = std::make_shared<Channel>(id->get_name());
-	    if (!symtab.insert(id->get_name(), channel)) {
-	       yyerror(&@$, "conflicting definitions");
-	    }
-	 }
+	 auto channel = get_channel(&@$, symtab, id->get_name());
 	 channel->set_alphabet(pn->get_name(), evset->get_alphabet());
 	 pn->add_channel(channel);
 	 $$ = channel;
@@ -442,12 +433,6 @@ choices: prefix_expression
 	 auto p1 = std::dynamic_pointer_cast<SelectingProcess>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
 	 Bindings bindings;
-	 auto intersection = p1->acceptable(bindings) *
-	    p2->acceptable(bindings);
-	 if (intersection.cardinality() > 0) {
-	    yyerror(&@$,
-	       "prefix events within a choice must be unique");
-	 }
 	 p1->add_choice(p2);
 	 $$ = p1;
       }
@@ -469,12 +454,13 @@ prefix_expression: identifier ARROW prefix_or_process_expression
       }
    | identifier EM identifier ARROW prefix_or_process_expression
       {
-	 auto channel = std::dynamic_pointer_cast<Identifier>($1);
+	 auto cid = std::dynamic_pointer_cast<Identifier>($1);
+	 auto channel = get_channel(&@$, symtab, cid->get_name());
 	 auto id = std::dynamic_pointer_cast<Identifier>($3);
 	 auto p = std::dynamic_pointer_cast<Process>($5);
 	 auto key = symtab.lookup<BindingsKey>(id->get_name());
 	 if (key) {
-	    $$ = std::make_shared<WritingProcess>(channel->get_name(), key, p);
+	    $$ = std::make_shared<WritingProcess>(channel, key, p);
 	 } else {
 	    auto event = channel->get_name() + "." + id->get_name();
 	    $$ = std::make_shared<PrefixedProcess>(event, p);
@@ -485,9 +471,10 @@ prefix_expression: identifier ARROW prefix_or_process_expression
 input_operation: identifier QM identifier
       {
 	 symtab.open();
-	 auto channel = std::dynamic_pointer_cast<Identifier>($1);
+	 auto cid = std::dynamic_pointer_cast<Identifier>($1);
+	 auto channel = get_channel(&@$, symtab, cid->get_name());
 	 auto variable = std::dynamic_pointer_cast<Identifier>($3);
-	 auto p = std::make_shared<ReadingProcess>(channel->get_name(),
+	 auto p = std::make_shared<ReadingProcess>(channel,
 	    variable->get_name());
 	 auto key = std::make_shared<BindingsKey>(p, variable->get_name());
 	 p->set_key(key);
@@ -537,3 +524,15 @@ identifier: LCIDENT
 process: UCIDENT;
 
 %%
+
+ChannelPtr get_channel(location const* loc, SymTable& symtab,
+      const std::string& name) {
+   auto channel = symtab.lookup<Channel>(name);
+   if (!channel) {
+      channel = std::make_shared<Channel>(name);
+      if (!symtab.global_insert(name, channel)) {
+	 yyerror(loc, "conflicting definitions");
+      }
+   }
+   return channel;
+}

@@ -44,6 +44,7 @@ namespace CSP {
    class SymTable {
       private:
 	 ScopePtr scope;
+	 ScopePtr global;
 	 struct Reference {
 	    Reference(std::string name, std::function<bool()> resolve) :
 		  name(std::move(name)), resolve(std::move(resolve)) {
@@ -60,12 +61,17 @@ namespace CSP {
 	 // accessors
 	 template <typename T>
 	 std::shared_ptr<T> lookup(const std::string& name) const {
-	    return scope->lookup<T>(name);
+	    if (scope) {
+	       return scope->lookup<T>(name);
+	    } else {
+	       return global->lookup<T>(name);
+	    }
 	 }
 
 	 // mutators
 	 void open() {
 	    auto inner = std::make_shared<Scope>(scope);
+	    if (!scope) global = inner;
 	    scope = inner;
 	 }
 	 void close() {
@@ -74,7 +80,7 @@ namespace CSP {
 	       the out-most scope, this is required in cases
 	       of mutual recursion */
 	    std::deque<Reference> survivors;
-	    for (auto&& ref: unresolved) {
+	    for (auto ref: unresolved) {
 	       if (!ref.resolve()) {
 		  survivors.push_back(ref);
 	       }
@@ -99,6 +105,10 @@ namespace CSP {
 	 bool insert(const std::string& name, ObjectPtr object) {
 	    assert(scope);
 	    return scope->insert(name, object);
+	 }
+	 bool global_insert(const std::string& name, ObjectPtr object) {
+	    assert(global);
+	    return global->insert(name, object);
 	 }
 	 void add_unresolved(std::string name, std::function<bool()> resolve) {
 	    unresolved.emplace_back(std::move(name), std::move(resolve));

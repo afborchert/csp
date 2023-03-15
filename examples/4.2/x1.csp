@@ -1,0 +1,4 @@
+-- CSP, 4.2, X1
+COPYBIT = mu X. (in?x -> (out!x -> X))
+alpha in(COPYBIT) = {0, 1}
+alpha out(COPYBIT) = {0, 1}

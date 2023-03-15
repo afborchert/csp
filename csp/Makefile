@@ -80,7 +80,7 @@ testparser.o: testparser.cpp parser.hpp location.hh symtable.hpp \
  scope.hpp named-process.hpp channel.hpp alphabet.hpp object.hpp \
  process.hpp bindings.hpp uniformint.hpp symbol-changer.hpp \
  identifier.hpp parser.tab.hpp scanner.hpp yytname.hpp
-trace.o: trace.cpp parser.hpp location.hh symtable.hpp scope.hpp \
- named-process.hpp channel.hpp alphabet.hpp object.hpp process.hpp \
- bindings.hpp uniformint.hpp symbol-changer.hpp identifier.hpp \
+trace.o: trace.cpp bindings.hpp object.hpp parser.hpp location.hh \
+ symtable.hpp scope.hpp named-process.hpp channel.hpp alphabet.hpp \
+ process.hpp uniformint.hpp symbol-changer.hpp identifier.hpp \
  parser.tab.hpp scanner.hpp yytname.hpp

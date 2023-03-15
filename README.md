@@ -402,3 +402,33 @@ Acceptable: {left.coin, right.choc}
 OK
 $
 ```
+
+## 4.2 X1
+Input and output operations on channels are supported,
+provided the corresponding alphabets are declared:
+
+```
+$ cat x1.csp
+-- CSP, 4.2, X1
+COPYBIT = mu X. (in?x -> (out!x -> X))
+alpha in(COPYBIT) = {0, 1}
+alpha out(COPYBIT) = {0, 1}
+$ trace x1.csp
+Tracing: COPYBIT = mu X.(in?x -> (out!x -> X))
+Alphabet: {in.0, in.1, out.0, out.1}
+Acceptable: {in.0, in.1}
+in.0
+Process: (out!x -> X)
+Acceptable: {out.0}
+out.0
+Process: mu X.(in?x -> (out!x -> X))
+Acceptable: {in.0, in.1}
+in.1
+Process: (out!x -> X)
+Acceptable: {out.1}
+out.1
+Process: mu X.(in?x -> (out!x -> X))
+Acceptable: {in.0, in.1}
+OK
+$
+```

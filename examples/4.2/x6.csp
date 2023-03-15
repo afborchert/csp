@@ -1,0 +1,6 @@
+-- CSP, 4.2, X6
+MERGE = (left1?x -> right!x -> MERGE
+   | left2?x -> right!x -> MERGE)
+alpha left1 = {0, 1}
+alpha left2 = {0, 1}
+alpha right = {0, 1}

@@ -126,7 +126,7 @@ namespace CSP {
 	    dependants.push_back(p);
 	 }
 
-	 virtual void add_channel(ChannelPtr c) {
+	 virtual void add_channel(ChannelPtr c) const {
 	    channels.push_back(c);
 	 }
 
@@ -145,7 +145,8 @@ namespace CSP {
 	 mutable bool alphabet_initialized = false;
 	 mutable bool dependencies_initialized = false;
 	 mutable std::deque<ConstProcessPtr> dependants;
-	 std::deque<ChannelPtr> channels; // channels this process depends on
+	 // channels this process depends on
+	 mutable std::deque<ChannelPtr> channels;
 
 	 virtual Alphabet get_channel_alphabet(ChannelPtr c) const {
 	    return c->get_alphabet();

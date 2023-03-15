@@ -39,13 +39,14 @@
 #include <string>
 
 #include "alphabet.hpp"
+#include "channel.hpp"
 #include "process.hpp"
 
 namespace CSP {
 
    class ReadingProcess: public Process {
       public:
-	 ReadingProcess(const std::string& channel,
+	 ReadingProcess(ChannelPtr channel,
 	       const std::string& variable) :
 	       channel(channel), variable(variable) {
 	 }
@@ -57,14 +58,16 @@ namespace CSP {
 	    assert(p && !process);
 	    process = p;
 	 }
-	 const std::string& get_channel() {
+	 const ChannelPtr get_channel() {
 	    return channel;
 	 }
 	 void print(std::ostream& out) const override {
 	    if (process) {
-	       out << channel << "?" << variable << " -> " << process;
+	       out << channel->get_name() <<
+		  "?" << variable << " -> " << process;
 	    } else {
-	       out << channel << "?" << variable << " -> ...";
+	       out << channel->get_name() <<
+		  "?" << variable << " -> ...";
 	    }
 	 }
 	 void expanded_print(std::ostream& out) const override {
@@ -74,7 +77,7 @@ namespace CSP {
 	 }
 	 Alphabet acceptable(Bindings& bindings) const final {
 	    if (!acceptable_computed) {
-	       std::string prefix = channel + ".";
+	       std::string prefix = channel->get_name() + ".";
 	       auto prefix_len = prefix.length();
 	       for (auto event: get_alphabet()) {
 		  if (event.substr(0, prefix_len) == prefix) {
@@ -86,7 +89,7 @@ namespace CSP {
 	 }
 
       private:
-	 const std::string channel;
+	 ChannelPtr channel;
 	 const std::string variable;
 	 ProcessPtr process;
 	 BindingsKeyPtr key;
@@ -95,7 +98,7 @@ namespace CSP {
 
 	 ProcessPtr internal_proceed(const std::string& next_event,
 	       Bindings& bindings) final {
-	    std::string prefix = channel + ".";
+	    std::string prefix = channel->get_name() + ".";
 	    auto prefix_len = prefix.length();
 	    if (next_event.substr(0, prefix_len) != prefix) return nullptr;
 	    auto message = next_event.substr(prefix_len);
@@ -110,6 +113,7 @@ namespace CSP {
 	    return process->get_alphabet();
 	 }
 	 void initialize_dependencies() const final {
+	    add_channel(channel);
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
 	 }
@@ -118,4 +122,3 @@ namespace CSP {
 } // namespace CSP
 
 #endif
-

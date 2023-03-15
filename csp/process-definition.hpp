@@ -56,7 +56,7 @@ namespace CSP {
 	    return process->acceptable(bindings);
 	 }
 
-	 void add_channel(ChannelPtr c) override {
+	 void add_channel(ChannelPtr c) const override {
 	    process->add_channel(c);
 	 }
 

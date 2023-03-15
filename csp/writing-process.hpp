@@ -40,22 +40,23 @@
 
 #include "alphabet.hpp"
 #include "bindings.hpp"
+#include "channel.hpp"
 #include "process.hpp"
 
 namespace CSP {
 
    class WritingProcess: public Process {
       public:
-	 WritingProcess(const std::string& channel,
+	 WritingProcess(ChannelPtr channel,
 	       BindingsKeyPtr key, ProcessPtr process) :
 	       channel(channel), key(key), process(process) {
 	    assert(process);
 	 }
-	 const std::string& get_channel() {
+	 const ChannelPtr get_channel() {
 	    return channel;
 	 }
 	 void print(std::ostream& out) const override {
-	    out << channel << "!" << key->name << " -> ";
+	    out << channel->get_name() << "!" << key->name << " -> ";
 	    process->print(out);
 	 }
 	 void expanded_print(std::ostream& out) const override {
@@ -65,19 +66,19 @@ namespace CSP {
 	 }
 	 Alphabet acceptable(Bindings& bindings) const final {
 	    auto message = bindings.get(key);
-	    auto event = channel + "." + message;
+	    auto event = channel->get_name() + "." + message;
 	    return Alphabet(event);
 	 }
 
       private:
-	 const std::string channel;
+	 ChannelPtr channel;
 	 BindingsKeyPtr key;
 	 ProcessPtr process;
 
 	 ProcessPtr internal_proceed(const std::string& next_event,
 	       Bindings& bindings) final {
 	    auto message = bindings.get(key);
-	    auto event = channel + "." + message;
+	    auto event = channel->get_name() + "." + message;
 	    if (next_event == event) return process;
 	    return nullptr;
 	 }
@@ -88,6 +89,7 @@ namespace CSP {
 	    return process->get_alphabet();
 	 }
 	 void initialize_dependencies() const final {
+	    add_channel(channel);
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
 	 }
