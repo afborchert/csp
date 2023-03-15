@@ -89,9 +89,11 @@ The grammar represents a subset of CSP:
 
    _Definitions_ &#8594; _Definition_ | _Definitions_ _Definition_
 
-   _Definition_ &#8594; _FunctionDefinition_ | _ProcessDefinition_
+   _Definition_ &#8594; _FunctionDefinition_ | _ChannelDefinition_ | _ProcessDefinition_
 
    _FunctionDefinition_ &#8594; _Identifier_ `(` _Identifier_ `)` `=` _Identifier_
+
+   _ChannelDefinition_ &#8594; *ALPHA* _Identifier_ `=` _Alphabet_ | *ALPHA* _Identifier_ `(` _Process_ `)` `=` _Alphabet_ | *ALPHA* _Identifier_ `=` _ChannelDefinition_ | *ALPHA* _Identifier_ `(` _Process_ `)` `=` _ChannelDefinition_
 
    _ProcessDefinition_ &#8594; _Process_ `=` _ProcessExpression_ | _Process_ _Alphabet_ `=` _ProcessExpression_
 
@@ -118,17 +120,15 @@ The grammar represents a subset of CSP:
 
    _Choices_ &#8594; _PrefixExpression_ | _Choices_ `|` _PrefixExpression_
 
-   _PrefixExpression_ &#8594; _Event_ `->` _ProcessExpression_ | _Event_ `->` _PrefixExpression_
+   _PrefixExpression_ &#8594; _Identifier_ `->` _ProcessExpression_ | _Identifier_ `->` _PrefixExpression_ | _Identifier_ `?` _Identifier_ `->` _ProcessExpression_ | _Identifier_ `!` _Identifier_ `->` _ProcessExpression_
 
    _Alphabet_ &#8594; `{` `}` | `{` _AlphabetMembers_ `}`
 
-   _AlphabetMembers_ &#8594; _Event_ | _AlphabetMembers_ `,` _Event_
+   _AlphabetMembers_ &#8594; _Identifier_ | _AlphabetMembers_ `,` _Identifier_
 
    _Process_ &#8594; *UCIDENT*
 
    _Label_ &#8594; _Identifier_
-
-   _Event_ &#8594; _Identifier_
 
    _Identifier_ &#8594; *LCIDENT* | _Identifier_ `.` *LCIDENT*
 

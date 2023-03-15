@@ -41,8 +41,12 @@
       MainProcess = ProcessDefinition | ProcessExpression .
       Definitions = Definition |
 	 Definitions Definition .
-      Definition = FunctionDefinition | ProcessDefinition .
+      Definition = FunctionDefinition | ChannelDefinition | ProcessDefinition .
       FunctionDefinition = Identifier "(" Identifier ")" = Identifier .
+      ChannelDefinition = ALPHA Identifier "=" Alphabet |
+	 ALPHA Identifier "(" Process ")" "=" Alphabet |
+	 ALPHA Identifier "=" ChannelDefinition |
+	 ALPHA Identifier "(" Process ")" "=" ChannelDefinition .
       ProcessDefinition = Process "=" ProcessExpression |
 	 Process Alphabet "=" ProcessExpression .
       ProcessExpression = ProcessSequence .
@@ -75,7 +79,11 @@
       Choices = PrefixExpression |
 	 Choices "|" PrefixExpression .
       PrefixExpression = Identifier "->" PrefixExpression |
-	 Event "->" ProcessExpression .
+	 Identifier "->" ProcessExpression |
+	 Identifier "?" Identifier "->" PrefixExpression |
+	 Identifier "?" Identifier "->" ProcessExpression |
+	 Identifier "!" Identifier "->" PrefixExpression |
+	 Identifier "!" Identifier "->" ProcessExpression .
       Alphabet = "{" "}" | "{" AlphabetMembers "}" .
       AlphabetMembers = Event | AlphabetMembers "," Event .
       Event = Identifier .
