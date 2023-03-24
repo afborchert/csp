@@ -46,15 +46,14 @@ namespace CSP {
 	 // accessors
 	 template <typename T>
 	 std::shared_ptr<T> lookup(const std::string& name) const {
-	    auto it = find(name);
-	    if (it == objects.end()) {
-	       return nullptr;
-	    }
+	    auto [ok, it] = find(name);
+	    if (!ok) return nullptr;
 	    return std::dynamic_pointer_cast<T>(it->second);
 	 }
 
 	 bool defined(const std::string& name) const {
-	    return find(name) != objects.end();
+	    auto [ok, it] = find(name);
+	    return ok;
 	 }
 
 	 ScopePtr get_outer() const {
@@ -72,12 +71,15 @@ namespace CSP {
 	 std::map<std::string, ObjectPtr> objects;
 	 using Iterator = std::map<std::string, ObjectPtr>::const_iterator;
 
-	 Iterator find(const std::string& name) const {
+	 std::pair<bool, Iterator> find(const std::string& name) const {
 	    auto it = objects.find(name);
-	    if (it == objects.end() && outer) {
-	       return outer->find(name);
+	    if (it == objects.end()) {
+	       if (outer) {
+		  return outer->find(name);
+	       }
+	       return {false, it};
 	    }
-	    return it;
+	    return {true, it};
 	 }
    };
 
