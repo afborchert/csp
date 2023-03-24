@@ -42,37 +42,44 @@ namespace CSP {
 
    class ChaosProcess: public Process {
       public:
-	 ChaosProcess(const Alphabet& alphabet) :
-	       chaos_alphabet(alphabet), state(undecided) {
+	 ChaosProcess(const Alphabet& alphabet) : chaos_alphabet(alphabet) {
 	 }
-	 ChaosProcess(ProcessPtr p_alphabet) :
-	       p_alphabet(p_alphabet), state(undecided) {
+	 ChaosProcess(ProcessPtr p_alphabet) : p_alphabet(p_alphabet) {
 	 }
 	 void print(std::ostream& out) const override {
 	    out << "CHAOS " << get_alphabet();
 	 }
 	 Alphabet acceptable(StatusPtr status) const final {
-	    decide();
-	    return accepting_next;
+	    auto s = get_status<InternalStatus>(status);
+	    decide(s);
+	    return s->accepting_next;
 	 }
 
       private:
+	 struct InternalStatus: public Status {
+	    mutable enum {undecided, decided} state;
+	    mutable Alphabet accepting_next; // defined if state == decided
+
+	    InternalStatus(StatusPtr status) :
+	       Status(status), state(undecided) {
+	    }
+	 };
+	 using InternalStatusPtr = std::shared_ptr<InternalStatus>;
+
 	 const Alphabet chaos_alphabet;
 	 ProcessPtr p_alphabet; // process from which we take its alphabet
-	 mutable enum {undecided, decided} state;
-	 mutable UniformIntDistribution prg;
-	 mutable Alphabet accepting_next; // defined if state == decided
 
 	 ActiveProcess internal_proceed(const std::string& next_event,
 	       StatusPtr status) final {
-	    decide();
-	    bool ok = accepting_next.is_member(next_event);
-	    state = undecided;
+	    auto s = get_status<InternalStatus>(status);
+	    decide(s);
+	    bool ok = s->accepting_next.is_member(next_event);
+	    s->state = InternalStatus::undecided;
 	    if (ok) {
-	       return {shared_from_this(), status};
+	       return {shared_from_this(), s};
 	    } else {
 	       /* STOP */
-	       return {nullptr, status};
+	       return {nullptr, s};
 	    }
 	 }
 	 Alphabet internal_get_alphabet() const final {
@@ -82,15 +89,15 @@ namespace CSP {
 	       return chaos_alphabet;
 	    }
 	 }
-	 void decide() const {
-	    if (state == undecided) {
-	       accepting_next = Alphabet();
+	 void decide(InternalStatusPtr s) const {
+	    if (s->state == InternalStatus::undecided) {
+	       s->accepting_next = Alphabet();
 	       for (const auto& event: get_alphabet()) {
-		  if (prg.flip()) {
-		     accepting_next.add(event);
+		  if (s->flip()) {
+		     s->accepting_next.add(event);
 		  }
 	       }
-	       state = decided;
+	       s->state = InternalStatus::decided;
 	    }
 	 }
 	 void initialize_dependencies() const final {

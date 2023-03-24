@@ -35,6 +35,12 @@
 #include "scope.hpp"
 #include "uniformint.hpp"
 
+/*
+   status objects maintain runtime information which include
+    - bound variables and processes
+    - storage of decisions made by non-deterministic processes
+*/
+
 namespace CSP {
 
    class Status;
@@ -73,15 +79,26 @@ namespace CSP {
 	 }
 
       private:
-	 ScopePtr scope;
+	 template<typename T, typename... Args>
+	 friend std::shared_ptr<T> get_status(StatusPtr status, Args&&... args);
+
+	 ScopePtr scope; // for bound variables and processes
+	 StatusPtr extended; // managed by get_status
 	 std::shared_ptr<UniformIntDistribution> prg;
    };
 
+   /* access extended status */
    template<typename T, typename... Args>
    std::shared_ptr<T> get_status(StatusPtr status, Args&&... args) {
       std::shared_ptr<T> s = std::dynamic_pointer_cast<T>(status);
       if (s) return s;
-      return std::make_shared<T>(status, std::forward<Args>(args)...);
+      if (status->extended) {
+	 std::shared_ptr<T> s = std::dynamic_pointer_cast<T>(status->extended);
+	 if (s) return s;
+      }
+      auto extended = std::make_shared<T>(status, std::forward<Args>(args)...);
+      status->extended = extended;
+      return extended;
    }
 
 } // namespace CSP
