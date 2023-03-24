@@ -1,0 +1,5 @@
+-- CSP, 5.1, X6, p. 173
+ABC = mu X. (
+   b -> SKIP alpha ABC |
+   a -> (X; (c -> SKIP alpha ABC))
+)

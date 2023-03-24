@@ -1,0 +1,10 @@
+-- CSP, 5.1, X7, p. 173-174
+ABCDE = (ABC; (d -> SKIP {a, b, c, d})) || CDE
+ABC = mu X. (
+   b -> SKIP alpha ABC |
+   a -> (X; (c -> SKIP alpha ABC))
+)
+CDE = f(ABC)
+f(a) = c
+f(b) = d
+f(c) = e

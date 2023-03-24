@@ -1,0 +1,2 @@
+-- CSP, 5.1, X8, p. 174
+POS = (down -> SKIP alpha POS | up -> (POS; POS))

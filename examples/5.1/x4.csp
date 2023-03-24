@@ -1,0 +1,8 @@
+-- CSP, 5.1, X4, pp. 172-173
+PIDGINGOL {a, the, cat, dog, bites, scratches} =
+   NOUNCLAUSE; PREDICATE
+PREDICATE = VERB; NOUNCLAUSE
+VERB = (bites -> SKIP alpha PIDGINGOL | scratches -> SKIP alpha PIDGINGOL)
+NOUNCLAUSE = ARTICLE; NOUN
+ARTICLE = (a -> SKIP alpha PIDGINGOL | the -> SKIP alpha PIDGINGOL)
+NOUN = (cat -> SKIP alpha PIDGINGOL | dog -> SKIP alpha PIDGINGOL)
