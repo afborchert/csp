@@ -100,6 +100,12 @@ namespace CSP {
 	    return name;
 	 }
 
+	 void print(std::ostream& out) const final {
+	    for (auto [event1, event2]: map) {
+	       out << name << "(" << event1 << ") = " << event2 << std::endl;
+	    }
+	 }
+
       private:
 	 std::string name;
 	 std::map<std::string, std::string> map;
@@ -126,23 +132,23 @@ namespace CSP {
 	       return event;
 	    }
 	 }
-
-	 void print(std::ostream& out) const final {
-	    for (auto [event1, event2]: map) {
-	       out << name << "(" << event1 << ") = " << event2 << std::endl;
-	    }
-	 }
    };
 
    /* see CSP 2.6.1 */
    class Inverse: public SymbolChanger {
-      public: Inverse(SymbolChangerPtr f) : f(f) {
-	 assert(f);
-	 auto f_ = std::dynamic_pointer_cast<Inverse>(f);
-	 if (f_) {
-	    f = f_->f;
+      public:
+	 Inverse(SymbolChangerPtr f) : f(f) {
+	    assert(f);
+	    auto f_ = std::dynamic_pointer_cast<Inverse>(f);
+	    if (f_) {
+	       f = f_->f;
+	    }
 	 }
-      }
+
+	 void print(std::ostream& out) const final {
+	    f->print(out); out << "^-1";
+	 }
+
       private:
 	 SymbolChangerPtr f;
 
@@ -157,10 +163,6 @@ namespace CSP {
 	 std::string internal_reverse_map(std::string event) final {
 	    return f->map(event);
 	 }
-
-	 void print(std::ostream& out) const final {
-	    f->print(out); out << "^-1";
-	 }
    };
 
    /* see CSP 2.6.2 */
@@ -168,6 +170,11 @@ namespace CSP {
       public:
 	 Qualifier(std::string label) : label(label) {
 	 }
+
+	 void print(std::ostream& out) const final {
+	    out << "f_" << label;
+	 }
+
       private:
 	 std::string label;
 
@@ -181,10 +188,6 @@ namespace CSP {
 
 	 std::string internal_reverse_map(std::string event) final {
 	    return event.substr(label.size() + 1);
-	 }
-
-	 void print(std::ostream& out) const final {
-	    out << "f_" << label;
 	 }
    };
 
