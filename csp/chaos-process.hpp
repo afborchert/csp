@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -51,7 +51,7 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    out << "CHAOS " << get_alphabet();
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
+	 Alphabet acceptable(StatusPtr status) const final {
 	    decide();
 	    return accepting_next;
 	 }
@@ -63,16 +63,16 @@ namespace CSP {
 	 mutable UniformIntDistribution prg;
 	 mutable Alphabet accepting_next; // defined if state == decided
 
-	 ProcessPtr internal_proceed(const std::string& next_event,
-	       Bindings& bindings) final {
+	 ActiveProcess internal_proceed(const std::string& next_event,
+	       StatusPtr status) final {
 	    decide();
 	    bool ok = accepting_next.is_member(next_event);
 	    state = undecided;
 	    if (ok) {
-	       return std::dynamic_pointer_cast<Process>(shared_from_this());
+	       return {shared_from_this(), status};
 	    } else {
 	       /* STOP */
-	       return nullptr;
+	       return {nullptr, status};
 	    }
 	 }
 	 Alphabet internal_get_alphabet() const final {
@@ -95,8 +95,7 @@ namespace CSP {
 	 }
 	 void initialize_dependencies() const final {
 	    if (p_alphabet) {
-	       p_alphabet->add_dependant(
-		  std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	       p_alphabet->add_dependant(shared_from_this());
 	    }
 	 }
    };

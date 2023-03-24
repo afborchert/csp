@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -23,48 +23,58 @@
    SOFTWARE.
 */
 
-#ifndef CSP_BINDINGS_HPP
-#define CSP_BINDINGS_HPP
+#ifndef CSP_PARAMETERS_HPP
+#define CSP_PARAMETERS_HPP
 
-#include <cassert>
 #include <cstdlib>
+#include <deque>
 #include <iostream>
-#include <memory>
-#include <unordered_map>
+#include <string>
 
+#include "alphabet.hpp"
 #include "object.hpp"
 
 namespace CSP {
-   /* we do not include "process.hpp" to avoid a reference cycle */
-   class Process;
-   using ProcessPtr = std::shared_ptr<Process>;
 
-   struct BindingsKey: public Object {
-      BindingsKey(ProcessPtr p, std::string name) :
-	    p(p), name(name) {
-      }
-      ProcessPtr p;
-      std::string name;
-      void print(std::ostream& out) const override {
-	 out << name;
-      }
-   };
-   using BindingsKeyPtr = std::shared_ptr<BindingsKey>;
-
-   class Bindings {
+   /* list of actual parameters */
+   class Parameters: public Object {
       public:
-	 void set(BindingsKeyPtr key, std::string message) {
-	    assert(key);
-	    b.insert_or_assign(key, std::move(message));
+	 void print(std::ostream& out) const final {
+	    out << "("; bool first = true;
+	    for (auto event: events) {
+	       if (first) {
+		  first = false;
+	       } else {
+		  out << ", ";
+	       }
+	       out << event;
+	    }
+	    out << ")";
 	 }
-	 std::string get(BindingsKeyPtr key) const {
-	    auto it = b.find(key);
-	    assert(it != b.end());
-	    return it->second;
+	 void add(std::string event) {
+	    events.emplace_back(std::move(event));
 	 }
+	 auto size() const {
+	    return events.size();
+	 }
+	 const std::string& at(std::size_t index) const {
+	    return events.at(index);
+	 }
+
       private:
-	 std::unordered_map<BindingsKeyPtr, std::string> b;
+	 std::deque<std::string> events;
    };
+
+   using ParametersPtr = std::shared_ptr<Parameters>;
+   using ConstParametersPtr = std::shared_ptr<const Parameters>;
+
+   inline std::ostream& operator<<(std::ostream& out, ParametersPtr p) {
+      p->print(out); return out;
+   }
+
+   inline std::ostream& operator<<(std::ostream& out, ConstParametersPtr p) {
+      p->print(out); return out;
+   }
 
 } // namespace CSP
 

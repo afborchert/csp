@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -73,7 +73,7 @@ namespace CSP {
 	 }
 
 	 bool operator<=(const Alphabet& other) const {
-	    return other <= *this;
+	    return other >= *this;
 	 }
 
 	 bool operator==(const Alphabet& other) const {

@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -48,7 +48,9 @@
 	 ALPHA Identifier "=" ChannelDefinition |
 	 ALPHA Identifier "(" Process ")" "=" ChannelDefinition .
       ProcessDefinition = Process "=" ProcessExpression |
-	 Process Alphabet "=" ProcessExpression .
+	 Process Alphabet "=" ProcessExpression |
+	 Process Parameters "=" ProcessExpression |
+	 Process Parameters Alphabet "=" ProcessExpression .
       ProcessExpression = ProcessSequence .
       ProcessSequence = ParallelProcesses |
 	 ProcessSequence ";" ParallelProcesses .
@@ -58,13 +60,16 @@
 	 InterleavingProcesses "|||" ExternalChoice .
       ExternalChoice = InternalChoice |
 	 ExternalChoice "[]" InternalChoice .
-      InternalChoice = ConcealedProcessExpression |
-	 InternalChoice = "|~|" ConcealedProcessExpression .
+      InternalChoice = SubordinationExpression |
+	 InternalChoice = "|~|" SubordinationExpression .
+      SubordinationExpression = ConcealedProcessExpression |
+	 SubordinationExpression "//" ConcealedProcessExpression .
       ConcealedProcessExpression = LabeledProcessExpression |
 	 LabeledProcessExpression "\" Alphabet .
       LabeledProcessExpression = SimpleProcessExpression |
 	 Label COLON SimpleProcessExpression .
       SimpleProcessExpression = Process |
+	 Process Parameters |
 	 CHAOS Alphabet | CHAOS ALPHA Process |
 	 RUN Alphabet | RUN ALPHA Process |
 	 STOP Alphabet | STOP ALPHA Process |
@@ -84,6 +89,8 @@
 	 Identifier "?" Identifier "->" ProcessExpression |
 	 Identifier "!" Identifier "->" PrefixExpression |
 	 Identifier "!" Identifier "->" ProcessExpression .
+      Parameters = "(" ParameterList ")" .
+      ParameterList = Identifier | ParameterList "," Identifier .
       Alphabet = "{" "}" | "{" AlphabetMembers "}" .
       AlphabetMembers = Event | AlphabetMembers "," Event .
       Event = Identifier .
@@ -98,9 +105,9 @@ namespace CSP {
    class SymTable;
 }
 
+
 #include <memory>
 
-#include "bindings.hpp"
 #include "channel.hpp"
 #include "chaos-process.hpp"
 #include "concealed-process.hpp"
@@ -113,6 +120,7 @@ namespace CSP {
 #include "mapped-process.hpp"
 #include "object.hpp"
 #include "parallel-processes.hpp"
+#include "parameters.hpp"
 #include "prefixed-process.hpp"
 #include "process-definition.hpp"
 #include "process-reference.hpp"
@@ -125,6 +133,7 @@ namespace CSP {
 #include "selecting-process.hpp"
 #include "skip-process.hpp"
 #include "stop-process.hpp"
+#include "subordination.hpp"
 #include "symbol-changer.hpp"
 #include "symtable.hpp"
 #include "writing-process.hpp"
@@ -134,6 +143,7 @@ using namespace CSP;
 
 ChannelPtr get_channel(location const* loc, SymTable& symtab,
       const std::string& name);
+NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
 
 %}
 
@@ -152,7 +162,7 @@ ChannelPtr get_channel(location const* loc, SymTable& symtab,
 
 /* operators */
 %token ARROW OR EQUAL PARALLEL INTERLEAVES INTERNAL_CHOICE EXTERNAL_CHOICE
-%token CONCEAL
+%token CONCEAL SUBORDINATION
 
 /* delimiters */
 %token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON COLON PERIOD
@@ -207,7 +217,8 @@ channel_definition: ALPHA identifier EQUAL alphabet_expression
    | ALPHA identifier LPAREN process RPAREN EQUAL alphabet_expression
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
-	 auto pn = std::dynamic_pointer_cast<ProcessReference>($4);
+	 auto pid = std::dynamic_pointer_cast<Identifier>($4);
+	 auto pn = get_process(pid->get_name(), symtab);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($7);
 	 auto channel = get_channel(&@$, symtab, id->get_name());
 	 channel->set_alphabet(pn->get_name(), evset->get_alphabet());
@@ -239,29 +250,66 @@ function_definition: identifier LPAREN identifier RPAREN EQUAL identifier
       }
    ;
 
-process_definition: process EQUAL process_expression
+process_definition: process_definition_header EQUAL process_expression
       {
-	 auto pn = std::dynamic_pointer_cast<ProcessReference>($1);
-	 auto gp = std::dynamic_pointer_cast<Process>($3);
-	 auto process = std::make_shared<ProcessDefinition>(pn->get_name(), gp);
-	 bool ok = symtab.insert(pn->get_name(), process);
-	 if (!ok) {
-	    yyerror(&@$, "process defined multiple times");
-	 }
-	 $$ = process;
+	 auto np = std::dynamic_pointer_cast<ProcessDefinition>($1);
+	 auto p = std::dynamic_pointer_cast<Process>($3);
+	 np->set_process(p);
+	 symtab.close();
       }
    ;
-process_definition: process alphabet EQUAL process_expression
+process_definition_header: process
       {
-	 auto pn = std::dynamic_pointer_cast<ProcessReference>($1);
-	 auto gp = std::dynamic_pointer_cast<Process>($4);
-	 auto process = std::make_shared<ProcessDefinition>(pn->get_name(), gp);
-	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
-	 process->set_alphabet(evset->get_alphabet());
-	 bool ok = symtab.insert(pn->get_name(), process);
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto process = std::make_shared<ProcessDefinition>(id->get_name());
+	 bool ok = symtab.insert(id->get_name(), process);
 	 if (!ok) {
 	    yyerror(&@$, "process defined multiple times");
 	 }
+	 symtab.open();
+	 $$ = process;
+      }
+   | process alphabet
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
+	 auto process = std::make_shared<ProcessDefinition>(id->get_name());
+	 process->set_alphabet(evset->get_alphabet());
+	 bool ok = symtab.insert(id->get_name(), process);
+	 if (!ok) {
+	    yyerror(&@$, "process defined multiple times");
+	 }
+	 symtab.open();
+	 $$ = process;
+      }
+   | process parameters
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto formal = std::dynamic_pointer_cast<Parameters>($2);
+	 auto process = std::make_shared<ProcessDefinition>(id->get_name(),
+	    formal);
+	 bool ok = symtab.insert(id->get_name(), process);
+	 if (!ok) {
+	    yyerror(&@$, "process defined multiple times");
+	 }
+	 symtab.open();
+	 process->enter_parameters(symtab);
+	 $$ = process;
+      }
+   | process parameters alphabet
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto formal = std::dynamic_pointer_cast<Parameters>($2);
+	 auto evset = std::dynamic_pointer_cast<EventSet>($3);
+	 auto process = std::make_shared<ProcessDefinition>(id->get_name(),
+	    formal);
+	 process->set_alphabet(evset->get_alphabet());
+	 bool ok = symtab.insert(id->get_name(), process);
+	 if (!ok) {
+	    yyerror(&@$, "process defined multiple times");
+	 }
+	 symtab.open();
+	 process->enter_parameters(symtab);
 	 $$ = process;
       }
    ;
@@ -305,12 +353,21 @@ external_choice: internal_choice
       }
    ;
 
-internal_choice: concealed_process
-   | internal_choice INTERNAL_CHOICE concealed_process
+internal_choice: subordination_expression
+   | internal_choice INTERNAL_CHOICE subordination_expression
       {
 	 auto p1 = std::dynamic_pointer_cast<Process>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
 	 $$ = std::make_shared<InternalChoice>(p1, p2);
+      }
+   ;
+
+subordination_expression: concealed_process
+   | subordination_expression SUBORDINATION concealed_process
+      {
+	 auto p = std::dynamic_pointer_cast<Process>($1);
+	 auto q = std::dynamic_pointer_cast<Process>($3);
+	 $$ = std::make_shared<Subordination>(p, q);
       }
    ;
 
@@ -338,6 +395,21 @@ labeled_process_expression: simple_process_expression
       }
    ;
 simple_process_expression: process
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto p = std::make_shared<ProcessReference>(id->get_name(), symtab);
+	 p->register_ref();
+	 $$ = p;
+      }
+   | process parameters
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto actual = std::dynamic_pointer_cast<Parameters>($2);
+	 auto p = std::make_shared<ProcessReference>(id->get_name(),
+	    actual, symtab);
+	 p->register_ref();
+	 $$ = p;
+      }
    | CHAOS alphabet
       {
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
@@ -345,7 +417,8 @@ simple_process_expression: process
       }
    | CHAOS ALPHA process
       {
-	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 auto id = std::dynamic_pointer_cast<Identifier>($3);
+	 auto alpha_p = get_process(id->get_name(), symtab);
 	 $$ = std::make_shared<ChaosProcess>(alpha_p);
       }
    | RUN alphabet
@@ -355,7 +428,8 @@ simple_process_expression: process
       }
    | RUN ALPHA process
       {
-	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 auto id = std::dynamic_pointer_cast<Identifier>($3);
+	 auto alpha_p = get_process(id->get_name(), symtab);
 	 $$ = std::make_shared<RunProcess>(alpha_p);
       }
    | SKIP alphabet
@@ -365,7 +439,8 @@ simple_process_expression: process
       }
    | SKIP ALPHA process
       {
-	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 auto id = std::dynamic_pointer_cast<Identifier>($3);
+	 auto alpha_p = get_process(id->get_name(), symtab);
 	 $$ = std::make_shared<SkipProcess>(alpha_p);
       }
    | STOP alphabet
@@ -375,7 +450,8 @@ simple_process_expression: process
       }
    | STOP ALPHA process
       {
-	 auto alpha_p = std::dynamic_pointer_cast<Process>($3);
+	 auto id = std::dynamic_pointer_cast<Identifier>($3);
+	 auto alpha_p = get_process(id->get_name(), symtab);
 	 $$ = std::make_shared<StopProcess>(alpha_p);
       }
    | open_expression process_expression close_expression
@@ -408,29 +484,30 @@ simple_process_expression: process
 
 mu_header: MU process PERIOD
       {
-	 auto pn = std::dynamic_pointer_cast<ProcessReference>($2);
-	 auto p = std::make_shared<RecursiveProcess>(pn->get_name());
+	 auto id = std::dynamic_pointer_cast<Identifier>($2);
+	 auto p = std::make_shared<RecursiveProcess>(id->get_name());
 	 symtab.open();
-	 bool ok = symtab.insert(pn->get_name(), p); assert(ok);
+	 bool ok = symtab.insert(id->get_name(), p); assert(ok);
 	 $$ = p;
       }
    | MU process COLON alphabet PERIOD
       {
-	 auto pn = std::dynamic_pointer_cast<ProcessReference>($2);
+	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($4);
-	 auto p = std::make_shared<RecursiveProcess>(pn->get_name(),
+	 auto p = std::make_shared<RecursiveProcess>(id->get_name(),
 	    evset->get_alphabet());
 	 symtab.open();
-	 bool ok = symtab.insert(pn->get_name(), p); assert(ok);
+	 bool ok = symtab.insert(id->get_name(), p); assert(ok);
 	 $$ = p;
       }
    | MU process COLON ALPHA process PERIOD
       {
-	 auto pn = std::dynamic_pointer_cast<ProcessReference>($2);
-	 auto alpha_p = std::dynamic_pointer_cast<ProcessReference>($5);
-	 auto p = std::make_shared<RecursiveProcess>(pn->get_name(), alpha_p);
+	 auto id = std::dynamic_pointer_cast<Identifier>($2);
+	 auto id_alpha_p = std::dynamic_pointer_cast<Identifier>($3);
+	 auto alpha_p = get_process(id_alpha_p->get_name(), symtab);
+	 auto p = std::make_shared<RecursiveProcess>(id->get_name(), alpha_p);
 	 symtab.open();
-	 bool ok = symtab.insert(pn->get_name(), p); assert(ok);
+	 bool ok = symtab.insert(id->get_name(), p); assert(ok);
 	 $$ = p;
       }
    ;
@@ -444,7 +521,6 @@ choices: prefix_expression
       {
 	 auto p1 = std::dynamic_pointer_cast<SelectingProcess>($1);
 	 auto p2 = std::dynamic_pointer_cast<Process>($3);
-	 Bindings bindings;
 	 p1->add_choice(p2);
 	 $$ = p1;
       }
@@ -470,9 +546,8 @@ prefix_expression: identifier ARROW prefix_or_process_expression
 	 auto channel = get_channel(&@$, symtab, cid->get_name());
 	 auto id = std::dynamic_pointer_cast<Identifier>($3);
 	 auto p = std::dynamic_pointer_cast<Process>($5);
-	 auto key = symtab.lookup<BindingsKey>(id->get_name());
-	 if (key) {
-	    $$ = std::make_shared<WritingProcess>(channel, key, p);
+	 if (symtab.defined(id->get_name())) {
+	    $$ = std::make_shared<WritingProcess>(channel, id->get_name(), p);
 	 } else {
 	    auto event = channel->get_name() + "." + id->get_name();
 	    $$ = std::make_shared<PrefixedProcess>(event, p);
@@ -488,14 +563,31 @@ input_operation: identifier QM identifier
 	 auto variable = std::dynamic_pointer_cast<Identifier>($3);
 	 auto p = std::make_shared<ReadingProcess>(channel,
 	    variable->get_name());
-	 auto key = std::make_shared<BindingsKey>(p, variable->get_name());
-	 p->set_key(key);
-	 symtab.insert(variable->get_name(), key);
+	 symtab.define(variable->get_name());
 	 $$ = p;
       }
    ;
 prefix_or_process_expression: process_expression
    | prefix_expression
+   ;
+
+parameters: LPAREN parameter_list RPAREN
+      { $$ = $2; }
+   ;
+parameter_list: identifier
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto params = std::make_shared<Parameters>();
+	 params->add(id->get_name());
+	 $$ = params;
+      }
+   | parameter_list COMMA identifier
+      {
+	 auto params = std::dynamic_pointer_cast<Parameters>($1);
+	 auto id = std::dynamic_pointer_cast<Identifier>($3);
+	 params->add(id->get_name());
+	 $$ = params;
+      }
    ;
 
 alphabet: LBRACE RBRACE
@@ -547,4 +639,12 @@ ChannelPtr get_channel(location const* loc, SymTable& symtab,
       }
    }
    return channel;
+}
+
+NamedProcessPtr get_process(const std::string& name, SymTable& symtab) {
+   auto p = symtab.lookup<NamedProcess>(name);
+   if (p) return p;
+   auto rp = std::make_shared<ProcessReference>(name, symtab);
+   rp->register_ref(); rp->set_refonly();
+   return rp;
 }

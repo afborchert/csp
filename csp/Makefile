@@ -53,34 +53,33 @@ $(GeneratedCPPSourcesFromBison): %.tab.cpp: %.ypp
 depend:		$(CPPSources)
 		$(MAKEDEPEND) $(CPPFLAGS) $(CPPSources)
 # DO NOT DELETE
-parser.tab.o: parser.tab.cpp bindings.hpp object.hpp channel.hpp \
- alphabet.hpp chaos-process.hpp process.hpp uniformint.hpp \
+parser.tab.o: parser.tab.cpp channel.hpp alphabet.hpp object.hpp \
+ chaos-process.hpp process.hpp status.hpp scope.hpp uniformint.hpp \
  concealed-process.hpp error.hpp parser.hpp location.hh symtable.hpp \
- scope.hpp named-process.hpp symbol-changer.hpp identifier.hpp \
- parser.tab.hpp external-choice.hpp event-set.hpp \
- interleaving-processes.hpp internal-choice.hpp mapped-process.hpp \
- parallel-processes.hpp prefixed-process.hpp process-definition.hpp \
+ symbol-changer.hpp identifier.hpp parser.tab.hpp external-choice.hpp \
+ event-set.hpp interleaving-processes.hpp internal-choice.hpp \
+ mapped-process.hpp parallel-processes.hpp parameters.hpp \
+ prefixed-process.hpp process-definition.hpp named-process.hpp \
  process-reference.hpp process-sequence.hpp reading-process.hpp \
  recursive-process.hpp run-process.hpp scanner.hpp selecting-process.hpp \
- writing-process.hpp skip-process.hpp stop-process.hpp yytname.hpp
+ writing-process.hpp skip-process.hpp stop-process.hpp subordination.hpp \
+ yytname.hpp
 yytname.o: yytname.cpp
-error.o: error.cpp error.hpp parser.hpp location.hh symtable.hpp \
- scope.hpp named-process.hpp channel.hpp alphabet.hpp object.hpp \
- process.hpp bindings.hpp uniformint.hpp symbol-changer.hpp \
- identifier.hpp parser.tab.hpp
-scanner.o: scanner.cpp error.hpp parser.hpp location.hh symtable.hpp \
- scope.hpp named-process.hpp channel.hpp alphabet.hpp object.hpp \
- process.hpp bindings.hpp uniformint.hpp symbol-changer.hpp \
- identifier.hpp parser.tab.hpp process-reference.hpp scanner.hpp
-testlex.o: testlex.cpp parser.hpp location.hh symtable.hpp scope.hpp \
- named-process.hpp channel.hpp alphabet.hpp object.hpp process.hpp \
- bindings.hpp uniformint.hpp symbol-changer.hpp identifier.hpp \
- parser.tab.hpp scanner.hpp yytname.hpp
-testparser.o: testparser.cpp parser.hpp location.hh symtable.hpp \
- scope.hpp named-process.hpp channel.hpp alphabet.hpp object.hpp \
- process.hpp bindings.hpp uniformint.hpp symbol-changer.hpp \
- identifier.hpp parser.tab.hpp scanner.hpp yytname.hpp
-trace.o: trace.cpp bindings.hpp object.hpp parser.hpp location.hh \
- symtable.hpp scope.hpp named-process.hpp channel.hpp alphabet.hpp \
- process.hpp uniformint.hpp symbol-changer.hpp identifier.hpp \
- parser.tab.hpp scanner.hpp yytname.hpp
+error.o: error.cpp error.hpp parser.hpp location.hh process.hpp \
+ alphabet.hpp channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp \
+ symtable.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp
+scanner.o: scanner.cpp error.hpp parser.hpp location.hh process.hpp \
+ alphabet.hpp channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp \
+ symtable.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp \
+ process-reference.hpp parameters.hpp process-definition.hpp \
+ named-process.hpp scanner.hpp
+testlex.o: testlex.cpp parser.hpp location.hh process.hpp alphabet.hpp \
+ channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp symtable.hpp \
+ symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp yytname.hpp
+testparser.o: testparser.cpp parser.hpp location.hh process.hpp \
+ alphabet.hpp channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp \
+ symtable.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp \
+ scanner.hpp yytname.hpp
+trace.o: trace.cpp parser.hpp location.hh process.hpp alphabet.hpp \
+ channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp symtable.hpp \
+ symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp yytname.hpp

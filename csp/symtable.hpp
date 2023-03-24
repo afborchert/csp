@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -33,6 +33,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -45,6 +46,8 @@ namespace CSP {
       private:
 	 ScopePtr scope;
 	 ScopePtr global;
+	 unsigned unique = 0;
+
 	 struct Reference {
 	    Reference(std::string name, std::function<bool()> resolve) :
 		  name(std::move(name)), resolve(std::move(resolve)) {
@@ -66,6 +69,10 @@ namespace CSP {
 	    } else {
 	       return global->lookup<T>(name);
 	    }
+	 }
+
+	 bool defined(const std::string& name) const {
+	    return scope->defined(name);
 	 }
 
 	 // mutators
@@ -106,12 +113,22 @@ namespace CSP {
 	    assert(scope);
 	    return scope->insert(name, object);
 	 }
+	 bool define(const std::string& name) {
+	    return insert(name, nullptr);
+	 }
+
 	 bool global_insert(const std::string& name, ObjectPtr object) {
 	    assert(global);
 	    return global->insert(name, object);
 	 }
 	 void add_unresolved(std::string name, std::function<bool()> resolve) {
 	    unresolved.emplace_back(std::move(name), std::move(resolve));
+	 }
+
+	 std::string get_unique_symbol() {
+	    std::ostringstream out;
+	    out << "$" << unique++;
+	    return out.str();
 	 }
    };
 

@@ -95,7 +95,7 @@ The grammar represents a subset of CSP:
 
    _ChannelDefinition_ &#8594; *ALPHA* _Identifier_ `=` _Alphabet_ | *ALPHA* _Identifier_ `(` _Process_ `)` `=` _Alphabet_ | *ALPHA* _Identifier_ `=` _ChannelDefinition_ | *ALPHA* _Identifier_ `(` _Process_ `)` `=` _ChannelDefinition_
 
-   _ProcessDefinition_ &#8594; _Process_ `=` _ProcessExpression_ | _Process_ _Alphabet_ `=` _ProcessExpression_
+   _ProcessDefinition_ &#8594; _Process_ `=` _ProcessExpression_ | _Process_ _Alphabet_ `=` _ProcessExpression_ | _Process_ _Parameters_ `=` _ProcessExpression_ | _Process_ _Parameters_ _Alphabet_ `=` _ProcessExpression_
 
    _ProcessExpression_ &#8594; _ProcessSequence_
 
@@ -114,13 +114,17 @@ The grammar represents a subset of CSP:
 
    _LabeledProcessExpression_ &#8594; _SimpleProcessExpression_ | _Label_ `:` _SimpleProcessExpression_
 
-   _SimpleProcessExpression_ &#8594; _Process_ | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* _Process_ | *RUN* _Alphabet_ | *RUN* *ALPHA* _Process_ | *STOP* _Alphabet_ | *STOP* *ALPHA* _Process_ | *SKIP* _Alphabet_ | *SKIP* *ALPHA* _Process_ | `(` _ProcessExpression_ `)` | `(` _Choices_ `)` | _Identifier_ `(` _ProcessExpression_ `)` | _MuHeader_ `(` _Choices_ `)`
+   _SimpleProcessExpression_ &#8594; _Process_ | _Process_ _Parameters_ | *CHAOS* _Alphabet_ | *CHAOS* *ALPHA* _Process_ | *RUN* _Alphabet_ | *RUN* *ALPHA* _Process_ | *STOP* _Alphabet_ | *STOP* *ALPHA* _Process_ | *SKIP* _Alphabet_ | *SKIP* *ALPHA* _Process_ | `(` _ProcessExpression_ `)` | `(` _Choices_ `)` | _Identifier_ `(` _ProcessExpression_ `)` | _MuHeader_ `(` _Choices_ `)`
 
    _MuHeader_ &#8594; *MU* _Process_ `.` | *MU* _Process_ `:` _Alphabet_ `.` | *MU* _Process_ `:` *ALPHA* _Process_ `.`
 
    _Choices_ &#8594; _PrefixExpression_ | _Choices_ `|` _PrefixExpression_
 
    _PrefixExpression_ &#8594; _Identifier_ `->` _ProcessExpression_ | _Identifier_ `->` _PrefixExpression_ | _Identifier_ `?` _Identifier_ `->` _ProcessExpression_ | _Identifier_ `!` _Identifier_ `->` _ProcessExpression_
+
+   _Parameters_ &#8594; `(` _ParameterList_ `)`
+
+   _ParameterList_ &#8594; _Identifier_ | _ParameterList_ `,` _Identifier_
 
    _Alphabet_ &#8594; `{` `}` | `{` _AlphabetMembers_ `}`
 

@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -106,12 +106,8 @@ restart:
 	 token = parser::token::ALPHA;
       } else if (*tokenstr == "mu") {
 	 token = parser::token::MU;
-      } else if (token == parser::token::LCIDENT) {
-	 yylval = std::make_shared<Identifier>(*tokenstr);
       } else {
-	 auto p = std::make_shared<ProcessReference>(*tokenstr, symtab);
-	 p->register_ref();
-	 yylval = p;
+	 yylval = std::make_shared<Identifier>(*tokenstr);
       }
       tokenstr = nullptr;
    } else {
@@ -122,13 +118,9 @@ restart:
 	 case '/':
 	    nextch();
 	    if (ch == '/') {
-	       /* single-line comment */
-	       while (!eof && ch != '\n') {
-		  nextch();
-	       }
-	       if (eof) {
-		  error("unexpected eof in single-line comment");
-	       }
+	       nextch();
+	       token = parser::token::SUBORDINATION;
+	       break;
 	    } else if (ch == '*') {
 	       /* delimited comment */
 	       nextch();

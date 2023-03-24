@@ -1,0 +1,7 @@
+-- CSP, 4.2, X7
+VAR = (left?x -> VAR_helper(x))
+VAR_helper(x) = (
+   left?y -> VAR_helper(y) |
+   right!x -> VAR_helper(x)
+)
+alpha left = alpha right = {0, 1}

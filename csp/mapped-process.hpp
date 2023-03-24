@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -50,18 +50,18 @@ namespace CSP {
 	    std::ostringstream os; process->print(os);
 	    out << f->get_name(os.str());
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
-	    return f->map(process->acceptable(bindings));
+	 Alphabet acceptable(StatusPtr status) const final {
+	    return f->map(process->acceptable(status));
 	 }
 
       private:
 	 SymbolChangerPtr f;
 	 ProcessPtr process;
 
-	 ProcessPtr internal_proceed(const std::string& event,
-	       Bindings& bindings) final {
-	    auto p = process->proceed(f->reverse_map(event), bindings);
-	    return std::make_shared<MappedProcess>(p, f);
+	 ActiveProcess internal_proceed(const std::string& event,
+	       StatusPtr status) final {
+	    auto [p, s] = process->proceed(f->reverse_map(event), status);
+	    return {std::make_shared<MappedProcess>(p, f), s};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    /* mapping is done through map_alphabet below */

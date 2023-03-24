@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -57,10 +57,12 @@ namespace CSP {
    class Object;
    using ObjectPtr = std::shared_ptr<Object>;
 
-   class Object: public std::enable_shared_from_this<Object> {
+   class Object {
       friend std::ostream& operator<<(std::ostream& out,
 	 const ObjectPtr& object);
       public:
+	 virtual ~Object() {}
+
 	 /* print method that is safe in regard to recursion */
 	 virtual void print(std::ostream& out) const = 0;
 

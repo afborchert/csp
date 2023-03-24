@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -25,18 +25,22 @@
 
 /*
    A process definition object behaves like its right-hand-side process
-   but it remembers its left-hand-side name for printing
+   but it remembers its left-hand-side name for printing;
+   processes can be parameterized with events
 */
 
 #ifndef CSP_PROCESS_DEFINITION_HPP
 #define CSP_PROCESS_DEFINITION_HPP
 
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "alphabet.hpp"
 #include "named-process.hpp"
+#include "parameters.hpp"
 
 namespace CSP {
 
@@ -45,15 +49,39 @@ namespace CSP {
 
    class ProcessDefinition: public NamedProcess {
       public:
-	 ProcessDefinition(const std::string& name, ProcessPtr process) :
-	       NamedProcess(name), process(process) {
-	    assert(process);
+	 ProcessDefinition(const std::string& name) :
+	       NamedProcess(name) {
+	 }
+	 ProcessDefinition(const std::string& name,
+		  ParametersPtr params) :
+	       NamedProcess(name), params(params) {
+	 }
+
+	 void set_process(ProcessPtr p) {
+	    assert(p); assert(!process);
+	    process = p;
+	 }
+
+	 void enter_parameters(SymTable& symtab) {
+	    if (params) {
+	       for (std::size_t i = 0; i < params->size(); ++i) {
+		  symtab.define(params->at(i));
+	       }
+	    }
 	 }
 	 void print(std::ostream& out) const override {
-	    out << get_name() << " = "; process->print(out);
+	    if (params) {
+	       out << get_name() << params << " = "; process->print(out);
+	    } else {
+	       out << get_name() << " = "; process->print(out);
+	    }
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
-	    return process->acceptable(bindings);
+	 ConstParametersPtr get_params() const {
+	    return params;
+	 }
+
+	 Alphabet acceptable(StatusPtr status) const final {
+	    return process->acceptable(status);
 	 }
 
 	 void add_channel(ChannelPtr c) const override {
@@ -61,11 +89,12 @@ namespace CSP {
 	 }
 
       private:
+	 ParametersPtr params; // if any
 	 ProcessPtr process;
 
-	 ProcessPtr internal_proceed(const std::string& event,
-	       Bindings& bindings) final {
-	    return process->proceed(event, bindings);
+	 ActiveProcess internal_proceed(const std::string& event,
+	       StatusPtr status) final {
+	    return process->proceed(event, status);
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return process->get_alphabet();

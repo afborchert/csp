@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -35,9 +35,11 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tuple>
 
 #include "alphabet.hpp"
 #include "process.hpp"
+#include "status.hpp"
 #include "uniformint.hpp"
 
 namespace CSP {
@@ -52,47 +54,56 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    process1->print(out); out << " ||| "; process2->print(out);
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
-	    return process1->acceptable(bindings) +
-	       process2->acceptable(bindings);
+	 Alphabet acceptable(StatusPtr status) const final {
+	    return process1->acceptable(status) +
+	       process2->acceptable(status);
 	 }
 
       private:
+	 struct InternalStatus: public Status {
+	    StatusPtr s1;
+	    StatusPtr s2;
+	    InternalStatus(StatusPtr status) :
+	       Status(status), s1(status), s2(status) {
+	    }
+	 };
+
 	 ProcessPtr process1;
 	 ProcessPtr process2;
-	 UniformIntDistribution prg;
 
-	 ProcessPtr internal_proceed(const std::string& event,
-	       Bindings& bindings) final {
-	    Alphabet a1 = process1->acceptable(bindings);
-	    Alphabet a2 = process2->acceptable(bindings);
+	 ActiveProcess internal_proceed(const std::string& event,
+	       StatusPtr status) final {
+	    auto s = get_status<InternalStatus>(status);
+	    Alphabet a1 = process1->acceptable(s->s1);
+	    Alphabet a2 = process2->acceptable(s->s2);
 	    bool ok1 = a1.is_member(event);
 	    bool ok2 = a2.is_member(event);
 	    if (ok1 && ok2) {
-	       if (prg.flip()) {
+	       if (status->flip()) {
 		  ok1 = false;
 	       } else {
 		  ok2 = false;
 	       }
 	    }
+	    ProcessPtr p;
 	    if (ok1) {
-	       return std::make_shared<InterleavingProcesses>(
-			process1->proceed(event, bindings), process2);
+	       std::tie(p, s->s1) = process1->proceed(event, s->s1);
+	       p = std::make_shared<InterleavingProcesses>(p, process2);
 	    } else if (ok2) {
-	       return std::make_shared<InterleavingProcesses>(
-			process1, process2->proceed(event, bindings));
+	       std::tie(p, s->s2) = process2->proceed(event, s->s2);
+	       p = std::make_shared<InterleavingProcesses>(process1, p);
 	    } else {
-	       return nullptr;
+	       p = nullptr;
 	    }
+	    return {p, s};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return process1->get_alphabet() + process2->get_alphabet();
 	 }
 	 void initialize_dependencies() const final {
-	    process1->add_dependant(std::dynamic_pointer_cast<const Process>(
-	       shared_from_this()));
-	    process2->add_dependant(
-	       std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	    auto me = shared_from_this();
+	    process1->add_dependant(me);
+	    process2->add_dependant(me);
 	 }
    };
 

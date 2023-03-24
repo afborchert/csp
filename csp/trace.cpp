@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -28,12 +28,13 @@
 #include <ctime>
 #include <fstream>
 #include <iostream>
+#include <tuple>
 #include <unistd.h>
 
-#include "bindings.hpp"
 #include "parser.hpp"
 #include "process.hpp"
 #include "scanner.hpp"
+#include "status.hpp"
 #include "symtable.hpp"
 #include "yytname.hpp"
 
@@ -105,7 +106,7 @@ int main(int argc, char** argv) {
 	 }
 	 exit(0);
       }
-      Bindings bindings;
+      auto status = std::make_shared<Status>();
       if (opt_p) {
 	 std::cout << "Tracing: " << process << std::endl;
       }
@@ -114,18 +115,18 @@ int main(int argc, char** argv) {
       }
       if (opt_v) {
 	 std::cout << "Acceptable: " <<
-	    process->acceptable(bindings) << std::endl;
+	    process->acceptable(status) << std::endl;
       }
-      if (!process->accepts_success(bindings)) {
+      if (!process->accepts_success(status)) {
 	 std::string event;
 	 while (std::cin >> event) {
 	    if (process->get_alphabet().is_member(event)) {
-	       process = process->proceed(event, bindings);
+	       std::tie(process, status) = process->proceed(event, status);
 	       if (!process) {
 		  std::cerr << "cannot accept " << event << std::endl;
 		  exit(1);
 	       }
-	       if (process->accepts_success(bindings)) break;
+	       if (process->accepts_success(status)) break;
 	       if (opt_e) {
 		  std::cout << event << std::endl;
 	       }
@@ -134,7 +135,7 @@ int main(int argc, char** argv) {
 	       }
 	       if (opt_v) {
 		  std::cout << "Acceptable: " <<
-		     process->acceptable(bindings) << std::endl;
+		     process->acceptable(status) << std::endl;
 	       }
 	    } else {
 	       std::cout << "Not in alphabet: " << event << std::endl;

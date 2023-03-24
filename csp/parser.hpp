@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -41,6 +41,7 @@ namespace CSP {
 #include "location.hh"
 
 /* regular includes */
+#include "process.hpp"
 #include "symtable.hpp"
 
 /* last include */

@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -47,12 +47,8 @@ namespace CSP {
    class ReadingProcess: public Process {
       public:
 	 ReadingProcess(ChannelPtr channel,
-	       const std::string& variable) :
-	       channel(channel), variable(variable) {
-	 }
-	 void set_key(BindingsKeyPtr k) {
-	    assert(k && !key);
-	    key = k;
+	       const std::string& varname) :
+	       channel(channel), varname(varname) {
 	 }
 	 void set_process(ProcessPtr p) {
 	    assert(p && !process);
@@ -64,10 +60,10 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    if (process) {
 	       out << channel->get_name() <<
-		  "?" << variable << " -> " << process;
+		  "?" << varname << " -> " << process;
 	    } else {
 	       out << channel->get_name() <<
-		  "?" << variable << " -> ...";
+		  "?" << varname << " -> ...";
 	    }
 	 }
 	 void expanded_print(std::ostream& out) const override {
@@ -75,7 +71,7 @@ namespace CSP {
 	       otherwise this is done by SelectingProcess */
 	    out << "("; print(out); out << ")";
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
+	 Alphabet acceptable(StatusPtr status) const final {
 	    if (!acceptable_computed) {
 	       std::string prefix = channel->get_name() + ".";
 	       auto prefix_len = prefix.length();
@@ -90,21 +86,22 @@ namespace CSP {
 
       private:
 	 ChannelPtr channel;
-	 const std::string variable;
+	 const std::string varname;
 	 ProcessPtr process;
-	 BindingsKeyPtr key;
 	 mutable bool acceptable_computed = false;
 	 mutable Alphabet a; // return value for acceptable
 
-	 ProcessPtr internal_proceed(const std::string& next_event,
-	       Bindings& bindings) final {
+	 ActiveProcess internal_proceed(const std::string& next_event,
+	       StatusPtr status) final {
 	    std::string prefix = channel->get_name() + ".";
 	    auto prefix_len = prefix.length();
-	    if (next_event.substr(0, prefix_len) != prefix) return nullptr;
+	    if (next_event.substr(0, prefix_len) != prefix) {
+	       return {nullptr, status};
+	    }
 	    auto message = next_event.substr(prefix_len);
-	    assert(key);
-	    bindings.set(key, message);
-	    return process;
+	    status = std::make_shared<Status>(status);
+	    status->set(varname, std::make_shared<Identifier>(message));
+	    return {process, status};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    /* the rest of the alphabet is constructed through

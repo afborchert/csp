@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -60,7 +60,7 @@ namespace CSP {
 	       otherwise this is done by SelectingProcess */
 	    out << "("; print(out); out << ")";
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
+	 Alphabet acceptable(StatusPtr status) const final {
 	    return Alphabet(event);
 	 }
 
@@ -68,18 +68,21 @@ namespace CSP {
 	 const std::string event;
 	 ProcessPtr process;
 
-	 ProcessPtr internal_proceed(const std::string& next_event,
-	       Bindings& bindings) final {
+	 ActiveProcess internal_proceed(const std::string& next_event,
+	       StatusPtr status) final {
+	    ProcessPtr p;
 	    if (event == next_event) {
-	       return process;
+	       p = process;
 	    } else {
-	       return nullptr;
+	       p = nullptr;
 	    }
+	    return {p, status};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return Alphabet(event) + process->get_alphabet();
 	 }
 	 void initialize_dependencies() const final {
+	    add_dependant(process);
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
 	 }

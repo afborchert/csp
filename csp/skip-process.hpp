@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -50,7 +50,7 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    out << "SKIP " << get_alphabet();
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
+	 Alphabet acceptable(StatusPtr status) const final {
 	    return Alphabet("_success_");
 	 }
 
@@ -58,13 +58,13 @@ namespace CSP {
 	 const Alphabet skip_alphabet;
 	 ProcessPtr p_alphabet; // process from which we take its alphabet
 
-	 ProcessPtr internal_proceed(const std::string& next_event,
-	       Bindings& bindings) final {
+	 ActiveProcess internal_proceed(const std::string& next_event,
+	       StatusPtr status) final {
 	    /* should usually not be used */
 	    if (next_event == "_success_") {
-	       return std::make_shared<StopProcess>(skip_alphabet);
+	       return {std::make_shared<StopProcess>(skip_alphabet), status};
 	    } else {
-	       return nullptr;
+	       return {nullptr, status};
 	    }
 	 }
 	 Alphabet internal_get_alphabet() const final {
@@ -76,8 +76,7 @@ namespace CSP {
 	 }
 	 void initialize_dependencies() const final {
 	    if (p_alphabet) {
-	       p_alphabet->add_dependant(
-		  std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	       p_alphabet->add_dependant(shared_from_this());
 	    }
 	 }
    };

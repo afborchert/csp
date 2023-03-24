@@ -23,37 +23,66 @@
    SOFTWARE.
 */
 
-#ifndef CSP_EVENT_SET_HPP
-#define CSP_EVENT_SET_HPP
+#ifndef CSP_STATUS_HPP
+#define CSP_STATUS_HPP
 
-#include <iostream>
-#include <string>
+#include <cassert>
+#include <cstdlib>
+#include <memory>
+#include <vector>
+#include <utility>
 
-#include "alphabet.hpp"
-#include "object.hpp"
+#include "scope.hpp"
+#include "uniformint.hpp"
 
 namespace CSP {
 
-   class EventSet: public Object {
+   class Status;
+   using StatusPtr = std::shared_ptr<Status>;
+
+   class Status {
       public:
-	 EventSet() {
+	 Status() :
+	       scope(std::make_shared<Scope>()),
+	       prg(std::make_shared<UniformIntDistribution>()) {
 	 }
-	 EventSet(const Alphabet& alphabet) : alphabet(alphabet) {
+	 Status(StatusPtr status) :
+	       scope(std::make_shared<Scope>(status->scope)),
+	       prg(status->prg) {
 	 }
-	 EventSet(const std::string& name) {
-	    alphabet.add(name);
+
+	 virtual ~Status() {}
+
+	 template <typename T>
+	 auto lookup(const std::string& name) const {
+	    auto object = scope->lookup<T>(name);
+	    assert(object);
+	    return object;
 	 }
-	 void print(std::ostream& out) const override {
-	    out << alphabet;
+
+	 void set(const std::string& name, ObjectPtr object) {
+	    bool ok = scope->insert(name, object);
+	    assert(ok);
 	 }
-	 const Alphabet& get_alphabet() const {
-	    return alphabet;
+
+	 auto draw(unsigned int upper_limit) {
+	    return prg->draw(upper_limit);
 	 }
+	 bool flip() {
+	    return prg->flip();
+	 }
+
       private:
-	 Alphabet alphabet;
+	 ScopePtr scope;
+	 std::shared_ptr<UniformIntDistribution> prg;
    };
 
-   using EventSetPtr = std::shared_ptr<EventSet>;
+   template<typename T, typename... Args>
+   std::shared_ptr<T> get_status(StatusPtr status, Args&&... args) {
+      std::shared_ptr<T> s = std::dynamic_pointer_cast<T>(status);
+      if (s) return s;
+      return std::make_shared<T>(status, std::forward<Args>(args)...);
+   }
 
 } // namespace CSP
 

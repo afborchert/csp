@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -29,8 +29,8 @@
 #include <map>
 #include <memory>
 #include <string>
-#include "named-process.hpp"
-#include "symbol-changer.hpp"
+
+#include "object.hpp"
 
 namespace CSP {
 
@@ -38,10 +38,6 @@ namespace CSP {
    using ScopePtr = std::shared_ptr<Scope>;
 
    class Scope {
-      private:
-	 ScopePtr outer;
-	 std::map<std::string, ObjectPtr> objects;
-
       public:
 	 // constructors
 	 Scope() = default;
@@ -50,15 +46,15 @@ namespace CSP {
 	 // accessors
 	 template <typename T>
 	 std::shared_ptr<T> lookup(const std::string& name) const {
-	    auto it = objects.find(name);
+	    auto it = find(name);
 	    if (it == objects.end()) {
-	       if (outer) {
-		  return outer->lookup<T>(name);
-	       } else {
-		  return nullptr;
-	       }
+	       return nullptr;
 	    }
 	    return std::dynamic_pointer_cast<T>(it->second);
+	 }
+
+	 bool defined(const std::string& name) const {
+	    return find(name) != objects.end();
 	 }
 
 	 ScopePtr get_outer() const {
@@ -69,6 +65,19 @@ namespace CSP {
 	 bool insert(const std::string& name, ObjectPtr object) {
 	    auto [it, ok] = objects.insert(std::make_pair(name, object));
 	    return ok;
+	 }
+
+      private:
+	 ScopePtr outer;
+	 std::map<std::string, ObjectPtr> objects;
+	 using Iterator = std::map<std::string, ObjectPtr>::const_iterator;
+
+	 Iterator find(const std::string& name) const {
+	    auto it = objects.find(name);
+	    if (it == objects.end() && outer) {
+	       return outer->find(name);
+	    }
+	    return it;
 	 }
    };
 

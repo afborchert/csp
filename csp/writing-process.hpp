@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -39,24 +39,24 @@
 #include <string>
 
 #include "alphabet.hpp"
-#include "bindings.hpp"
 #include "channel.hpp"
+#include "identifier.hpp"
 #include "process.hpp"
 
 namespace CSP {
 
    class WritingProcess: public Process {
       public:
-	 WritingProcess(ChannelPtr channel,
-	       BindingsKeyPtr key, ProcessPtr process) :
-	       channel(channel), key(key), process(process) {
+	 WritingProcess(ChannelPtr channel, const std::string& varname,
+		  ProcessPtr process) :
+	       channel(channel), varname(varname), process(process) {
 	    assert(process);
 	 }
 	 const ChannelPtr get_channel() {
 	    return channel;
 	 }
 	 void print(std::ostream& out) const override {
-	    out << channel->get_name() << "!" << key->name << " -> ";
+	    out << channel->get_name() << "!" << varname << " -> ";
 	    process->print(out);
 	 }
 	 void expanded_print(std::ostream& out) const override {
@@ -64,23 +64,28 @@ namespace CSP {
 	       otherwise this is done by SelectingProcess */
 	    out << "("; print(out); out << ")";
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
-	    auto message = bindings.get(key);
-	    auto event = channel->get_name() + "." + message;
+	 Alphabet acceptable(StatusPtr status) const final {
+	    auto message = status->lookup<Identifier>(varname);
+	    auto event = channel->get_name() + "." + message->get_name();
 	    return Alphabet(event);
 	 }
 
       private:
 	 ChannelPtr channel;
-	 BindingsKeyPtr key;
+	 std::string varname;
 	 ProcessPtr process;
 
-	 ProcessPtr internal_proceed(const std::string& next_event,
-	       Bindings& bindings) final {
-	    auto message = bindings.get(key);
-	    auto event = channel->get_name() + "." + message;
-	    if (next_event == event) return process;
-	    return nullptr;
+	 ActiveProcess internal_proceed(const std::string& next_event,
+	       StatusPtr status) final {
+	    auto message = status->lookup<Identifier>(varname);
+	    auto event = channel->get_name() + "." + message->get_name();
+	    ProcessPtr p;
+	    if (next_event == event) {
+	       p = process;
+	    } else {
+	       p = nullptr;
+	    }
+	    return {p, status};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    /* the rest of the alphabet is constructed through
@@ -98,5 +103,3 @@ namespace CSP {
 } // namespace CSP
 
 #endif
-
-

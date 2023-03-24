@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -31,6 +31,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 
 /* we need to declare these first
    as these types are required by some of the headers below */
@@ -42,17 +43,19 @@ namespace CSP {
 }
 
 #include "alphabet.hpp"
-#include "bindings.hpp"
 #include "channel.hpp"
 #include "object.hpp"
+#include "status.hpp"
 #include "uniformint.hpp"
 
 namespace CSP {
 
+   using ActiveProcess = std::pair<ProcessPtr, StatusPtr>;
+
    /*
       Instances of this class represent CSP processes.
    */
-   class Process: public Object {
+   class Process: public Object, public std::enable_shared_from_this<Process> {
       public:
 	 // default constructor
 	 Process() {}
@@ -62,27 +65,27 @@ namespace CSP {
 	    null is returned if the event was not accepted;
 	    the same process is returned if the event
 	    does not belong to the alphabet of this process */
-	 ProcessPtr proceed(const std::string& event, Bindings& bindings) {
+	 ActiveProcess proceed(const std::string& event, StatusPtr status) {
 	    if (get_alphabet().is_member(event)) {
 	       /* use internal polymorphic function
 	          to process this event */
-	       return internal_proceed(event, bindings);
+	       return internal_proceed(event, status);
 	    } else {
 	       /* if it is not in our alphabet
 		  we are not interested in it */
-	       return std::dynamic_pointer_cast<Process>(shared_from_this());
+	       return {shared_from_this(), status};
 	    }
 	 }
 
 	 /* retrieve the set of symbols which would be
 	    accepted next by this process;
 	    the empty set is returned in case of STOP */
-	 virtual Alphabet acceptable(Bindings& bindings) const = 0;
+	 virtual Alphabet acceptable(StatusPtr status) const = 0;
 
 	 /* returns true iff success is accepted,
 	    i.e. in case of a SKIP process */
-	 bool accepts_success(Bindings& bindings) const {
-	    return acceptable(bindings).is_member("_success_");
+	 bool accepts_success(StatusPtr status) const {
+	    return acceptable(status).is_member("_success_");
 	 }
 
 	 /* retrieve the alphabet of this process;
@@ -122,7 +125,7 @@ namespace CSP {
 
 	 /* add a process to the list of dependants whose
 	    alphabet depends on this process */
-	 void add_dependant(ConstProcessPtr p) {
+	 void add_dependant(ConstProcessPtr p) const {
 	    dependants.push_back(p);
 	 }
 
@@ -134,8 +137,8 @@ namespace CSP {
 	 /* internal implementation of proceed
 	    which no longer needs to check if event belongs to
 	    our alphabet and that depends on the actual process */
-	 virtual ProcessPtr internal_proceed(const std::string& event,
-	    Bindings& bindings) = 0;
+	 virtual ActiveProcess internal_proceed(const std::string& event,
+	    StatusPtr status) = 0;
 
 	 /* construct initial alphabet */
 	 virtual Alphabet internal_get_alphabet() const = 0;
@@ -175,8 +178,7 @@ namespace CSP {
    };
 
    inline std::ostream& operator<<(std::ostream& out, ProcessPtr p) {
-      ObjectPtr object(p);
-      object->expanded_print(out); return out;
+      p->expanded_print(out); return out;
    }
 
    inline std::ostream& operator<<(std::ostream& out, ConstProcessPtr p) {

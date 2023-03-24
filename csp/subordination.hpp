@@ -24,11 +24,12 @@
 */
 
 /*
-   Sequence of processes, i.e. processes of the form P1; P2
+   Support of subordination operator P // Q,
+   see CSP 4.5
 */
 
-#ifndef CSP_PROCESS_SEQUENCE_HPP
-#define CSP_PROCESS_SEQUENCE_HPP
+#ifndef CSP_SUBORDINATION_HPP
+#define CSP_SUBORDINATION_HPP
 
 #include <cassert>
 #include <iostream>
@@ -40,44 +41,48 @@
 
 namespace CSP {
 
-   class ProcessSequence: public Process {
+   class Subordination: public Process {
       public:
-	 ProcessSequence(ProcessPtr p, ProcessPtr q) :
-	       process1(p), process2(q) {
-	    assert(process1);
-	    assert(process2);
+	 Subordination(ProcessPtr p, ProcessPtr q) : p(p), q(q) {
+	    assert(p); assert(q);
 	 }
 	 void print(std::ostream& out) const override {
-	    process1->print(out); out << "; "; process2->print(out);
+	    p->print(out); out << " // "; q->print(out);
 	 }
 	 Alphabet acceptable(StatusPtr status) const final {
-	    if (process1->accepts_success(status)) {
-	       return process2->acceptable(status);
-	    } else {
-	       return process1->acceptable(status);
-	    }
+	    setup();
+	    return pq->acceptable(status);
 	 }
 
       private:
-	 ProcessPtr process1;
-	 ProcessPtr process2;
+	 ProcessPtr p;
+	 ProcessPtr q;
+	 mutable ProcessPtr pq; // (P || Q) \ alpha P
+
+	 void setup() const {
+	    if (!pq) {
+	       auto pp = std::make_shared<ParallelProcesses>(p, q);
+	       auto p_alpha = p->get_alphabet();
+	       auto q_alpha = q->get_alphabet();
+	       auto conceal = p_alpha * q_alpha;
+	       pq = std::make_shared<ConcealedProcess>(pp, conceal);
+	    }
+	 }
 
 	 ActiveProcess internal_proceed(const std::string& event,
 	       StatusPtr status) final {
-	    if (process1->accepts_success(status)) {
-	       return process2->proceed(event, status);
-	    } else {
-	       auto [p, s] = process1->proceed(event, status);
-	       return {std::make_shared<ProcessSequence>(p, process2), s};
-	    }
+	    setup();
+	    return pq->proceed(event, status);
 	 }
 	 Alphabet internal_get_alphabet() const final {
-	    return process1->get_alphabet() + process2->get_alphabet();
+	    auto p_alpha = p->get_alphabet();
+	    auto q_alpha = q->get_alphabet();
+	    return q_alpha - p_alpha;
 	 }
-	 void initialize_dependencies() const final {
-	    auto me = shared_from_this();
-	    process1->add_dependant(me);
-	    process2->add_dependant(me);
+
+	 void initialize_dependencies() const {
+	    /* make sure that the alphabet of p includes that of q */
+	    p->add_dependant(q);
 	 }
    };
 

@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -35,6 +35,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tuple>
 
 #include "alphabet.hpp"
 #include "process.hpp"
@@ -45,17 +46,18 @@ namespace CSP {
    class ConcealedProcess: public Process {
       public:
 	 ConcealedProcess(ProcessPtr p, Alphabet concealed) :
-	    process(p), concealed(concealed), state(undecided) {
+	       process(p), concealed(concealed) {
 	    assert(process);
 	    assert(concealed.cardinality() > 0); // otherwise not useful
 	 }
 	 void print(std::ostream& out) const override {
 	    process->print(out); out << " \\ " << concealed;
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
-	    decide(bindings);
-	    if (next) {
-	       return next->acceptable(bindings) - concealed;
+	 Alphabet acceptable(StatusPtr status) const final {
+	    auto s = get_status<InternalStatus>(status);
+	    decide(s);
+	    if (s->next) {
+	       return s->next->acceptable(s->status) - concealed;
 	    } else {
 	       /* too bad -- we have turned into STOP */
 	       return Alphabet();
@@ -65,30 +67,37 @@ namespace CSP {
       private:
 	 ProcessPtr process;
 	 Alphabet concealed;
-	 /* if asked, we move ahead */
-	 mutable enum {undecided, decided} state;
-	 mutable UniformIntDistribution prg;
-	 mutable ProcessPtr next; // defined if state == decided
 
-	 ProcessPtr internal_proceed(const std::string& event,
-	       Bindings& bindings) final {
-	    decide(bindings);
-	    ProcessPtr p = next;
-	    state = undecided;
+	 struct InternalStatus: public Status {
+	    /* if asked, we move ahead */
+	    StatusPtr status; // for process
+	    enum {undecided, decided} state;
+	    ProcessPtr next; // defined if state == decided
 
-	    if (!p) {
-	       return nullptr;
+	    InternalStatus(StatusPtr status) :
+	       Status(status), status(status), state(undecided) {
 	    }
-	    p = std::make_shared<ConcealedProcess>(p->proceed(event, bindings),
-	       concealed);
+	 };
+	 using InternalStatusPtr = std::shared_ptr<InternalStatus>;
+
+	 ActiveProcess internal_proceed(const std::string& event,
+	       StatusPtr status) final {
+	    auto s = get_status<InternalStatus>(status);
+	    decide(s);
+	    ProcessPtr p = s->next;
+	    if (!p) {
+	       return {nullptr, s};
+	    }
+	    std::tie(p, s->status) = p->proceed(event, s->status);
+	    p = std::make_shared<ConcealedProcess>(p, concealed);
 	    p->set_alphabet(process->get_alphabet() - concealed);
-	    return p;
+	    return {p, s->status};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return process->get_alphabet() - concealed;
 	 }
-	 void decide(Bindings& bindings) const {
-	    if (state == undecided) {
+	 void decide(InternalStatusPtr s) const {
+	    if (s->state == InternalStatus::undecided) {
 	       /* as noted in 3.5.2 the implementation of this operator
 		  is inherently non-deterministic and thereby possibly
 		  divergent, i.e. this could be an endless loop if
@@ -99,26 +108,29 @@ namespace CSP {
 	       unsigned int count = 0;
 	       ProcessPtr p = process;
 	       while (p && count++ < 1000) {
-		  Alphabet acceptable = p->acceptable(bindings);
+		  Alphabet acceptable = p->acceptable(s->status);
 		  if (acceptable.cardinality() == 0) {
 		     /* deadlock */
-		     next = nullptr; state = decided; return;
-		  }
-		  /* we are chosing now the next event by random */
-		  auto chose = prg.draw(acceptable.cardinality());
-		  auto event = *std::next(acceptable.begin(), chose);
-		  if (!concealed.is_member(event)) {
-		     next = p; state = decided;
+		     s->next = nullptr; s->state = InternalStatus::decided;
 		     return;
 		  }
-		  p = p->proceed(event, bindings);
+		  /* we are chosing now the next event by random */
+		  auto chose = s->draw(acceptable.cardinality());
+		  auto event = *std::next(acceptable.begin(), chose);
+		  if (!concealed.is_member(event)) {
+		     s->next = p; s->state = InternalStatus::decided;
+		     return;
+		  }
+		  std::tie(p, s->status) = p->proceed(event, s->status);
 	       }
 	       /* emergency break from a possibly otherwise endless loop;
 	          the only option we have here is to turn into STOP */
-	       next = nullptr;
-	       state = decided;
+	       s->next = nullptr;
+	       s->state = InternalStatus::decided;
 	    }
+	    return;
 	 }
+
 	 /* no initialize_dependencies */
    };
 

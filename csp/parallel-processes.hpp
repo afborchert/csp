@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -50,32 +50,48 @@ namespace CSP {
 	 void print(std::ostream& out) const override {
 	    process1->print(out); out << " || "; process2->print(out);
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
+	 void expanded_print(std::ostream& out) const override {
+	    process1->expanded_print(out);
+	    out << " || ";
+	    process2->expanded_print(out);
+	 }
+	 Alphabet acceptable(StatusPtr status) const final {
 	    /* events are acceptable either
 	         if they are accepted by both, or
 		 if they do belong to the alphabet of one of the processes only
 		    and are acceptable by the corresponding process
 	    */
 	    Alphabet sd = process1->get_alphabet() / process2->get_alphabet();
-	    Alphabet p1a = process1->acceptable(bindings);
-	    Alphabet p2a = process2->acceptable(bindings);
+	    auto s = get_status<InternalStatus>(status);
+	    Alphabet p1a = process1->acceptable(s->s1);
+	    Alphabet p2a = process2->acceptable(s->s2);
 	    Alphabet ex1 = sd * p1a;
 	    Alphabet ex2 = sd * p2a;
 	    return p1a * p2a + ex1 + ex2;
 	 }
 
       private:
+	 struct InternalStatus: public Status {
+	    StatusPtr s1;
+	    StatusPtr s2;
+	    InternalStatus(StatusPtr status) :
+	       Status(status), s1(status), s2(status) {
+	    }
+	 };
+
 	 ProcessPtr process1;
 	 ProcessPtr process2;
 
-	 ProcessPtr internal_proceed(const std::string& event,
-	       Bindings& bindings) final {
-	    ProcessPtr p1 = process1->proceed(event, bindings);
-	    ProcessPtr p2 = process2->proceed(event, bindings);
+	 ActiveProcess internal_proceed(const std::string& event,
+	       StatusPtr status) final {
+	    auto s = get_status<InternalStatus>(status);
+	    auto [p1, s1] = process1->proceed(event, s->s1);
+	    auto [p2, s2] = process2->proceed(event, s->s2);
 	    if (p1 && p2) {
-	       return std::make_shared<ParallelProcesses>(p1, p2);
+	       s->s1 = s1; s->s2 = s2;
+	       return {std::make_shared<ParallelProcesses>(p1, p2), s};
 	    } else {
-	       return nullptr;
+	       return {nullptr, s};
 	    }
 	 };
 	 Alphabet internal_get_alphabet() const final {

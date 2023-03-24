@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -37,6 +37,7 @@
 
 #include "alphabet.hpp"
 #include "process.hpp"
+#include "status.hpp"
 #include "uniformint.hpp"
 
 namespace CSP {
@@ -44,58 +45,68 @@ namespace CSP {
    class InternalChoice: public Process {
       public:
 	 InternalChoice(ProcessPtr p, ProcessPtr q) :
-	       nextmove(undecided), process1(p), process2(q) {
+	       process1(p), process2(q) {
 	    assert(process1);
 	    assert(process2);
 	 }
 	 void print(std::ostream& out) const override {
 	    process1->print(out); out << " |~| "; process2->print(out);
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
+	 Alphabet acceptable(StatusPtr status) const final {
+	    auto s = get_status<InternalStatus>(status);
 	    /* if we get asked, we make up our mind */
-	    decide();
-	    if (nextmove == headforp1) {
-	       return process1->acceptable(bindings);
+	    decide(s);
+	    if (s->nextmove == InternalStatus::headforp1) {
+	       return process1->acceptable(s->s1);
 	    } else {
-	       return process2->acceptable(bindings);
+	       return process2->acceptable(s->s2);
 	    }
 	 }
 
       private:
-	 /* if asked, we tell our next decision */
-	 mutable enum {undecided, headforp1, headforp2} nextmove;
-	 mutable UniformIntDistribution prg;
+	 struct InternalStatus: public Status {
+	    StatusPtr s1;
+	    StatusPtr s2;
+	    enum {undecided, headforp1, headforp2} nextmove;
+
+	    InternalStatus(StatusPtr status) :
+	       Status(status), s1(status), s2(status), nextmove(undecided) {
+	    }
+	 };
+	 using InternalStatusPtr = std::shared_ptr<InternalStatus>;
+
 	 ProcessPtr process1;
 	 ProcessPtr process2;
 
-	 ProcessPtr internal_proceed(const std::string& event,
-	       Bindings& bindings) final {
-	    decide();
-	    if (nextmove == headforp1) {
-	       nextmove = undecided;
-	       return process1->proceed(event, bindings);
+	 ActiveProcess internal_proceed(const std::string& event,
+	       StatusPtr status) final {
+	    auto s = get_status<InternalStatus>(status);
+	    decide(s);
+	    ProcessPtr p;
+	    if (s->nextmove == InternalStatus::headforp1) {
+	       std::tie(p, s->s1) = process1->proceed(event, s->s1);
 	    } else {
-	       nextmove = undecided;
-	       return process2->proceed(event, bindings);
+	       std::tie(p, s->s2) = process2->proceed(event, s->s2);
 	    }
+	    s->nextmove = InternalStatus::undecided;
+	    return {p, s};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return process1->get_alphabet() + process2->get_alphabet();
 	 }
-	 void decide() const {
-	    if (nextmove == undecided) {
-	       if (prg.flip()) {
-		  nextmove = headforp1;
+	 void decide(InternalStatusPtr s) const {
+	    if (s->nextmove == InternalStatus::undecided) {
+	       if (s->flip()) {
+		  s->nextmove = InternalStatus::headforp1;
 	       } else {
-		  nextmove = headforp2;
+		  s->nextmove = InternalStatus::headforp2;
 	       }
 	    }
 	 }
 	 void initialize_dependencies() const final {
-	    process1->add_dependant(std::dynamic_pointer_cast<const Process>(
-	       shared_from_this()));
-	    process2->add_dependant(
-	       std::dynamic_pointer_cast<const Process>(shared_from_this()));
+	    auto me = shared_from_this();
+	    process1->add_dependant(me);
+	    process2->add_dependant(me);
 	 }
    };
 

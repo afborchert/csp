@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2022 Andreas F. Borchert
+   Copyright (c) 2011-2023 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -32,15 +32,16 @@
 #define CSP_SELECTING_PROCESS_HPP
 
 #include <cassert>
-#include <deque>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "alphabet.hpp"
 #include "prefixed-process.hpp"
 #include "process.hpp"
 #include "reading-process.hpp"
+#include "status.hpp"
 #include "writing-process.hpp"
 
 namespace CSP {
@@ -68,37 +69,26 @@ namespace CSP {
 	    }
 	    out << ")";
 	 }
-	 Alphabet acceptable(Bindings& bindings) const final {
+	 Alphabet acceptable(StatusPtr status) const final {
 	    Alphabet set;
 	    for (auto choice: choices) {
-	       set = set + choice->acceptable(bindings);
+	       set = set + choice->acceptable(status);
 	    }
 	    return set;
 	 }
 
       private:
-	 std::deque<ProcessPtr> choices;
+	 std::vector<ProcessPtr> choices;
 
-	 ProcessPtr internal_proceed(const std::string& event,
-	       Bindings& bindings) final {
+	 ActiveProcess internal_proceed(const std::string& event,
+	       StatusPtr status) final {
 	    for (auto choice: choices) {
-	       auto p = choice->proceed(event, bindings);
+	       auto [p, s] = choice->proceed(event, status);
 	       if (p) {
-		  /* if we have a chain of prefixed processes,
-		     we return a SelectingProcess instead as
-		     PrefixedProcess objects are always enclosed
-		     by a SelectingProcess object;
-		     this helps to see parentheses when it is printed */
-		  ProcessPtr pp = std::dynamic_pointer_cast<PrefixedProcess>(p);
-		  if (!pp) pp = std::dynamic_pointer_cast<ReadingProcess>(p);
-		  if (!pp) pp = std::dynamic_pointer_cast<WritingProcess>(p);
-		  if (pp) {
-		     return std::make_shared<SelectingProcess>(pp);
-		  }
-		  return p;
+		  return {p, s};
 	       }
 	    }
-	    return nullptr;
+	    return {nullptr, status};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    Alphabet set;
