@@ -71,9 +71,14 @@ namespace CSP {
 	 }
 	 void print(std::ostream& out) const override {
 	    if (params) {
-	       out << get_name() << params << " = "; process->print(out);
+	       out << get_name() << params << " = ";
 	    } else {
-	       out << get_name() << " = "; process->print(out);
+	       out << get_name() << " = ";
+	    }
+	    if (process) {
+	       process->print(out);
+	    } else {
+	       out << "*undefined*";
 	    }
 	 }
 	 ConstParametersPtr get_params() const {
@@ -81,10 +86,12 @@ namespace CSP {
 	 }
 
 	 Alphabet acceptable(StatusPtr status) const final {
+	    assert(process);
 	    return process->acceptable(status);
 	 }
 
 	 void add_channel(ChannelPtr c) const override {
+	    assert(process);
 	    process->add_channel(c);
 	 }
 
