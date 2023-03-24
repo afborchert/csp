@@ -465,7 +465,7 @@ simple_process_expression: process
 	 auto f = symtab.lookup<FunctionDefinition>(id->get_name());
 	 if (!f) {
 	    f = std::make_shared<FunctionDefinition>(id->get_name());
-	    bool ok = symtab.insert(id->get_name(), f);
+	    bool ok = symtab.global_insert(id->get_name(), f);
 	    if (!ok) {
 	       yyerror(&@$, "conflicting references");
 	    }
