@@ -34,7 +34,7 @@ make
 
 ### Comments
 The commenting style of Ada and C is supported:
-* For single-line comments `//` or `--` can be used which extend to the end of the line.
+* `--` can be used for comments that extend to the end of the line.
 * Comments can be enclosed in `/*` and `*/`.
 
 ### Identifiers and keywords
@@ -43,7 +43,8 @@ Following identifiers and keywords are used by the grammar:
 | Symbol    | Description                                      | Regular expression
 | --------- | ------------------------------------------------ | --------------------
 | *UCIDENT* | identifier that begins with an upper case letter | `[A-Z][A-Za-z0-9_]*`
-| *LCIDENT* | identifier that begins with a lower case letter  | `[a-z][A-Za-z0-9_]*`
+| *LCIDENT* | identifier that begins with a lower case letter  | `[a-z0-9][A-Za-z0-9_]*`
+|           | or digit                                         |
 | *ALPHA*   | keyword "alpha" (must be lower case)             | alpha
 | *CHAOS*   | keyword "CHAOS" (must be upper case)             | CHAOS
 | *MU*      | keyword "mu" (must be lower case)                | mu
@@ -60,6 +61,7 @@ those with the highest precedence coming first:
 | `(`...`)`            | grouping             |                 |
 | `:`                  | labeling             | non-associative | 2.6.2
 | `\`                  | concealment          | non-associative | 3.5
+| `//`                 | subordination        | left-to-right   | 4.5
 | `->`                 | prefix               | right-to-left   | 1.1.1
 | &#124;~&#124;        | non-deterministic or | left-to-right   | 3.2
 | `[]`                 | general choice       | left-to-right   | 3.3
@@ -108,7 +110,9 @@ The grammar represents a subset of CSP:
 
    _ExternalChoice_ &#8594; _InternalChoice_ | _ExternalChoice_ `[]` _InternalChoice_
 
-   _InternalChoice_ &#8594; _ConcealedProcessExpression_ | _InternalChoice_ `|~|` _ConcealedProcessExpression_
+   _InternalChoice_ &#8594; _SubordinationExpression_ | _InternalChoice_ `|~|` _SubordinationExpression_
+
+   _SubordinationExpression_ &#8594; _ConcealedProcessExpression_ | _SubordinationExpression_ `//` _ConcealedProcessExpression_
 
    _ConcealedProcessExpression_ &#8594; _LabeledProcessExpression_ | _LabeledProcessExpression_ `\` _Alphabet_
 
@@ -435,4 +439,38 @@ Process: mu X.(in?x -> (out!x -> X))
 Acceptable: {in.0, in.1}
 OK
 $
+```
+
+## 4.2 X7
+Processes can be parameterized with messages but
+processes with and without parameters need different
+names:
+
+```
+$ cat x7.csp
+-- CSP, 4.2, X7
+VAR = (left?x -> VAR_helper(x))
+VAR_helper(x) = (
+   left?y -> VAR_helper(y) |
+   right!x -> VAR_helper(x)
+)
+alpha left = alpha right = {0, 1}
+$ trace x7.csp
+Tracing: VAR = (left?x -> VAR_helper(x))
+Alphabet: {left.0, left.1, right.0, right.1}
+Acceptable: {left.0, left.1}
+left.1
+Process: VAR_helper(x)
+Acceptable: {left.0, left.1, right.1}
+right.1
+Process: VAR_helper(x)
+Acceptable: {left.0, left.1, right.1}
+left.0
+Process: VAR_helper(y)
+Acceptable: {left.0, left.1, right.0}
+right.0
+Process: VAR_helper(x)
+Acceptable: {left.0, left.1, right.0}
+OK
+$ 
 ```

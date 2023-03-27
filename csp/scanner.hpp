@@ -28,8 +28,8 @@
 
 #include <iostream>
 #include <memory>
+
 #include "parser.hpp"
-#include "symtable.hpp"
 
 namespace CSP {
 
@@ -37,20 +37,17 @@ namespace CSP {
 
    class Scanner {
       public:
-	 Scanner(std::istream& in, const std::string& input_name,
-	    SymTable& symtab);
+	 Scanner(std::istream& in, const std::string& input_name);
 
 	 // mutators
 	 int get_token(semantic_type& yylval, location& yylloc);
 	 bool at_eof() const;
 
       private:
-	 SymTable& symtab;
 	 std::istream& in;
 	 std::string input_name;
 	 unsigned char ch;
 	 bool eof;
-	 int lasttoken; // last token returned by get_token()
 	 position oldpos, pos;
 	 location tokenloc;
 	 std::unique_ptr<std::string> tokenstr;

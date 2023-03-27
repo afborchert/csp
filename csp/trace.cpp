@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
    }
    SymTable symtab;
    std::string filename(fname);
-   Scanner scanner(fin, filename, symtab);
+   Scanner scanner(fin, filename);
 
    ProcessPtr process;
    parser p(scanner, symtab, process);

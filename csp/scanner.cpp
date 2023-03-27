@@ -58,9 +58,8 @@ bool is_whitespace(char ch) {
 
 // constructor ===============================================================
 
-Scanner::Scanner(std::istream& in, const std::string& input_name,
-	 SymTable& symtab) :
-      symtab(symtab), in(in), input_name(input_name),
+Scanner::Scanner(std::istream& in, const std::string& input_name) :
+      in(in), input_name(input_name),
       ch(0), eof(false), tokenstr(nullptr) {
    // unfortunately pos insists on a non-const pointer to std::string
    pos.initialize(&this->input_name);

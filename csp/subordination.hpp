@@ -80,7 +80,7 @@ namespace CSP {
 	    return q_alpha - p_alpha;
 	 }
 
-	 void initialize_dependencies() const {
+	 void initialize_dependencies() const final {
 	    /* make sure that the alphabet of p includes that of q */
 	    p->add_dependant(q);
 	 }

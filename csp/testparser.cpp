@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+
 #include "parser.hpp"
 #include "process.hpp"
 #include "scanner.hpp"
@@ -53,9 +54,9 @@ int main(int argc, char** argv) {
 	    " for reading" << std::endl;
 	 exit(1);
       }
-      scanner = std::make_unique<Scanner>(*fin, filename, symtab);
+      scanner = std::make_unique<Scanner>(*fin, filename);
    } else {
-      scanner = std::make_unique<Scanner>(std::cin, "stdin", symtab);
+      scanner = std::make_unique<Scanner>(std::cin, "stdin");
    }
 
    ProcessPtr process;

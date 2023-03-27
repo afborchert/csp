@@ -29,7 +29,6 @@
 #include <memory>
 #include "parser.hpp"
 #include "scanner.hpp"
-#include "symtable.hpp"
 #include "yytname.hpp"
 
 using namespace CSP;
@@ -41,7 +40,6 @@ int main(int argc, char** argv) {
       exit(1);
    }
 
-   SymTable symtab;
    std::unique_ptr<Scanner> scanner;
    std::unique_ptr<std::ifstream> fin = nullptr;
    if (argc > 0) {
@@ -53,9 +51,9 @@ int main(int argc, char** argv) {
 	    " for reading" << std::endl;
 	 exit(1);
       }
-      scanner = std::make_unique<Scanner>(*fin, filename, symtab);
+      scanner = std::make_unique<Scanner>(*fin, filename);
    } else {
-      scanner = std::make_unique<Scanner>(std::cin, "stdin", symtab);
+      scanner = std::make_unique<Scanner>(std::cin, "stdin");
    }
    semantic_type yylval;
    int token;
