@@ -58,10 +58,11 @@ those with the highest precedence coming first:
 | Operator             | Description          | Associativity   | Section
 | -------------------- | -------------------- | --------------- | -------
 | `(`...`)`            | grouping             |                 |
+| `->`                 | prefix               | right-to-left   | 1.1.1
+| `|`                  | choice               | left-to-right   | 1.1.3
 | `:`                  | labeling             | non-associative | 2.6.2
 | `\`                  | concealment          | non-associative | 3.5
 | `//`                 | subordination        | left-to-right   | 4.5
-| `->`                 | prefix               | right-to-left   | 1.1.1
 | &#124;~&#124;        | non-deterministic or | left-to-right   | 3.2
 | `[]`                 | general choice       | left-to-right   | 3.3
 | &#124;&#124;&#124;   | interleaving         | left-to-right   | 3.6

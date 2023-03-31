@@ -56,7 +56,7 @@
 	 ProcessSequence ";" ParallelProcesses .
       ParallelProcesses = InterleavingProcesses |
 	 ParallelProcesses "||" InterleavingProcesses .
-      InterleavingProcesses = ProcessChoices |
+      InterleavingProcesses = ExternalChoice |
 	 InterleavingProcesses "|||" ExternalChoice .
       ExternalChoice = InternalChoice |
 	 ExternalChoice "[]" InternalChoice .
