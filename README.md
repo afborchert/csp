@@ -59,7 +59,7 @@ those with the highest precedence coming first:
 | -------------------- | -------------------- | --------------- | -------
 | `(`...`)`            | grouping             |                 |
 | `->`                 | prefix               | right-to-left   | 1.1.1
-| `|`                  | choice               | left-to-right   | 1.1.3
+| `&#124;`             | choice               | left-to-right   | 1.1.3
 | `:`                  | labeling             | non-associative | 2.6.2
 | `\`                  | concealment          | non-associative | 3.5
 | `//`                 | subordination        | left-to-right   | 4.5
