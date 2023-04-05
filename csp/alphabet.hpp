@@ -203,6 +203,7 @@ namespace CSP {
 	    return out << "string";
 	 case Alphabet::integer:
 	    return out << "integer";
+      }
    }
 
 } // namespace CSP
