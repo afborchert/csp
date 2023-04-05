@@ -105,10 +105,23 @@ restart:
 	 token = parser::token::ALPHA;
       } else if (*tokenstr == "mu") {
 	 token = parser::token::MU;
+      } else if (*tokenstr == "string") {
+	 token = parser::token::STRING;
+      } else if (*tokenstr == "integer") {
+	 token = parser::token::INTEGER;
       } else {
 	 yylval = std::make_shared<Identifier>(*tokenstr);
       }
       tokenstr = nullptr;
+   } else if (ch == '"') {
+      tokenstr = std::make_unique<std::string>();
+      nextch();
+      while (ch != '"') {
+	 nextch();
+      }
+      yylval = std::make_shared<Identifier>(*tokenstr);
+      tokenstr = nullptr;
+      nextch;
    } else {
       switch (ch) {
 	 case 0:

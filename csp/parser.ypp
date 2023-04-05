@@ -99,7 +99,8 @@
       Process = UCIDENT .
 */
 
-%{
+%code top {
+
 namespace CSP {
    class Scanner;
    class SymTable;
@@ -145,7 +146,7 @@ ChannelPtr get_channel(location const* loc, SymTable& symtab,
       const std::string& name);
 NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
 
-%}
+} // end of code block at top
 
 %skeleton "lalr1.cc"
 %define api.prefix {csp}
@@ -172,7 +173,7 @@ NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
 %token LCIDENT UCIDENT
 
 /* keywords */
-%token ALPHA CHAOS RUN SKIP STOP MU
+%token ALPHA CHAOS RUN SKIP STOP MU INTEGER STRING
 
 %%
 
@@ -594,6 +595,10 @@ alphabet: LBRACE RBRACE
       { $$ = std::make_shared<EventSet>(); }
    | LBRACE alphabet_members RBRACE
       { $$ = $2; }
+   | STRING
+      { $$ = std::make_shared<EventSet>(Alphabet(Alphabet::string)); }
+   | INTEGER
+      { $$ = std::make_shared<EventSet>(Alphabet(Alphabet::integer)); }
    ;
 alphabet_members: event
       {
