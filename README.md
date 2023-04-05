@@ -43,13 +43,15 @@ Following identifiers and keywords are used by the grammar:
 | Symbol    | Description                                              | Regular expression
 | --------- | -------------------------------------------------------- | --------------------
 | *UCIDENT* | identifier that begins with an upper case letter         | `[A-Z][A-Za-z0-9_]*`
-| *LCIDENT* | identifier that begins with a lower case letter or digit | `[a-z0-9][A-Za-z0-9_]*`
+| *LCIDENT* | identifier that begins with a lower case letter or digit | `[a-z0-9][A-Za-z0-9_]*|"[^"]*"`
 | *ALPHA*   | keyword "alpha" (must be lower case)                     | alpha
 | *CHAOS*   | keyword "CHAOS" (must be upper case)                     | CHAOS
+| *INTEGER* | keyword "integer" (must be lower case)                   | integer
 | *MU*      | keyword "mu" (must be lower case)                        | mu
 | *RUN*     | keyword "RUN" (must be upper case)                       | RUN
-| *STOP*    | keyword "STOP" (must be upper case)                      | STOP
 | *SKIP*    | keyword "SKIP" (must be upper case)                      | SKIP
+| *STOP*    | keyword "STOP" (must be upper case)                      | STOP
+| *STRING*  | keyword "string" (must be lower case)                    | string
 
 ### Operators
 Following operators are supported and presented in the order of precedence,
@@ -130,7 +132,7 @@ The grammar represents a subset of CSP:
 
    _ParameterList_ &#8594; _Identifier_ | _ParameterList_ `,` _Identifier_
 
-   _Alphabet_ &#8594; `{` `}` | `{` _AlphabetMembers_ `}`
+   _Alphabet_ &#8594; `{` `}` | `{` _AlphabetMembers_ `}` | *STRING* | *INTEGER*
 
    _AlphabetMembers_ &#8594; _Identifier_ | _AlphabetMembers_ `,` _Identifier_
 
@@ -471,6 +473,37 @@ Acceptable: {left.0, left.1, right.0}
 right.0
 Process: VAR_helper(x)
 Acceptable: {left.0, left.1, right.0}
+OK
+$ 
+```
+
+## 6.2 X3
+Alphabets can have the special values *string* or *integer*. In
+these cases all strings (enclosed in `"..."`) or non-negative
+integers can be used, respectively:
+
+```
+$ cat x3.csp
+-- CSP, 6.2, X3
+lp:LP
+LP = (acquire -> mu X. (left?s -> h!s -> X | release -> LP))
+alpha left = alpha h = string
+$ trace x3.csp
+Tracing: lp:LP
+Alphabet: {lp.acquire, lp.h.*string*, lp.left.*string*, lp.release}
+Acceptable: {lp.acquire}
+lp.acquire
+Process: lp:mu X.(left?s -> (h!s -> X) | release -> LP)
+Acceptable: {lp.left.*string*, lp.release}
+lp.left."A.JONES"
+Process: lp:h!s -> X
+Acceptable: {lp.h."A.JONES"}
+lp.h."A.JONES"
+Process: lp:X
+Acceptable: {lp.left.*string*, lp.release}
+lp.release
+Process: lp:LP
+Acceptable: {lp.acquire}
 OK
 $ 
 ```

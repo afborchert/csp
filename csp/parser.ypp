@@ -31,10 +31,12 @@
       LCIDENT    Identifier that begins with a lower case letter
       ALPHA      keyword "alpha"
       CHAOS      keyword "CHAOS"
+      INTEGER    keyword "integer"
       MU         keyword "mu"
       RUN        keyword "RUN"
       SKIP       keyword "SKIP"
       STOP       keyword "STOP"
+      STRING     keyword "string"
 
    Productions:
       Unit = MainProcess Definitions .
@@ -91,7 +93,7 @@
 	 Identifier "!" Identifier "->" ProcessExpression .
       Parameters = "(" ParameterList ")" .
       ParameterList = Identifier | ParameterList "," Identifier .
-      Alphabet = "{" "}" | "{" AlphabetMembers "}" .
+      Alphabet = "{" "}" | "{" AlphabetMembers "}" | STRING | INTEGER .
       AlphabetMembers = Event | AlphabetMembers "," Event .
       Event = Identifier .
       Label = Identifier .
@@ -99,7 +101,7 @@
       Process = UCIDENT .
 */
 
-%code top {
+%{
 
 namespace CSP {
    class Scanner;
@@ -146,7 +148,7 @@ ChannelPtr get_channel(location const* loc, SymTable& symtab,
       const std::string& name);
 NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
 
-} // end of code block at top
+%}
 
 %skeleton "lalr1.cc"
 %define api.prefix {csp}
@@ -596,9 +598,9 @@ alphabet: LBRACE RBRACE
    | LBRACE alphabet_members RBRACE
       { $$ = $2; }
    | STRING
-      { $$ = std::make_shared<EventSet>(Alphabet(Alphabet::string)); }
+      { $$ = std::make_shared<EventSet>("*string*"); }
    | INTEGER
-      { $$ = std::make_shared<EventSet>(Alphabet(Alphabet::integer)); }
+      { $$ = std::make_shared<EventSet>("*integer*"); }
    ;
 alphabet_members: event
       {

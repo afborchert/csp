@@ -121,7 +121,7 @@ restart:
       }
       yylval = std::make_shared<Identifier>(*tokenstr);
       tokenstr = nullptr;
-      nextch;
+      nextch();
    } else {
       switch (ch) {
 	 case 0:

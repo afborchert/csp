@@ -1,3 +1,4 @@
 -- CSP, 6.2, X3
+lp:LP
 LP = (acquire -> mu X. (left?s -> h!s -> X | release -> LP))
-alpha left = alpha h = {0, 1}
+alpha left = alpha h = string
