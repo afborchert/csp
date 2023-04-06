@@ -9,7 +9,6 @@ CPPSources := $(GeneratedCPPSources) \
 Objects := $(patsubst %.cpp,%.o,$(CPPSources))
 MainCPPSources := testlex.cpp testparser.cpp trace.cpp
 MainObjects := $(patsubst %.cpp,%.o,$(MainCPPSources))
-#BISON := bison
 core_objs := error.o parser.tab.o scanner.o
 testparser_objs := $(core_objs) testparser.o
 testlex_objs := $(core_objs) testlex.o
