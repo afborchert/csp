@@ -1,7 +1,6 @@
 BisonSources :=	$(wildcard *.ypp)
 GeneratedCPPSourcesFromBison := $(patsubst %.ypp,%.tab.cpp,$(BisonSources))
-GeneratedCPPSources := $(GeneratedCPPSourcesFromBison) \
-   yytname.cpp
+GeneratedCPPSources := $(GeneratedCPPSourcesFromBison)
 GeneratedHPPSources := $(patsubst %.ypp,%.tab.hpp,$(BisonSources)) \
    $(wildcard *.hh)
 CPPSources := $(GeneratedCPPSources) \
@@ -11,11 +10,10 @@ Objects := $(patsubst %.cpp,%.o,$(CPPSources))
 MainCPPSources := testlex.cpp testparser.cpp trace.cpp
 MainObjects := $(patsubst %.cpp,%.o,$(MainCPPSources))
 #BISON := bison
-core_objs := error.o parser.tab.o scanner.o yytname.o
+core_objs := error.o parser.tab.o scanner.o
 testparser_objs := $(core_objs) testparser.o
 testlex_objs := $(core_objs) testlex.o
 trace_objs := $(core_objs) trace.o
-Utils := ../bison-scripts
 Binaries := testlex testparser trace
 MAKEDEPEND := perl ../gcc-makedepend/gcc-makedepend.pl
 
@@ -44,9 +42,6 @@ testparser:	$(testparser_objs)
 trace:		$(trace_objs)
 		$(CXX) $(LDFLAGS) -o $@ $(trace_objs) $(LDLIBS)
 
-yytname.cpp:	parser.tab.cpp
-		perl $(Utils)/extract_yytname.pl CSP parser.tab.cpp >$@
-
 $(GeneratedCPPSourcesFromBison): %.tab.cpp: %.ypp
 	$(BISON) -d $<
 
@@ -56,30 +51,30 @@ depend:		$(CPPSources)
 parser.tab.o: parser.tab.cpp channel.hpp alphabet.hpp object.hpp \
  chaos-process.hpp process.hpp status.hpp scope.hpp uniformint.hpp \
  concealed-process.hpp error.hpp parser.hpp location.hh symtable.hpp \
- symbol-changer.hpp identifier.hpp parser.tab.hpp external-choice.hpp \
- event-set.hpp interleaving-processes.hpp internal-choice.hpp \
- mapped-process.hpp parallel-processes.hpp parameters.hpp \
- prefixed-process.hpp process-definition.hpp named-process.hpp \
- process-reference.hpp process-sequence.hpp reading-process.hpp \
- recursive-process.hpp run-process.hpp scanner.hpp selecting-process.hpp \
- writing-process.hpp skip-process.hpp stop-process.hpp subordination.hpp \
- yytname.hpp
-yytname.o: yytname.cpp
+ symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp \
+ external-choice.hpp event-set.hpp interleaving-processes.hpp \
+ internal-choice.hpp mapped-process.hpp parallel-processes.hpp \
+ parameters.hpp prefixed-process.hpp process-definition.hpp \
+ named-process.hpp process-reference.hpp process-sequence.hpp \
+ reading-process.hpp recursive-process.hpp run-process.hpp \
+ selecting-process.hpp writing-process.hpp skip-process.hpp \
+ stop-process.hpp subordination.hpp
 error.o: error.cpp error.hpp parser.hpp location.hh process.hpp \
  alphabet.hpp channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp \
- symtable.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp
+ symtable.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp \
+ scanner.hpp
 scanner.o: scanner.cpp error.hpp parser.hpp location.hh process.hpp \
  alphabet.hpp channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp \
  symtable.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp \
- process-reference.hpp parameters.hpp process-definition.hpp \
- named-process.hpp scanner.hpp
+ scanner.hpp process-reference.hpp parameters.hpp process-definition.hpp \
+ named-process.hpp
 testlex.o: testlex.cpp parser.hpp location.hh process.hpp alphabet.hpp \
  channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp symtable.hpp \
- symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp yytname.hpp
+ symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp
 testparser.o: testparser.cpp parser.hpp location.hh process.hpp \
  alphabet.hpp channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp \
  symtable.hpp symbol-changer.hpp identifier.hpp parser.tab.hpp \
- scanner.hpp yytname.hpp
+ scanner.hpp
 trace.o: trace.cpp parser.hpp location.hh process.hpp alphabet.hpp \
  channel.hpp object.hpp status.hpp scope.hpp uniformint.hpp symtable.hpp \
- symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp yytname.hpp
+ symbol-changer.hpp identifier.hpp parser.tab.hpp scanner.hpp

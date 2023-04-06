@@ -36,7 +36,6 @@
 #include "scanner.hpp"
 #include "status.hpp"
 #include "symtable.hpp"
-#include "yytname.hpp"
 
 using namespace CSP;
 

@@ -27,10 +27,12 @@
 #define CSP_ERROR_HPP
 
 #include "parser.hpp"
+#include "scanner.hpp"
 
 namespace CSP {
 
-   void yyerror(location const* loc, char const* msg);
+   void yyerror(const location& loc, char const* msg);
+   void yyerror(const location& loc, Scanner& scanner, char const* msg);
 
 } // namespace CSP
 

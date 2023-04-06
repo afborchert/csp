@@ -43,14 +43,25 @@ namespace CSP {
 	 int get_token(semantic_type& yylval, location& yylloc);
 	 bool at_eof() const;
 
+	 const std::string& get_line(std::size_t ln) const {
+	    if (ln >= 1 && ln <= lines.size()) {
+	       return lines[ln-1];
+	    } else {
+	       return line;
+	    }
+	 }
+
       private:
 	 std::istream& in;
 	 std::string input_name;
-	 unsigned char ch;
-	 bool eof;
+	 unsigned char ch = 0;
+	 bool eof = false;
 	 position oldpos, pos;
 	 location tokenloc;
 	 std::unique_ptr<std::string> tokenstr;
+	 std::vector<std::string> lines; // input lines
+	 std::string line; // current line
+	 std::size_t line_index = 1;
 
 	 // private mutators
 	 void nextch();

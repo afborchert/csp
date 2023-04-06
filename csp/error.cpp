@@ -25,36 +25,61 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
+
 #include "error.hpp"
 
 namespace CSP {
 
-void yyerror(location const* loc, char const* msg) {
+static void print_error(const location& loc, char const* msg) {
    /* we have to output locations ourselves as the corresponding
       output operator as provided by bison is broken */
-   auto filename = loc->begin.filename;
+   auto filename = loc.begin.filename;
    if (!filename) {
-      filename = loc->end.filename;
+      filename = loc.end.filename;
    }
    if (filename) {
       std::cerr << *filename << ":";
    }
-   auto end_col = loc->end.column > 0? loc->end.column - 1: 0;
-   if (loc->begin.line < loc->end.line) {
-      std::cerr << loc->begin.line << ':' << loc->begin.column <<
-	 '-' << loc->end.line << ':' << loc->end.column;
-   } else if (loc->begin.line < end_col) {
-      std::cerr << loc->begin.line << ':' << loc->begin.column <<
+   auto end_col = loc.end.column > 0? loc.end.column - 1: 0;
+   if (loc.begin.line < loc.end.line) {
+      std::cerr << loc.begin.line << ':' << loc.begin.column <<
+	 '-' << loc.end.line << ':' << loc.end.column;
+   } else if (loc.begin.line < end_col) {
+      std::cerr << loc.begin.line << ':' << loc.begin.column <<
 	 '-' << end_col;
    } else {
-      std::cerr << loc->begin.line << ':' << loc->begin.column;
+      std::cerr << loc.begin.line << ':' << loc.begin.column;
    }
    std::cerr << ": " << msg << std::endl;
+}
+
+void yyerror(const location& loc, char const* msg) {
+   print_error(loc, msg);
+   exit(1);
+}
+
+void yyerror(const location& loc, Scanner& scanner, char const* msg) {
+   print_error(loc, msg);
+   for (auto ln = loc.begin.line; ln <= loc.end.line; ++ln) {
+      std::cerr << std::setw(5) << ln << " | " <<
+	 scanner.get_line(ln) << std::endl;
+   }
+   int skip = 8; int stretch = 0;
+   if (loc.begin.line == loc.end.line) {
+      stretch = loc.end.column - loc.begin.column;
+      skip += loc.begin.column - 1;
+   } else {
+      stretch = loc.end.column - 1;
+   }
+   for (int i = 0; i < skip; ++i) std::cerr << " ";
+   for (int i = 0; i < stretch; ++i) std::cerr << "~";
+   std::cerr << std::endl;
    exit(1);
 }
 
 void parser::error(const location_type& loc, const std::string& msg) {
-   yyerror(&loc, msg.c_str());
+   yyerror(loc, scanner, msg.c_str());
 }
 
 } // namespace CSP

@@ -27,9 +27,9 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+
 #include "parser.hpp"
 #include "scanner.hpp"
-#include "yytname.hpp"
 
 using namespace CSP;
 
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
    int token;
    location loc;
    while ((token = scanner->get_token(yylval, loc)) != 0) {
-      std::cout << yytname[token - 255];
+      std::cout << token;
       if (yylval) {
 	 std::cout << " \"" << yylval << '"';
 	 yylval = ObjectPtr();

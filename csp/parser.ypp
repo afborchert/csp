@@ -140,11 +140,10 @@ namespace CSP {
 #include "symbol-changer.hpp"
 #include "symtable.hpp"
 #include "writing-process.hpp"
-#include "yytname.hpp"
 
 using namespace CSP;
 
-ChannelPtr get_channel(location const* loc, SymTable& symtab,
+ChannelPtr get_channel(const location& loc, Scanner& scanner, SymTable& symtab,
       const std::string& name);
 NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
 
@@ -157,25 +156,48 @@ NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
 %defines
 %verbose
 %locations
-%token-table
+%define parse.lac full
+%define parse.error detailed
 %parse-param { Scanner& scanner }
 %parse-param { SymTable& symtab }
 %parse-param { ProcessPtr& p }
 %lex-param { Scanner& scanner }
 
 /* operators */
-%token ARROW OR EQUAL PARALLEL INTERLEAVES INTERNAL_CHOICE EXTERNAL_CHOICE
-%token CONCEAL SUBORDINATION
+%token ARROW "'->'"
+%token CONCEAL "'\\'"
+%token EQUAL "'='"
+%token EXTERNAL_CHOICE "'[]'"
+%token INTERLEAVES "'|||'"
+%token INTERNAL_CHOICE "'|~|'"
+%token OR "'|'"
+%token PARALLEL "'||'"
+%token SUBORDINATION "'//'"
 
 /* delimiters */
-%token LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON COLON PERIOD
-%token QM EM /* '?' and '!' */
+%token COLON "':'"
+%token COMMA "','"
+%token EM "'!'"
+%token LBRACE "'{'"
+%token LPAREN "'('"
+%token PERIOD "'.'"
+%token QM "'?'"
+%token RBRACE "'}'"
+%token RPAREN "')'"
+%token SEMICOLON "';'"
 
 /* identifiers */
 %token LCIDENT UCIDENT
 
 /* keywords */
-%token ALPHA CHAOS RUN SKIP STOP MU INTEGER STRING
+%token ALPHA "'alpha'"
+%token CHAOS "'CHAOS'"
+%token INTEGER "'integer'"
+%token MU "'mu'"
+%token RUN "'RUN'"
+%token SKIP "'SKIP'"
+%token STOP "'STOP'"
+%token STRING "'string'"
 
 %%
 
@@ -185,7 +207,7 @@ start:
       {
 	 p = std::dynamic_pointer_cast<Process>($2);
 	 if (!scanner.at_eof()) {
-	    yyerror(&@$, "CSP program ends already here");
+	    error(@$, "CSP program ends already here");
 	 }
 	 symtab.close();
       }
@@ -213,7 +235,7 @@ channel_definition: ALPHA identifier EQUAL alphabet_expression
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($4);
-	 auto channel = get_channel(&@$, symtab, id->get_name());
+	 auto channel = get_channel(@$, scanner, symtab, id->get_name());
 	 channel->set_alphabet(evset->get_alphabet());
 	 $$ = evset;
       }
@@ -223,7 +245,7 @@ channel_definition: ALPHA identifier EQUAL alphabet_expression
 	 auto pid = std::dynamic_pointer_cast<Identifier>($4);
 	 auto pn = get_process(pid->get_name(), symtab);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($7);
-	 auto channel = get_channel(&@$, symtab, id->get_name());
+	 auto channel = get_channel(@$, scanner, symtab, id->get_name());
 	 channel->set_alphabet(pn->get_name(), evset->get_alphabet());
 	 pn->add_channel(channel);
 	 $$ = evset;
@@ -247,7 +269,7 @@ function_definition: identifier LPAREN identifier RPAREN EQUAL identifier
 	    assert(ok);
 	 }
 	 if (!function->add_mapping(event1, event2)) {
-	    yyerror(&@$, "function definition violates injectivity");
+	    error(@$, "function definition violates injectivity");
 	 }
 	 $$ = function;
       }
@@ -267,7 +289,7 @@ process_definition_header: process
 	 auto process = std::make_shared<ProcessDefinition>(id->get_name());
 	 bool ok = symtab.insert(id->get_name(), process);
 	 if (!ok) {
-	    yyerror(&@$, "process defined multiple times");
+	    error(@$, "process defined multiple times");
 	 }
 	 symtab.open();
 	 $$ = process;
@@ -280,7 +302,7 @@ process_definition_header: process
 	 process->set_alphabet(evset->get_alphabet());
 	 bool ok = symtab.insert(id->get_name(), process);
 	 if (!ok) {
-	    yyerror(&@$, "process defined multiple times");
+	    error(@$, "process defined multiple times");
 	 }
 	 symtab.open();
 	 $$ = process;
@@ -293,7 +315,7 @@ process_definition_header: process
 	    formal);
 	 bool ok = symtab.insert(id->get_name(), process);
 	 if (!ok) {
-	    yyerror(&@$, "process defined multiple times");
+	    error(@$, "process defined multiple times");
 	 }
 	 symtab.open();
 	 process->enter_parameters(symtab);
@@ -309,7 +331,7 @@ process_definition_header: process
 	 process->set_alphabet(evset->get_alphabet());
 	 bool ok = symtab.insert(id->get_name(), process);
 	 if (!ok) {
-	    yyerror(&@$, "process defined multiple times");
+	    error(@$, "process defined multiple times");
 	 }
 	 symtab.open();
 	 process->enter_parameters(symtab);
@@ -470,7 +492,7 @@ simple_process_expression: process
 	    f = std::make_shared<FunctionDefinition>(id->get_name());
 	    bool ok = symtab.global_insert(id->get_name(), f);
 	    if (!ok) {
-	       yyerror(&@$, "conflicting references");
+	       error(@$, "conflicting references");
 	    }
 	 }
 	 $$ = std::make_shared<MappedProcess>(p, f);
@@ -546,7 +568,7 @@ prefix_expression: identifier ARROW prefix_or_process_expression
    | identifier EM identifier ARROW prefix_or_process_expression
       {
 	 auto cid = std::dynamic_pointer_cast<Identifier>($1);
-	 auto channel = get_channel(&@$, symtab, cid->get_name());
+	 auto channel = get_channel(@$, scanner, symtab, cid->get_name());
 	 auto id = std::dynamic_pointer_cast<Identifier>($3);
 	 auto p = std::dynamic_pointer_cast<Process>($5);
 	 if (symtab.defined(id->get_name())) {
@@ -562,7 +584,7 @@ input_operation: identifier QM identifier
       {
 	 symtab.open();
 	 auto cid = std::dynamic_pointer_cast<Identifier>($1);
-	 auto channel = get_channel(&@$, symtab, cid->get_name());
+	 auto channel = get_channel(@$, scanner, symtab, cid->get_name());
 	 auto variable = std::dynamic_pointer_cast<Identifier>($3);
 	 auto p = std::make_shared<ReadingProcess>(channel,
 	    variable->get_name());
@@ -636,13 +658,13 @@ process: UCIDENT;
 
 %%
 
-ChannelPtr get_channel(location const* loc, SymTable& symtab,
-      const std::string& name) {
+ChannelPtr get_channel(const location& loc, Scanner& scanner,
+      SymTable& symtab, const std::string& name) {
    auto channel = symtab.lookup<Channel>(name);
    if (!channel) {
       channel = std::make_shared<Channel>(name);
       if (!symtab.global_insert(name, channel)) {
-	 yyerror(loc, "conflicting definitions");
+	 yyerror(loc, scanner, "conflicting definitions");
       }
    }
    return channel;
