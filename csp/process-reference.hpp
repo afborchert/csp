@@ -43,25 +43,33 @@ namespace CSP {
 }
 
 #include "alphabet.hpp"
+#include "context.hpp"
+#include "error.hpp"
 #include "identifier.hpp"
 #include "parameters.hpp"
+#include "parser.hpp"
 #include "process-definition.hpp"
 #include "named-process.hpp"
+#include "scanner.hpp"
 #include "symtable.hpp"
 
 namespace CSP {
 
    class ProcessReference: public NamedProcess {
       public:
-	 ProcessReference(const std::string& name, SymTable& symtab) :
-	       NamedProcess(name), symtab(symtab) {
+	 ProcessReference(const location& loc,
+		  const std::string& name,
+		  Context& context) :
+	       NamedProcess(name), loc(loc), context(context) {
 	 }
-	 ProcessReference(const std::string& name,
-		  ParametersPtr params, SymTable& symtab) :
-	       NamedProcess(name), symtab(symtab),
+	 ProcessReference(const location& loc,
+		  const std::string& name,
+		  ParametersPtr params,
+		  Context& context) :
+	       NamedProcess(name), loc(loc), context(context),
 	       actual(params), bound(params->size(), false) {
 	    for (std::size_t i = 0; i < actual->size(); ++i) {
-	       if (symtab.defined(actual->at(i))) {
+	       if (context.symtab().defined(actual->at(i))) {
 		  bound[i] = true;
 	       }
 	    }
@@ -71,7 +79,7 @@ namespace CSP {
 	    if (!resolve()) {
 	       auto me = std::dynamic_pointer_cast<ProcessReference>(
 		  shared_from_this());
-	       symtab.add_unresolved(get_name(),
+	       context.symtab().add_unresolved(loc, get_name(),
 		  [me]() {
 		     return me->resolve();
 		  });
@@ -85,22 +93,20 @@ namespace CSP {
 
 	 bool resolve() const {
 	    if (p) return true;
-	    auto pdef = symtab.lookup<ProcessDefinition>(get_name());
+	    auto pdef = context.symtab().lookup<ProcessDefinition>(get_name());
 	    if (!pdef) {
-	       p = symtab.lookup<NamedProcess>(get_name());
+	       p = context.symtab().lookup<NamedProcess>(get_name());
 	       if (!p) return false;
 	       if (actual) {
-		  std::cerr << "reference of process " << get_name() <<
-		     " does not match its definition" << std::endl;
-		  std::exit(1);
+		  yyerror(loc, context, "reference of process '%s' "
+		     "does not match its definition", get_name());
 	       }
 	    } else if (!just_reference) {
 	       formal = pdef->get_params();
 	       if (!formal != !actual ||
 		     (formal && formal->size() != actual->size())) {
-		  std::cerr << "reference of process " << get_name() <<
-		     " does not match its definition" << std::endl;
-		  std::exit(1);
+		  yyerror(loc, context, "reference of process '%s' "
+		     "does not match its definition", get_name());
 	       }
 	       p = pdef;
 	    }
@@ -147,7 +153,8 @@ namespace CSP {
 	 }
 
       private:
-	 SymTable& symtab;
+	 const location loc;
+	 Context& context;
 	 mutable ProcessPtr p;
 	 ParametersPtr actual;
 	 std::vector<bool> bound;

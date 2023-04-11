@@ -103,13 +103,9 @@
 
 %{
 
-namespace CSP {
-   class Scanner;
-   class SymTable;
-}
-
-
 #include <memory>
+
+#include "context.hpp" // to be included first
 
 #include "channel.hpp"
 #include "chaos-process.hpp"
@@ -143,9 +139,10 @@ namespace CSP {
 
 using namespace CSP;
 
-ChannelPtr get_channel(const location& loc, Scanner& scanner, SymTable& symtab,
+ChannelPtr get_channel(const location& loc, Context& context,
       const std::string& name);
-NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
+NamedProcessPtr get_process(const location& loc, const std::string& name,
+      Context& context);
 
 %}
 
@@ -158,10 +155,9 @@ NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
 %locations
 %define parse.lac full
 %define parse.error detailed
-%parse-param { Scanner& scanner }
-%parse-param { SymTable& symtab }
+%parse-param { Context& csp_context }
 %parse-param { ProcessPtr& p }
-%lex-param { Scanner& scanner }
+%lex-param { Context& csp_context }
 
 /* operators */
 %token ARROW "'->'"
@@ -202,14 +198,14 @@ NamedProcessPtr get_process(const std::string& name, SymTable& symtab);
 %%
 
 start:
-      { symtab.open(); }
+      { csp_context.symtab().open(); }
    unit
       {
 	 p = std::dynamic_pointer_cast<Process>($2);
-	 if (!scanner.at_eof()) {
+	 if (!csp_context.scanner().at_eof()) {
 	    error(@$, "CSP program ends already here");
 	 }
-	 symtab.close();
+	 csp_context.symtab().close();
       }
    ;
 
@@ -235,18 +231,24 @@ channel_definition: ALPHA identifier EQUAL alphabet_expression
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($4);
-	 auto channel = get_channel(@$, scanner, symtab, id->get_name());
-	 channel->set_alphabet(evset->get_alphabet());
+	 auto channel = get_channel(@$, csp_context, id->get_name());
+	 if (!channel->set_alphabet(evset->get_alphabet())) {
+	    yyerror(@$, csp_context, "alphabet of channel '%s' has "
+	       "already been defined", id->get_name());
+	 }
 	 $$ = evset;
       }
    | ALPHA identifier LPAREN process RPAREN EQUAL alphabet_expression
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto pid = std::dynamic_pointer_cast<Identifier>($4);
-	 auto pn = get_process(pid->get_name(), symtab);
+	 auto pn = get_process(@$, pid->get_name(), csp_context);
 	 auto evset = std::dynamic_pointer_cast<EventSet>($7);
-	 auto channel = get_channel(@$, scanner, symtab, id->get_name());
-	 channel->set_alphabet(pn->get_name(), evset->get_alphabet());
+	 auto channel = get_channel(@$, csp_context, id->get_name());
+	 if (!channel->set_alphabet(pn->get_name(), evset->get_alphabet())) {
+	    yyerror(@$, csp_context, "alphabet of channel '%s' has "
+	       "already been defined", id->get_name());
+	 }
 	 pn->add_channel(channel);
 	 $$ = evset;
       }
@@ -261,15 +263,18 @@ function_definition: identifier LPAREN identifier RPAREN EQUAL identifier
 	 auto id = std::dynamic_pointer_cast<Identifier>($1);
 	 auto event1 = std::dynamic_pointer_cast<Identifier>($3);
 	 auto event2 = std::dynamic_pointer_cast<Identifier>($6);
-	 auto function = symtab.lookup<FunctionDefinition>(id->get_name());
+	 auto function = csp_context.symtab().lookup<FunctionDefinition>(
+	    id->get_name());
 	 if (!function) {
 	    function = std::make_shared<FunctionDefinition>(id->get_name());
 	    assert(function);
-	    bool ok = symtab.insert(id->get_name(), function);
+	    bool ok = csp_context.symtab().insert(id->get_name(), function);
 	    assert(ok);
 	 }
 	 if (!function->add_mapping(event1, event2)) {
-	    error(@$, "function definition violates injectivity");
+	    yyerror(@$, csp_context, "function definition '%s(%s) = %s' "
+	       "violates injectivity", id->get_name(),
+	       event1->get_name(), event2->get_name());
 	 }
 	 $$ = function;
       }
@@ -280,18 +285,19 @@ process_definition: process_definition_header EQUAL process_expression
 	 auto np = std::dynamic_pointer_cast<ProcessDefinition>($1);
 	 auto p = std::dynamic_pointer_cast<Process>($3);
 	 np->set_process(p);
-	 symtab.close();
+	 csp_context.symtab().close();
       }
    ;
 process_definition_header: process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($1);
 	 auto process = std::make_shared<ProcessDefinition>(id->get_name());
-	 bool ok = symtab.insert(id->get_name(), process);
+	 bool ok = csp_context.symtab().insert(id->get_name(), process);
 	 if (!ok) {
-	    error(@$, "process defined multiple times");
+	    yyerror(@$, csp_context, "process '%s' defined multiple times",
+	       id->get_name());
 	 }
-	 symtab.open();
+	 csp_context.symtab().open();
 	 $$ = process;
       }
    | process alphabet
@@ -300,11 +306,12 @@ process_definition_header: process
 	 auto evset = std::dynamic_pointer_cast<EventSet>($2);
 	 auto process = std::make_shared<ProcessDefinition>(id->get_name());
 	 process->set_alphabet(evset->get_alphabet());
-	 bool ok = symtab.insert(id->get_name(), process);
+	 bool ok = csp_context.symtab().insert(id->get_name(), process);
 	 if (!ok) {
-	    error(@$, "process defined multiple times");
+	    yyerror(@$, csp_context, "process '%s' defined multiple times",
+	       id->get_name());
 	 }
-	 symtab.open();
+	 csp_context.symtab().open();
 	 $$ = process;
       }
    | process parameters
@@ -313,12 +320,13 @@ process_definition_header: process
 	 auto formal = std::dynamic_pointer_cast<Parameters>($2);
 	 auto process = std::make_shared<ProcessDefinition>(id->get_name(),
 	    formal);
-	 bool ok = symtab.insert(id->get_name(), process);
+	 bool ok = csp_context.symtab().insert(id->get_name(), process);
 	 if (!ok) {
-	    error(@$, "process defined multiple times");
+	    yyerror(@$, csp_context, "process '%s' defined multiple times",
+	       id->get_name());
 	 }
-	 symtab.open();
-	 process->enter_parameters(symtab);
+	 csp_context.symtab().open();
+	 process->enter_parameters(csp_context.symtab());
 	 $$ = process;
       }
    | process parameters alphabet
@@ -329,12 +337,13 @@ process_definition_header: process
 	 auto process = std::make_shared<ProcessDefinition>(id->get_name(),
 	    formal);
 	 process->set_alphabet(evset->get_alphabet());
-	 bool ok = symtab.insert(id->get_name(), process);
+	 bool ok = csp_context.symtab().insert(id->get_name(), process);
 	 if (!ok) {
-	    error(@$, "process defined multiple times");
+	    yyerror(@$, csp_context, "process '%s' defined multiple times",
+	       id->get_name());
 	 }
-	 symtab.open();
-	 process->enter_parameters(symtab);
+	 csp_context.symtab().open();
+	 process->enter_parameters(csp_context.symtab());
 	 $$ = process;
       }
    ;
@@ -422,7 +431,8 @@ labeled_process_expression: simple_process_expression
 simple_process_expression: process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($1);
-	 auto p = std::make_shared<ProcessReference>(id->get_name(), symtab);
+	 auto p = std::make_shared<ProcessReference>(@$,
+	    id->get_name(), csp_context);
 	 p->register_ref();
 	 $$ = p;
       }
@@ -430,8 +440,8 @@ simple_process_expression: process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($1);
 	 auto actual = std::dynamic_pointer_cast<Parameters>($2);
-	 auto p = std::make_shared<ProcessReference>(id->get_name(),
-	    actual, symtab);
+	 auto p = std::make_shared<ProcessReference>(@$, id->get_name(),
+	    actual, csp_context);
 	 p->register_ref();
 	 $$ = p;
       }
@@ -443,7 +453,7 @@ simple_process_expression: process
    | CHAOS ALPHA process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($3);
-	 auto alpha_p = get_process(id->get_name(), symtab);
+	 auto alpha_p = get_process(@$, id->get_name(), csp_context);
 	 $$ = std::make_shared<ChaosProcess>(alpha_p);
       }
    | RUN alphabet
@@ -454,7 +464,7 @@ simple_process_expression: process
    | RUN ALPHA process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($3);
-	 auto alpha_p = get_process(id->get_name(), symtab);
+	 auto alpha_p = get_process(@$, id->get_name(), csp_context);
 	 $$ = std::make_shared<RunProcess>(alpha_p);
       }
    | SKIP alphabet
@@ -465,7 +475,7 @@ simple_process_expression: process
    | SKIP ALPHA process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($3);
-	 auto alpha_p = get_process(id->get_name(), symtab);
+	 auto alpha_p = get_process(@$, id->get_name(), csp_context);
 	 $$ = std::make_shared<SkipProcess>(alpha_p);
       }
    | STOP alphabet
@@ -476,7 +486,7 @@ simple_process_expression: process
    | STOP ALPHA process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($3);
-	 auto alpha_p = get_process(id->get_name(), symtab);
+	 auto alpha_p = get_process(@$, id->get_name(), csp_context);
 	 $$ = std::make_shared<StopProcess>(alpha_p);
       }
    | open_expression process_expression close_expression
@@ -487,12 +497,13 @@ simple_process_expression: process
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($1);
 	 auto p = std::dynamic_pointer_cast<Process>($3);
-	 auto f = symtab.lookup<FunctionDefinition>(id->get_name());
+	 auto f = csp_context.symtab().lookup<FunctionDefinition>(id->get_name());
 	 if (!f) {
 	    f = std::make_shared<FunctionDefinition>(id->get_name());
-	    bool ok = symtab.global_insert(id->get_name(), f);
+	    bool ok = csp_context.symtab().global_insert(id->get_name(), f);
 	    if (!ok) {
-	       error(@$, "conflicting references");
+	       yyerror(@$, csp_context, "conflicting references for '%s'",
+		  id->get_name());
 	    }
 	 }
 	 $$ = std::make_shared<MappedProcess>(p, f);
@@ -502,7 +513,7 @@ simple_process_expression: process
 	 auto p = std::dynamic_pointer_cast<RecursiveProcess>($1);
 	 auto pe = std::dynamic_pointer_cast<Process>($3);
 	 p->set_process(pe);
-	 symtab.close();
+	 csp_context.symtab().close();
 	 $$ = p;
       }
    ;
@@ -511,8 +522,8 @@ mu_header: MU process PERIOD
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto p = std::make_shared<RecursiveProcess>(id->get_name());
-	 symtab.open();
-	 bool ok = symtab.insert(id->get_name(), p); assert(ok);
+	 csp_context.symtab().open();
+	 bool ok = csp_context.symtab().insert(id->get_name(), p); assert(ok);
 	 $$ = p;
       }
    | MU process COLON alphabet PERIOD
@@ -521,18 +532,18 @@ mu_header: MU process PERIOD
 	 auto evset = std::dynamic_pointer_cast<EventSet>($4);
 	 auto p = std::make_shared<RecursiveProcess>(id->get_name(),
 	    evset->get_alphabet());
-	 symtab.open();
-	 bool ok = symtab.insert(id->get_name(), p); assert(ok);
+	 csp_context.symtab().open();
+	 bool ok = csp_context.symtab().insert(id->get_name(), p); assert(ok);
 	 $$ = p;
       }
    | MU process COLON ALPHA process PERIOD
       {
 	 auto id = std::dynamic_pointer_cast<Identifier>($2);
 	 auto id_alpha_p = std::dynamic_pointer_cast<Identifier>($3);
-	 auto alpha_p = get_process(id_alpha_p->get_name(), symtab);
+	 auto alpha_p = get_process(@$, id_alpha_p->get_name(), csp_context);
 	 auto p = std::make_shared<RecursiveProcess>(id->get_name(), alpha_p);
-	 symtab.open();
-	 bool ok = symtab.insert(id->get_name(), p); assert(ok);
+	 csp_context.symtab().open();
+	 bool ok = csp_context.symtab().insert(id->get_name(), p); assert(ok);
 	 $$ = p;
       }
    ;
@@ -562,16 +573,16 @@ prefix_expression: identifier ARROW prefix_or_process_expression
 	 auto rp = std::dynamic_pointer_cast<ReadingProcess>($1);
 	 auto p = std::dynamic_pointer_cast<Process>($3);
 	 rp->set_process(p);
-	 symtab.close();
+	 csp_context.symtab().close();
 	 $$ = rp;
       }
    | identifier EM identifier ARROW prefix_or_process_expression
       {
 	 auto cid = std::dynamic_pointer_cast<Identifier>($1);
-	 auto channel = get_channel(@$, scanner, symtab, cid->get_name());
+	 auto channel = get_channel(@$, csp_context, cid->get_name());
 	 auto id = std::dynamic_pointer_cast<Identifier>($3);
 	 auto p = std::dynamic_pointer_cast<Process>($5);
-	 if (symtab.defined(id->get_name())) {
+	 if (csp_context.symtab().defined(id->get_name())) {
 	    $$ = std::make_shared<WritingProcess>(channel, id->get_name(), p);
 	 } else {
 	    auto event = channel->get_name() + "." + id->get_name();
@@ -582,13 +593,13 @@ prefix_expression: identifier ARROW prefix_or_process_expression
 
 input_operation: identifier QM identifier
       {
-	 symtab.open();
+	 csp_context.symtab().open();
 	 auto cid = std::dynamic_pointer_cast<Identifier>($1);
-	 auto channel = get_channel(@$, scanner, symtab, cid->get_name());
+	 auto channel = get_channel(@$, csp_context, cid->get_name());
 	 auto variable = std::dynamic_pointer_cast<Identifier>($3);
 	 auto p = std::make_shared<ReadingProcess>(channel,
 	    variable->get_name());
-	 symtab.define(variable->get_name());
+	 csp_context.symtab().define(variable->get_name());
 	 $$ = p;
       }
    ;
@@ -640,9 +651,9 @@ alphabet_members: event
    ;
 
 open_expression: LPAREN
-      { symtab.open(); }
+      { csp_context.symtab().open(); }
 close_expression: RPAREN
-      { symtab.close(); }
+      { csp_context.symtab().close(); }
 
 event: identifier;
 label: identifier;
@@ -658,22 +669,23 @@ process: UCIDENT;
 
 %%
 
-ChannelPtr get_channel(const location& loc, Scanner& scanner,
-      SymTable& symtab, const std::string& name) {
-   auto channel = symtab.lookup<Channel>(name);
+ChannelPtr get_channel(const location& loc, Context& context,
+      const std::string& name) {
+   auto channel = context.symtab().lookup<Channel>(name);
    if (!channel) {
       channel = std::make_shared<Channel>(name);
-      if (!symtab.global_insert(name, channel)) {
-	 yyerror(loc, scanner, "conflicting definitions");
+      if (!context.symtab().global_insert(name, channel)) {
+	 yyerror(loc, context, "conflicting definitions for '%s'", name);
       }
    }
    return channel;
 }
 
-NamedProcessPtr get_process(const std::string& name, SymTable& symtab) {
-   auto p = symtab.lookup<NamedProcess>(name);
+NamedProcessPtr get_process(const location& loc, const std::string& name,
+      Context& context) {
+   auto p = context.symtab().lookup<NamedProcess>(name);
    if (p) return p;
-   auto rp = std::make_shared<ProcessReference>(name, symtab);
+   auto rp = std::make_shared<ProcessReference>(loc, name, context);
    rp->register_ref(); rp->set_refonly();
    return rp;
 }

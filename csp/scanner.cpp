@@ -58,8 +58,10 @@ bool is_whitespace(char ch) {
 
 // constructor ===============================================================
 
-Scanner::Scanner(std::istream& in, const std::string& input_name) :
-      in(in), input_name(input_name) {
+Scanner::Scanner(Context& context, std::istream& in,
+	 const std::string& input_name) :
+      context(context), in(in), input_name(input_name) {
+   context.set_scanner(*this);
    // unfortunately pos insists on a non-const pointer to std::string
    pos.initialize(&this->input_name);
    nextch();
@@ -280,7 +282,7 @@ void Scanner::nextch() {
 }
 
 void Scanner::error(char const* msg) {
-   yyerror(tokenloc, *this, msg);
+   yyerror(tokenloc, context, msg);
 }
 
 } // namespace CSP

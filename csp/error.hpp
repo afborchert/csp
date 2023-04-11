@@ -26,13 +26,28 @@
 #ifndef CSP_ERROR_HPP
 #define CSP_ERROR_HPP
 
-#include "parser.hpp"
-#include "scanner.hpp"
+#include <sstream>
+#include <utility>
+
+#include <printf.hpp>
+
+#include "context.hpp"
+#include "location.hh"
 
 namespace CSP {
 
    void yyerror(const location& loc, char const* msg);
-   void yyerror(const location& loc, Scanner& scanner, char const* msg);
+   void yyerror(const location& loc, Context& context, char const* msg);
+
+   template<typename... Values>
+   inline void yyerror(const location& loc, Context& context,
+	 char const* format, Values&&... values) {
+      std::ostringstream os;
+      int nbytes = fmt::printf(os, format, std::forward<Values>(values)...);
+      if (nbytes > 0) {
+	 yyerror(loc, context, os.str().c_str());
+      }
+   }
 
 } // namespace CSP
 

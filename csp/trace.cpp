@@ -31,6 +31,7 @@
 #include <tuple>
 #include <unistd.h>
 
+#include "context.hpp"
 #include "parser.hpp"
 #include "process.hpp"
 #include "scanner.hpp"
@@ -50,7 +51,7 @@ void usage(const char* cmdname) {
       std::endl;
    std::cerr << " -v   do not print the set of acceptable events" <<
       std::endl;
-   exit(1);
+   std::exit(1);
 }
 
 int main(int argc, char** argv) {
@@ -89,21 +90,22 @@ int main(int argc, char** argv) {
    if (!fin) {
       std::cerr << cmdname << ": unable to open " << fname <<
 	 " for reading" << std::endl;
-      exit(1);
+      std::exit(1);
    }
-   SymTable symtab;
    std::string filename(fname);
-   Scanner scanner(fin, filename);
+   Context context;
+   Scanner scanner(context, fin, filename);
+   SymTable symtab(context);
 
    ProcessPtr process;
-   parser p(scanner, symtab, process);
-   if (p.parse() == 0) {
+   parser p(context, process);
+   if (p.parse() == 0 && context.get_error_count() == 0) {
       if (opt_A) {
 	 auto alphabet = process->get_alphabet();
 	 for (auto event: alphabet) {
 	    std::cout << event << std::endl;
 	 }
-	 exit(0);
+	 std::exit(0);
       }
       auto status = std::make_shared<Status>();
       if (opt_p) {
@@ -123,7 +125,7 @@ int main(int argc, char** argv) {
 	       std::tie(process, status) = process->proceed(event, status);
 	       if (!process) {
 		  std::cerr << "cannot accept " << event << std::endl;
-		  exit(1);
+		  std::exit(1);
 	       }
 	       if (process->accepts_success(status)) break;
 	       if (opt_e) {
@@ -142,5 +144,7 @@ int main(int argc, char** argv) {
 	 }
       }
       std::cout << "OK" << std::endl;
+   } else {
+      std::exit(1);
    }
 }
