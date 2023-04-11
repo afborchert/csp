@@ -27,7 +27,10 @@
 #include <iostream>
 #include <iomanip>
 
+#include "context.hpp"
 #include "error.hpp"
+#include "parser.hpp"
+#include "scanner.hpp"
 
 namespace CSP {
 
@@ -56,14 +59,14 @@ static void print_error(const location& loc, char const* msg) {
 
 void yyerror(const location& loc, char const* msg) {
    print_error(loc, msg);
-   exit(1);
+   std::exit(1);
 }
 
-void yyerror(const location& loc, Scanner& scanner, char const* msg) {
+void yyerror(const location& loc, Context& context, char const* msg) {
    print_error(loc, msg);
    for (auto ln = loc.begin.line; ln <= loc.end.line; ++ln) {
       std::cerr << std::setw(5) << ln << " | " <<
-	 scanner.get_line(ln) << std::endl;
+	 context.scanner().get_line(ln) << std::endl;
    }
    int skip = 8; int stretch = 0;
    if (loc.begin.line == loc.end.line) {
@@ -75,11 +78,12 @@ void yyerror(const location& loc, Scanner& scanner, char const* msg) {
    for (int i = 0; i < skip; ++i) std::cerr << " ";
    for (int i = 0; i < stretch; ++i) std::cerr << "~";
    std::cerr << std::endl;
-   exit(1);
+   context.increase_error_count();
 }
 
 void parser::error(const location_type& loc, const std::string& msg) {
-   yyerror(loc, scanner, msg.c_str());
+   yyerror(loc, csp_context, msg.c_str());
+   std::exit(1);
 }
 
 } // namespace CSP

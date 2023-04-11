@@ -23,57 +23,45 @@
    SOFTWARE.
 */
 
-#ifndef CSP_SCANNER_HPP
-#define CSP_SCANNER_HPP
+#ifndef CSP_CONTEXT_HPP
+#define CSP_CONTEXT_HPP
 
-#include <iostream>
-#include <memory>
-
-#include "context.hpp"
-#include "parser.hpp"
+#include <cassert>
 
 namespace CSP {
 
-   typedef parser::semantic_type semantic_type;
+   class Scanner;
+   class SymTable;
 
-   class Scanner {
+   class Context {
       public:
-	 Scanner(Context& context,
-	       std::istream& in, const std::string& input_name);
+	 void set_scanner(Scanner& scanner) {
+	    assert(!scanner_ptr);
+	    scanner_ptr = &scanner;
+	 }
+	 void set_symtab(SymTable& symtab) {
+	    assert(!symtab_ptr);
+	    symtab_ptr = &symtab;
+	 }
+	 Scanner& scanner() {
+	    return *scanner_ptr;
+	 }
+	 SymTable& symtab() {
+	    return *symtab_ptr;
+	 }
 
-	 // mutators
-	 int get_token(semantic_type& yylval, location& yylloc);
-	 bool at_eof() const;
-
-	 const std::string& get_line(std::size_t ln) const {
-	    if (ln >= 1 && ln <= lines.size()) {
-	       return lines[ln-1];
-	    } else {
-	       return line;
-	    }
+	 unsigned get_error_count() const {
+	    return error_count;
+	 }
+	 void increase_error_count() {
+	    ++error_count;
 	 }
 
       private:
-	 Context& context;
-	 std::istream& in;
-	 std::string input_name;
-	 unsigned char ch = 0;
-	 bool eof = false;
-	 position oldpos, pos;
-	 location tokenloc;
-	 std::unique_ptr<std::string> tokenstr;
-	 std::vector<std::string> lines; // input lines
-	 std::string line; // current line
-	 std::size_t line_index = 1;
-
-	 // private mutators
-	 void nextch();
-	 void error(char const* msg);
+	 Scanner* scanner_ptr = nullptr;
+	 SymTable* symtab_ptr = nullptr;
+	 unsigned error_count = 0;
    };
-
-   inline int yylex(semantic_type* yylval, location* yylloc, Context& context) {
-      return context.scanner().get_token(*yylval, *yylloc);
-   }
 
 } // namespace CSP
 

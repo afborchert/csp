@@ -37,6 +37,9 @@
 #include <string>
 #include <utility>
 
+#include "context.hpp"
+#include "error.hpp"
+#include "location.hh"
 #include "scope.hpp"
 #include "symbol-changer.hpp"
 
@@ -44,14 +47,17 @@ namespace CSP {
 
    class SymTable {
       private:
+	 Context& context;
 	 ScopePtr scope;
 	 ScopePtr global;
 	 unsigned unique = 0;
 
 	 struct Reference {
-	    Reference(std::string name, std::function<bool()> resolve) :
-		  name(std::move(name)), resolve(std::move(resolve)) {
+	    Reference(const location& loc,
+		  std::string name, std::function<bool()> resolve) :
+		  loc(loc), name(std::move(name)), resolve(std::move(resolve)) {
 	    }
+	    const location loc;
 	    const std::string name;
 	    std::function<bool()> resolve;
 	 };
@@ -59,7 +65,9 @@ namespace CSP {
 
       public:
 	 // constructors
-	 SymTable() = default;
+	 SymTable(Context& context) : context(context) {
+	    context.set_symtab(*this);
+	 }
 
 	 // accessors
 	 template <typename T>
@@ -98,8 +106,8 @@ namespace CSP {
 	       /* give error messages for all unresolved names */
 	       unsigned errors = 0;
 	       for (auto ref: unresolved) {
-		  std::cerr << "unable to resolve " <<
-		     ref.name << std::endl;
+		  yyerror(ref.loc, context, "unable to resolve "
+		     "reference to process '%s'", ref.name);
 		  ++errors;
 	       }
 	       if (errors) {
@@ -121,14 +129,9 @@ namespace CSP {
 	    assert(global);
 	    return global->insert(name, object);
 	 }
-	 void add_unresolved(std::string name, std::function<bool()> resolve) {
-	    unresolved.emplace_back(std::move(name), std::move(resolve));
-	 }
-
-	 std::string get_unique_symbol() {
-	    std::ostringstream out;
-	    out << "$" << unique++;
-	    return out.str();
+	 void add_unresolved(const location& loc,
+	       std::string name, std::function<bool()> resolve) {
+	    unresolved.emplace_back(loc, std::move(name), std::move(resolve));
 	 }
    };
 

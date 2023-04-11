@@ -41,6 +41,7 @@
 #include "alphabet.hpp"
 #include "named-process.hpp"
 #include "parameters.hpp"
+#include "symtable.hpp"
 
 namespace CSP {
 

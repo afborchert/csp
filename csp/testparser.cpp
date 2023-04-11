@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "context.hpp"
 #include "parser.hpp"
 #include "process.hpp"
 #include "scanner.hpp"
@@ -38,12 +39,12 @@ int main(int argc, char** argv) {
    char* cmdname = *argv++; --argc;
    if (argc > 1) {
       std::cerr << "Usage: " << cmdname << " [filename]" << std::endl;
-      exit(1);
+      std::exit(1);
    }
 
-   SymTable symtab;
    std::unique_ptr<Scanner> scanner;
    std::unique_ptr<std::ifstream> fin = nullptr;
+   Context context;
    if (argc > 0) {
       char* fname = *argv++; --argc;
       fin = std::make_unique<std::ifstream>(fname);
@@ -51,16 +52,19 @@ int main(int argc, char** argv) {
       if (!*fin) {
 	 std::cerr << cmdname << ": unable to open " << fname <<
 	    " for reading" << std::endl;
-	 exit(1);
+	 std::exit(1);
       }
-      scanner = std::make_unique<Scanner>(*fin, filename);
+      scanner = std::make_unique<Scanner>(context, *fin, filename);
    } else {
-      scanner = std::make_unique<Scanner>(std::cin, "stdin");
+      scanner = std::make_unique<Scanner>(context, std::cin, "stdin");
    }
+   SymTable symtab(context);
 
    ProcessPtr process;
-   parser p(*scanner, symtab, process);
-   if (p.parse() == 0) {
+   parser p(context, process);
+   if (p.parse() == 0 && context.get_error_count() == 0) {
       std::cout << "OK" << std::endl;
+   } else {
+      std::exit(1);
    }
 }
