@@ -55,8 +55,9 @@ namespace CSP {
 	    process1->print(out); out << " ||| "; process2->print(out);
 	 }
 	 Alphabet acceptable(StatusPtr status) const final {
-	    return process1->acceptable(status) +
-	       process2->acceptable(status);
+	    auto s = get_status<InternalStatus>(status);
+	    return process1->acceptable(s->s1) +
+	       process2->acceptable(s->s2);
 	 }
 
       private:

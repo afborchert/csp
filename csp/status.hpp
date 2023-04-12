@@ -54,6 +54,7 @@ namespace CSP {
 	 }
 	 Status(StatusPtr status) :
 	       scope(std::make_shared<Scope>(status->scope)),
+	       extended(status->extended),
 	       prg(status->prg) {
 	 }
 
@@ -97,7 +98,7 @@ namespace CSP {
 	 if (s) return s;
       }
       auto extended = std::make_shared<T>(status, std::forward<Args>(args)...);
-      status->extended = extended;
+      extended->extended = extended;
       return extended;
    }
 

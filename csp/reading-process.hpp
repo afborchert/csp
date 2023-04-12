@@ -72,13 +72,11 @@ namespace CSP {
 	    out << "("; print(out); out << ")";
 	 }
 	 Alphabet acceptable(StatusPtr status) const final {
-	    if (!acceptable_computed) {
-	       std::string prefix = channel->get_name() + ".";
-	       auto prefix_len = prefix.length();
-	       for (auto event: get_alphabet()) {
-		  if (event.substr(0, prefix_len) == prefix) {
-		     a += event;
-		  }
+	    std::string prefix = channel->get_name() + ".";
+	    auto prefix_len = prefix.length();
+	    for (auto event: get_alphabet()) {
+	       if (event.substr(0, prefix_len) == prefix) {
+		  a += event;
 	       }
 	    }
 	    return a;
@@ -88,7 +86,6 @@ namespace CSP {
 	 ChannelPtr channel;
 	 const std::string varname;
 	 ProcessPtr process;
-	 mutable bool acceptable_computed = false;
 	 mutable Alphabet a; // return value for acceptable
 
 	 ActiveProcess internal_proceed(const std::string& next_event,
@@ -111,6 +108,7 @@ namespace CSP {
 	 }
 	 void initialize_dependencies() const final {
 	    add_channel(channel);
+	    add_dependant(process);
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
 	 }

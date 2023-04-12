@@ -95,6 +95,7 @@ namespace CSP {
 	 }
 	 void initialize_dependencies() const final {
 	    add_channel(channel);
+	    add_dependant(process);
 	    process->add_dependant(std::dynamic_pointer_cast<const Process>(
 	       shared_from_this()));
 	 }

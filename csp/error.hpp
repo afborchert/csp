@@ -26,6 +26,7 @@
 #ifndef CSP_ERROR_HPP
 #define CSP_ERROR_HPP
 
+#include <cstdlib>
 #include <sstream>
 #include <utility>
 

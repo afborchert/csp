@@ -566,7 +566,8 @@ prefix_expression: identifier ARROW prefix_or_process_expression
       {  
 	 auto event = std::dynamic_pointer_cast<Identifier>($1);
 	 auto process = std::dynamic_pointer_cast<Process>($3);
-	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process);
+	 $$ = std::make_shared<PrefixedProcess>(event->get_name(), process,
+	    csp_context.symtab());
       }
    | input_operation ARROW prefix_or_process_expression
       {
@@ -586,7 +587,8 @@ prefix_expression: identifier ARROW prefix_or_process_expression
 	    $$ = std::make_shared<WritingProcess>(channel, id->get_name(), p);
 	 } else {
 	    auto event = channel->get_name() + "." + id->get_name();
-	    $$ = std::make_shared<PrefixedProcess>(event, p);
+	    $$ = std::make_shared<PrefixedProcess>(event, p,
+	       csp_context.symtab());
 	 }
       }
    ;
@@ -673,9 +675,12 @@ ChannelPtr get_channel(const location& loc, Context& context,
       const std::string& name) {
    auto channel = context.symtab().lookup<Channel>(name);
    if (!channel) {
+      if (context.symtab().defined(name)) {
+	 yyerror(loc, context, "conflicting definition for '%s'", name);
+      }
       channel = std::make_shared<Channel>(name);
       if (!context.symtab().global_insert(name, channel)) {
-	 yyerror(loc, context, "conflicting definitions for '%s'", name);
+	 yyerror(loc, context, "conflicting definition for '%s'", name);
       }
    }
    return channel;
