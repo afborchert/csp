@@ -21,7 +21,7 @@ Cloning should be done recursively:
 git clone --recursive https://github.com/afborchert/csp.git
 ```
 
-To build it, you need _bison_ 3.8 or newer and a recent _g++_ with
+To build it, you need _bison_ 3.6 or newer and a recent _g++_ with
 C++17 support:
 
 ```
