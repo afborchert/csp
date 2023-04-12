@@ -145,10 +145,19 @@ namespace CSP {
 	 /* intersection */
 	 Alphabet operator*(const Alphabet& other) const {
 	    Set result;
-	    auto inserter = std::inserter(result, result.end());
-	    std::set_intersection(events.begin(), events.end(),
-	       other.events.begin(), other.events.end(),
-	       inserter);
+	    /* this cannot be done through std::set_intersection
+	       in cases where we operate with integers or strings
+	       as alphabets */
+	    for (auto event: events) {
+	       if (other.is_member(event)) {
+		  result.insert(event);
+	       }
+	    }
+	    for (auto event: other.events) {
+	       if (is_member(event)) {
+		  result.insert(event);
+	       }
+	    }
 	    return Alphabet(result);
 	 }
 
