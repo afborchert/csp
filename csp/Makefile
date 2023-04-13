@@ -18,7 +18,7 @@ MAKEDEPEND := perl ../gcc-makedepend/gcc-makedepend.pl
 
 CXX :=		g++
 CXXSTD :=	-std=c++17
-CXXFLAGS :=	-Wall -g
+CXXFLAGS :=	-Wall -g -O3
 LDFLAGS :=
 CPPFLAGS +=	-I. -I../fmt $(CXXSTD)
 LDLIBS :=
