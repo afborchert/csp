@@ -91,7 +91,8 @@ namespace CSP {
 	    std::tie(p, s->status) = p->proceed(event, s->status);
 	    p = std::make_shared<ConcealedProcess>(p, concealed);
 	    p->set_alphabet(process->get_alphabet() - concealed);
-	    return {p, s->status};
+	    s->state = InternalStatus::undecided;
+	    return {p, s};
 	 }
 	 Alphabet internal_get_alphabet() const final {
 	    return process->get_alphabet() - concealed;
