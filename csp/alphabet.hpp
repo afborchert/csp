@@ -30,7 +30,6 @@
 #include <cassert>
 #include <cctype>
 #include <iostream>
-#include <regex>
 #include <set>
 #include <string>
 
@@ -175,23 +174,30 @@ namespace CSP {
 	    auto it = events.find(event);
 	    if (it != events.end()) return true;
 
-	    std::regex string_regex("^(.*?)\"[^\"]*\"$");
-	    std::smatch match;
-	    if (std::regex_match(event, match, string_regex) &&
-		  match.size() == 2) {
-	       auto key = match[1].str() + "*string*";
-	       it = events.find(key);
-	       return it != events.end();
+	    if (event.size() <= 2) return false;
+	    const char* s = event.c_str();
+	    const char* cp = s + event.size() - 2;
+	    bool is_string = false; bool is_numeric = false;
+	    if (cp[1] == '"') is_string = true;
+	    if (std::isdigit(cp[1])) is_numeric = true;
+	    if (!is_string && !is_numeric) return false;
+	    while (cp > s && *cp != '.') {
+	       is_numeric = is_numeric && isdigit(*cp);
+	       --cp;
 	    }
+	    if (cp == s) return false;
+	    if (is_string && cp[1] != '"') return false;
 
-	    std::regex int_regex("^(.*?\\.)\\d+$");
-	    if (std::regex_match(event, match, int_regex) &&
-		  match.size() == 2) {
-	       auto key = match[1].str() + "*integer*";
-	       it = events.find(key);
-	       return it != events.end();
+	    std::string key = event.substr(0, cp - s + 1);
+	    if (is_string) {
+	       key += "*string*";
+	    } else if (is_numeric) {
+	       key += "*integer*";
+	    } else {
+	       return false;
 	    }
-	    return false;
+	    it = events.find(key);
+	    return it != events.end();
 	 }
    };
 
