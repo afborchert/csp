@@ -90,9 +90,19 @@
 	 Identifier "?" Identifier "->" PrefixExpression |
 	 Identifier "?" Identifier "->" ProcessExpression |
 	 Identifier "!" Identifier "->" PrefixExpression |
-	 Identifier "!" Identifier "->" ProcessExpression .
+	 Identifier "!" Expression "->" PrefixExpression |
+	 Identifier "!" Identifier "->" ProcessExpression |
+	 Identifier "!" Expression "->" ProcessExpression .
       Parameters = "(" ParameterList ")" .
       ParameterList = Identifier | ParameterList "," Identifier .
+      Expression = "(" IntegerExpression ")" .
+      IntegerExpression = Identifier |
+	 "(" IntegerExpression ")" |
+	 IntegerExpression "+" IntegerExpression |
+	 IntegerExpression "-" IntegerExpression |
+	 IntegerExpression "*" IntegerExpression |
+	 IntegerExpression "div" IntegerExpression |
+	 IntegerExpression "mod" IntegerExpression .
       Alphabet = "{" "}" | "{" AlphabetMembers "}" | STRING | INTEGER .
       AlphabetMembers = Event | AlphabetMembers "," Event .
       Event = Identifier .
@@ -170,6 +180,13 @@ NamedProcessPtr get_process(const location& loc, const std::string& name,
 %token PARALLEL "'||'"
 %token SUBORDINATION "'//'"
 
+/* expressions */
+%token PLUS "'+'"
+%token MINUS "'-'"
+%token TIMES "'*'"
+%token DIV "'div'"
+%token MOD "'mod'"
+
 /* delimiters */
 %token COLON "':'"
 %token COMMA "','"
@@ -194,6 +211,10 @@ NamedProcessPtr get_process(const location& loc, const std::string& name,
 %token SKIP "'SKIP'"
 %token STOP "'STOP'"
 %token STRING "'string'"
+
+/* precedence, from lowest to highest */
+%left PLUS MINUS
+%left TIMES DIV MOD
 
 %%
 
@@ -591,6 +612,14 @@ prefix_expression: identifier ARROW prefix_or_process_expression
 	       csp_context.symtab());
 	 }
       }
+   | identifier EM expression ARROW prefix_or_process_expression
+      {
+	 auto cid = std::dynamic_pointer_cast<Identifier>($1);
+	 auto channel = get_channel(@$, csp_context, cid->get_name());
+	 auto expr = std::dynamic_pointer_cast<Expression>($3);
+	 auto p = std::dynamic_pointer_cast<Process>($5);
+	 $$ = std::make_shared<WritingProcess>(channel, expr, p);
+      }
    ;
 
 input_operation: identifier QM identifier
@@ -656,6 +685,76 @@ open_expression: LPAREN
       { csp_context.symtab().open(); }
 close_expression: RPAREN
       { csp_context.symtab().close(); }
+
+expression: LPAREN integer_expression RPAREN
+      { $$ = $2; }
+   ;
+integer_expression: identifier
+      {
+	 auto id = std::dynamic_pointer_cast<Identifier>($1);
+	 auto name = id->get_name();
+	 if (csp_context.symtab().defined(name)) {
+	    $$ = std::make_shared<Variable>(@$, csp_context, name);
+	 } else {
+	    const char* s = name.c_str();
+	    char* endptr;
+	    auto val = std::strtoul(s, &endptr, 10);
+	    if (*endptr) {
+	       yyerror(@$, csp_context,
+		  "integer value or integer variable expected");
+	       val = 0;
+	    }
+	    $$ = std::make_shared<Integer>(val);
+	 }
+      }
+   | LPAREN integer_expression RPAREN
+      { $$ = $2; }
+   | integer_expression PLUS integer_expression
+      {
+	 auto left = std::dynamic_pointer_cast<Expression>($1);
+	 auto right = std::dynamic_pointer_cast<Expression>($3);
+	 $$ = std::make_shared<Binary>(left, right, "+",
+	    [](Value leftval, Value rightval) {
+	       return leftval + rightval;
+	    });
+      }
+   | integer_expression MINUS integer_expression
+      {
+	 auto left = std::dynamic_pointer_cast<Expression>($1);
+	 auto right = std::dynamic_pointer_cast<Expression>($3);
+	 $$ = std::make_shared<Binary>(left, right, "-",
+	    [](Value leftval, Value rightval) {
+	       return leftval - rightval;
+	    });
+      }
+   | integer_expression TIMES integer_expression
+      {
+	 auto left = std::dynamic_pointer_cast<Expression>($1);
+	 auto right = std::dynamic_pointer_cast<Expression>($3);
+	 $$ = std::make_shared<Binary>(left, right, "*",
+	    [](Value leftval, Value rightval) {
+	       return leftval * rightval;
+	    });
+      }
+   | integer_expression DIV integer_expression
+      {
+	 auto left = std::dynamic_pointer_cast<Expression>($1);
+	 auto right = std::dynamic_pointer_cast<Expression>($3);
+	 $$ = std::make_shared<Binary>(left, right, "div",
+	    [](Value leftval, Value rightval) {
+	       return leftval / rightval;
+	    });
+      }
+   | integer_expression MOD integer_expression
+      {
+	 auto left = std::dynamic_pointer_cast<Expression>($1);
+	 auto right = std::dynamic_pointer_cast<Expression>($3);
+	 $$ = std::make_shared<Binary>(left, right, "mod",
+	    [](Value leftval, Value rightval) {
+	       return leftval % rightval;
+	    });
+      }
+   ;
 
 event: identifier;
 label: identifier;

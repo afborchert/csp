@@ -110,6 +110,10 @@ restart:
 	 token = parser::token::STRING;
       } else if (*tokenstr == "integer") {
 	 token = parser::token::INTEGER;
+      } else if (*tokenstr == "div") {
+	 token = parser::token::DIV;
+      } else if (*tokenstr == "mod") {
+	 token = parser::token::MOD;
       } else {
 	 yylval = std::make_shared<Identifier>(*tokenstr);
       }
@@ -176,6 +180,11 @@ restart:
 	    nextch(); token = parser::token::QM; break;
 	 case '!':
 	    nextch(); token = parser::token::EM; break;
+	 // operators in expressions
+	 case '+':
+	    nextch(); token = parser::token::PLUS; break;
+	 case '*':
+	    nextch(); token = parser::token::TIMES; break;
 	 // composite punctuators
 	 case '-':
 	    nextch();
@@ -191,7 +200,7 @@ restart:
 	       }
 	       goto restart;
 	    } else {
-	       error("invalid token");
+	       nextch(); token = parser::token::MINUS;
 	    }
 	    break;
 	 case '|':

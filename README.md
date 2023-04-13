@@ -47,14 +47,16 @@ Following identifiers and keywords are used by the grammar:
 | *LCIDENT* | string literals enclosed in `"..."`                      | `"[^"]*"`
 | *ALPHA*   | keyword "alpha" (must be lower case)                     | alpha
 | *CHAOS*   | keyword "CHAOS" (must be upper case)                     | CHAOS
+| *DIV*     | keyword "div" (must be lower case)                       | div
 | *INTEGER* | keyword "integer" (must be lower case)                   | integer
+| *MOD*     | keyword "mod" (must be lower case)                       | mod
 | *MU*      | keyword "mu" (must be lower case)                        | mu
 | *RUN*     | keyword "RUN" (must be upper case)                       | RUN
 | *SKIP*    | keyword "SKIP" (must be upper case)                      | SKIP
 | *STOP*    | keyword "STOP" (must be upper case)                      | STOP
 | *STRING*  | keyword "string" (must be lower case)                    | string
 
-### Operators
+### Operators in process expressions
 Following operators are supported and presented in the order of precedence,
 those with the highest precedence coming first:
 
@@ -79,6 +81,13 @@ in combination with the `|` operator (see section 1.1.3) which
 must be used with prefix expressions only.
 
 The sections refer to the book by C. A. R. Hoare.
+
+### Operators in integer expressions
+
+| Operator             | Associativity
+| -------------------- | --------------------
+| `*`, `div`, `mod`    | left-to-right
+| `+`, `-`             | left-to-right
 
 ### Delimiters
 
@@ -127,7 +136,7 @@ The grammar represents a subset of CSP:
 
    _Choices_ &#8594; _PrefixExpression_ | _Choices_ `|` _PrefixExpression_
 
-   _PrefixExpression_ &#8594; _Identifier_ `->` _ProcessExpression_ | _Identifier_ `->` _PrefixExpression_ | _Identifier_ `?` _Identifier_ `->` _ProcessExpression_ | _Identifier_ `!` _Identifier_ `->` _ProcessExpression_
+   _PrefixExpression_ &#8594; _Identifier_ `->` _ProcessExpression_ | _Identifier_ `->` _PrefixExpression_ | _Identifier_ `?` _Identifier_ `->` _ProcessExpression_ | _Identifier_ `?` _Identifier_ `->` _PrefixExpression_ | _Identifier_ `!` _Identifier_ `->` _ProcessExpression_ | _Identifier_ `!` _Identifier_ `->` _PrefixExpression_ | _Identifier_ `!` _Expression_ `->` _ProcessExpression_ | _Identifier_ `!` _Expression_ `->` _PrefixExpression_
 
    _Parameters_ &#8594; `(` _ParameterList_ `)`
 
@@ -440,6 +449,28 @@ Acceptable: {out.1}
 out.1
 Process: mu X.(in?x -> (out!x -> X))
 Acceptable: {in.0, in.1}
+OK
+$
+```
+
+## 4.2 X2
+Arithmetic operations for unsigned integers are supported.
+
+```
+$ cat x2.csp
+-- CSP, 4.2, X2
+DOUBLE = mu X. (left?x -> right!(x + x) -> X)
+alpha left = alpha right = integer
+$ trace x2.csp
+Tracing: DOUBLE = mu X.(left?x -> (right!(x + x) -> X))
+Alphabet: {left.*integer*, right.*integer*}
+Acceptable: {left.*integer*}
+left.21
+Process: (right!(x + x) -> X)
+Acceptable: {right.42}
+right.42
+Process: X
+Acceptable: {left.*integer*}
 OK
 $
 ```

@@ -51,7 +51,9 @@ namespace CSP {
 	 }
 
 	 void add(const std::string& event) {
-	    events.insert(event);
+	    if (!is_member(event)) {
+	       events.insert(event);
+	    }
 	 }
 
 	 Iterator begin() const {
@@ -63,26 +65,7 @@ namespace CSP {
 	 }
 
 	 bool is_member(const std::string& event) const {
-	    auto it = events.find(event);
-	    if (it != events.end()) return true;
-
-	    std::regex string_regex("^(.*?)\"[^\"]*\"$");
-	    std::smatch match;
-	    if (std::regex_match(event, match, string_regex) &&
-		  match.size() == 2) {
-	       auto key = match[1].str() + "*string*";
-	       it = events.find(key);
-	       return it != events.end();
-	    }
-
-	    std::regex int_regex("^(.*?\\.)\\d+$");
-	    if (std::regex_match(event, match, int_regex) &&
-		  match.size() == 2) {
-	       auto key = match[1].str() + "*integer*";
-	       it = events.find(key);
-	       return it != events.end();
-	    }
-	    return false;
+	    return matches(events, event);
 	 }
 
 	 int cardinality() const {
@@ -124,11 +107,26 @@ namespace CSP {
 
 	 /* union */
 	 Alphabet operator+(const Alphabet& other) const {
-	    Set result;
-	    auto inserter = std::inserter(result, result.end());
-	    std::set_union(events.begin(), events.end(),
-	       other.events.begin(), other.events.end(),
-	       inserter);
+	    Set result; Set delayed;
+	    for (auto event: events) {
+	       if (other.is_member(event)) {
+		  delayed.insert(event);
+	       } else {
+		  result.insert(event);
+	       }
+	    }
+	    for (auto event: other.events) {
+	       if (is_member(event)) {
+		  delayed.insert(event);
+	       } else {
+		  result.insert(event);
+	       }
+	    }
+	    for (auto event: delayed) {
+	       if (!matches(result, event)) {
+		  result.insert(event);
+	       }
+	    }
 	    return Alphabet(result);
 	 }
 
@@ -172,6 +170,29 @@ namespace CSP {
 	 }
       private:
 	 Set events;
+
+	 bool matches(const Set& events, const std::string& event) const {
+	    auto it = events.find(event);
+	    if (it != events.end()) return true;
+
+	    std::regex string_regex("^(.*?)\"[^\"]*\"$");
+	    std::smatch match;
+	    if (std::regex_match(event, match, string_regex) &&
+		  match.size() == 2) {
+	       auto key = match[1].str() + "*string*";
+	       it = events.find(key);
+	       return it != events.end();
+	    }
+
+	    std::regex int_regex("^(.*?\\.)\\d+$");
+	    if (std::regex_match(event, match, int_regex) &&
+		  match.size() == 2) {
+	       auto key = match[1].str() + "*integer*";
+	       it = events.find(key);
+	       return it != events.end();
+	    }
+	    return false;
+	 }
    };
 
    inline std::ostream& operator<<(std::ostream& out,

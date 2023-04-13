@@ -36,10 +36,12 @@
 #include <cassert>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include "alphabet.hpp"
 #include "channel.hpp"
+#include "expression.hpp"
 #include "identifier.hpp"
 #include "process.hpp"
 
@@ -51,12 +53,23 @@ namespace CSP {
 		  ProcessPtr process) :
 	       channel(channel), varname(varname), process(process) {
 	    assert(process);
+	    assert(varname.size() > 0);
+	 }
+	 WritingProcess(ChannelPtr channel, ExpressionPtr expression,
+		  ProcessPtr process) :
+	       channel(channel), expression(expression), process(process) {
+	    assert(process);
+	    assert(expression);
 	 }
 	 const ChannelPtr get_channel() {
 	    return channel;
 	 }
 	 void print(std::ostream& out) const override {
-	    out << channel->get_name() << "!" << varname << " -> ";
+	    if (expression) {
+	       out << channel->get_name() << "!" << expression << " -> ";
+	    } else {
+	       out << channel->get_name() << "!" << varname << " -> ";
+	    }
 	    process->print(out);
 	 }
 	 void expanded_print(std::ostream& out) const override {
@@ -65,20 +78,31 @@ namespace CSP {
 	    out << "("; print(out); out << ")";
 	 }
 	 Alphabet acceptable(StatusPtr status) const final {
-	    auto message = status->lookup<Identifier>(varname);
-	    auto event = channel->get_name() + "." + message->get_name();
+	    auto message = get_message(status);
+	    auto event = channel->get_name() + "." + message;
 	    return Alphabet(event);
 	 }
 
       private:
 	 ChannelPtr channel;
 	 std::string varname;
+	 ExpressionPtr expression;
 	 ProcessPtr process;
+
+	 std::string get_message(StatusPtr status) const {
+	    if (expression) {
+	       auto val = expression->eval(status);
+	       std::ostringstream os; os << val;
+	       return os.str();
+	    } else {
+	       return status->lookup<Identifier>(varname)->get_name();
+	    }
+	 }
 
 	 ActiveProcess internal_proceed(const std::string& next_event,
 	       StatusPtr status) final {
-	    auto message = status->lookup<Identifier>(varname);
-	    auto event = channel->get_name() + "." + message->get_name();
+	    auto message = get_message(status);
+	    auto event = channel->get_name() + "." + message;
 	    ProcessPtr p;
 	    if (next_event == event) {
 	       p = process;

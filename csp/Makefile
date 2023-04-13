@@ -53,11 +53,12 @@ parser.tab.o: parser.tab.cpp context.hpp channel.hpp alphabet.hpp \
  location.hh external-choice.hpp event-set.hpp identifier.hpp \
  interleaving-processes.hpp internal-choice.hpp mapped-process.hpp \
  symbol-changer.hpp parallel-processes.hpp parameters.hpp \
- prefixed-process.hpp process-definition.hpp named-process.hpp \
- symtable.hpp process-reference.hpp parser.hpp parser.tab.hpp scanner.hpp \
- process-sequence.hpp reading-process.hpp recursive-process.hpp \
- run-process.hpp selecting-process.hpp writing-process.hpp \
- skip-process.hpp stop-process.hpp subordination.hpp
+ prefixed-process.hpp symtable.hpp process-definition.hpp \
+ named-process.hpp process-reference.hpp parser.hpp parser.tab.hpp \
+ scanner.hpp process-sequence.hpp reading-process.hpp \
+ recursive-process.hpp run-process.hpp selecting-process.hpp \
+ writing-process.hpp expression.hpp skip-process.hpp stop-process.hpp \
+ subordination.hpp
 error.o: error.cpp context.hpp error.hpp ../fmt/printf.hpp location.hh \
  parser.hpp process.hpp alphabet.hpp channel.hpp object.hpp status.hpp \
  scope.hpp uniformint.hpp symtable.hpp symbol-changer.hpp identifier.hpp \
