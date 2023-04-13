@@ -43,7 +43,8 @@ Following identifiers and keywords are used by the grammar:
 | Symbol    | Description                                              | Regular expression
 | --------- | -------------------------------------------------------- | --------------------
 | *UCIDENT* | identifier that begins with an upper case letter         | `[A-Z][A-Za-z0-9_]*`
-| *LCIDENT* | identifier that begins with a lower case letter or digit | `[a-z0-9][A-Za-z0-9_]*`&#124;`"[^"]*"`
+| *LCIDENT* | identifier that begins with a lower case letter or digit | `[a-z0-9][A-Za-z0-9_]*`
+| *LCIDENT* | string literals enclosed in `"..."`                      | `"[^"]*"`
 | *ALPHA*   | keyword "alpha" (must be lower case)                     | alpha
 | *CHAOS*   | keyword "CHAOS" (must be upper case)                     | CHAOS
 | *INTEGER* | keyword "integer" (must be lower case)                   | integer
