@@ -158,6 +158,7 @@ The _trace_ command expects a filename as last argument and supports following f
 * `-a` do not print the alphabet at the beginning
 * `-e` print every accepted event
 * `-p` do not print the current process before the next event is read from the input
+* `-P n` run non-interactively by chosing up to _n_ times acceptable events by random
 * `-v` do not print the set of acceptable events before the next event is read from the input
 
 Typically, _trace_ is used interactively. Hence, helpful verbose output

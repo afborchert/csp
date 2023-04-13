@@ -49,6 +49,8 @@ void usage(const char* cmdname) {
    std::cerr << " -e   print events, if accepted" << std::endl;
    std::cerr << " -p   do not print current process after each event" <<
       std::endl;
+   std::cerr << " -P n chose event by random and stop after n events" <<
+      std::endl;
    std::cerr << " -v   do not print the set of acceptable events" <<
       std::endl;
    std::exit(1);
@@ -63,6 +65,8 @@ int main(int argc, char** argv) {
    bool opt_a = true;  // print alphabet at the beginning
    bool opt_e = false; // print events if accepted
    bool opt_p = true;  // print current process after each event
+   bool opt_P = false; // chose event by random and stop after n events
+   unsigned int event_count = 0; // parameter of -P
    bool opt_v = true;  // print current set of acceptable events
    while (argc > 0 && **argv == '-') {
       for (char* cp = *argv + 1; *cp; ++cp) {
@@ -75,6 +79,21 @@ int main(int argc, char** argv) {
 	       opt_e = true; break;
 	    case 'p':
 	       opt_p = false; break;
+	    case 'P':
+	       {
+		  opt_P = true;
+		  char* arg = cp+1;
+		  if (!*arg) {
+		     --argc; ++argv;
+		     if (argc == 0) usage(cmdname);
+		     arg = *argv;
+		  }
+		  char* endptr;
+		  event_count = std::strtoul(arg, &endptr, 10);
+		  if (*endptr) usage(cmdname);
+		  cp = endptr-1;
+	       }
+	       break;
 	    case 'v':
 	       opt_v = false; break;
 	    default:
@@ -120,7 +139,20 @@ int main(int argc, char** argv) {
       }
       if (!process->accepts_success(status)) {
 	 std::string event;
-	 while (std::cin >> event) {
+	 auto fetch_event = [&]() -> bool {
+	    if (opt_P) {
+	       if (event_count == 0) return false;
+	       --event_count;
+	       auto acceptable = process->acceptable(status);
+	       if (acceptable.cardinality() == 0) return false;
+	       auto chose = status->draw(acceptable.cardinality());
+	       event = *std::next(acceptable.begin(), chose);
+	       return true;
+	    } else {
+	       return !!(std::cin >> event);
+	    }
+	 };
+	 while (fetch_event()) {
 	    if (process->get_alphabet().is_member(event)) {
 	       std::tie(process, status) = process->proceed(event, status);
 	       if (!process) {
