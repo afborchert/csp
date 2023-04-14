@@ -1,0 +1,5 @@
+-- CSP, 4.3, X1
+P || Q
+P = (left?x -> mid!(x * x) -> P)
+Q = (mid?y -> right!(173 * y) -> Q)
+alpha left = alpha mid = alpha right = integer

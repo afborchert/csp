@@ -1,0 +1,9 @@
+-- CSP, 4.3, X3 (in addition to the original we read in parameters a and b)
+(in?a -> in?b -> X3(a, b))
+X3(a, b) = X2(a, b) || X23
+X2(a, b) = X21(a) || X22(b)
+X21(a) = (left1?x -> mid!(a * x) -> X21(a))
+X22(b) = (left2?y -> mid?z -> right!(z + b * y) -> X22(b))
+X23 = (left?x -> left1!x -> (mu X. (left?x -> left2!x -> left1!x -> X)))
+alpha in =
+alpha left = alpha left1 = alpha left2 = alpha mid = alpha right = integer
