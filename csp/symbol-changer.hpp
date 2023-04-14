@@ -191,6 +191,47 @@ namespace CSP {
 	 }
    };
 
+   /* see CSP 4.4 where we need to map right and left for pipe
+      to an internal hidden name */
+   class MapChannel: public SymbolChanger {
+      public:
+	 MapChannel(std::string channel, std::string newname) :
+	       channel(channel), newname(newname) {
+	 }
+	 void print(std::ostream& out) const final {
+	    out << "mapping " << channel << " -> " << newname;
+	 }
+
+      private:
+	 std::string channel;
+	 std::string newname;
+
+	 std::string get_name(std::string name) final {
+	    return name;
+	 }
+
+	 std::string map_channel(const std::string& event,
+	       const std::string& channel,
+	       const std::string& newname) {
+	    auto channel_len = channel.size();
+	    auto event_len = event.size();
+	    if (event_len <= channel_len + 1) return event;
+	    if (event.substr(0, channel_len) == channel &&
+		  event[channel_len] == '.') {
+	       return newname + event.substr(channel_len);
+	    }
+	    return event;
+	 }
+
+	 std::string internal_map(std::string event) final {
+	    return map_channel(event, channel, newname);
+	 }
+
+	 std::string internal_reverse_map(std::string event) final {
+	    return map_channel(event, newname, channel);
+	 }
+   };
+
 } // namespace CSP
 
 #endif

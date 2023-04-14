@@ -1,3 +1,4 @@
--- CSP, 4.2, X1
+-- CSP, 4.4, X6
+COPY >> COPY
 COPY = mu X. (left?x -> (right!x -> X))
 alpha left(COPY) = alpha right(COPY) = integer

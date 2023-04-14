@@ -133,6 +133,12 @@ namespace CSP {
 	       std::string name, std::function<bool()> resolve) {
 	    unresolved.emplace_back(loc, std::move(name), std::move(resolve));
 	 }
+
+	 std::string get_unique_symbol() {
+	    std::ostringstream out;
+	    out << "$" << unique++;
+	    return out.str();
+	 }
    };
 
 } // namespace CSP

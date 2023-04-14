@@ -61,6 +61,7 @@ namespace CSP {
 	 ActiveProcess internal_proceed(const std::string& event,
 	       StatusPtr status) final {
 	    auto [p, s] = process->proceed(f->reverse_map(event), status);
+	    if (!p) return {nullptr, status};
 	    return {std::make_shared<MappedProcess>(p, f), s};
 	 }
 	 Alphabet internal_get_alphabet() const final {

@@ -1,0 +1,11 @@
+-- CSP 4.5, X2
+QUADRUPLE = (
+   doub: DOUBLE // (
+      mu X. (left?x -> doub.left!x ->
+	 doub.right?y -> doub.left!y ->
+	 doub.right?z -> right!z -> X)
+   )
+)
+DOUBLE = mu X. (left?x -> right!(x + x) -> X)
+alpha doub.left = alpha doub.right =
+alpha left = alpha right = integer

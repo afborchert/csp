@@ -201,6 +201,39 @@ namespace CSP {
 	 }
    };
 
+   inline bool matches_prefix(const std::string& event,
+	 const std::string& prefix) {
+      auto prefix_len = prefix.size();
+      auto event_len = event.size();
+      if (event_len <= prefix_len + 2) return false;
+      if (event.substr(0, prefix_len) == prefix &&
+	    event[prefix_len] == '.') {
+	 return true;
+      }
+      return false;
+   }
+
+   inline Alphabet exclude_prefix(const Alphabet& alphabet,
+	 std::string prefix) {
+      Alphabet result;
+      for (auto& event: alphabet) {
+	 if (!matches_prefix(event, prefix)) {
+	    result.add(event);
+	 }
+      }
+      return result;
+   }
+
+   inline Alphabet select_prefix(const Alphabet& alphabet, std::string prefix) {
+      Alphabet result;
+      for (auto& event: alphabet) {
+	 if (matches_prefix(event, prefix)) {
+	    result.add(event);
+	 }
+      }
+      return result;
+   }
+
    inline std::ostream& operator<<(std::ostream& out,
 	 const Alphabet& alphabet) {
       out << '{';

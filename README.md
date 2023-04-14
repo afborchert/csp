@@ -68,6 +68,7 @@ those with the highest precedence coming first:
 | `:`                  | labeling             | non-associative | 2.6.2
 | `\`                  | concealment          | non-associative | 3.5
 | `//`                 | subordination        | left-to-right   | 4.5
+| `>>`                 | pipe                 | left-to-right   | 4.4
 | &#124;~&#124;        | non-deterministic or | left-to-right   | 3.2
 | `[]`                 | general choice       | left-to-right   | 3.3
 | &#124;&#124;&#124;   | interleaving         | left-to-right   | 3.6
@@ -122,7 +123,9 @@ The grammar represents a subset of CSP:
 
    _ExternalChoice_ &#8594; _InternalChoice_ | _ExternalChoice_ `[]` _InternalChoice_
 
-   _InternalChoice_ &#8594; _SubordinationExpression_ | _InternalChoice_ `|~|` _SubordinationExpression_
+   _InternalChoice_ &#8594; _PipeExpression_ | _InternalChoice_ `|~|` _PipeExpression_
+
+   _PipeExpression_ &#8594; _SubordinationExpression_ | _PipeExpression_ `>>` _SubordinationExpression_
 
    _SubordinationExpression_ &#8594; _ConcealedProcessExpression_ | _SubordinationExpression_ `//` _ConcealedProcessExpression_
 

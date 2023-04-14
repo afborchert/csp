@@ -234,6 +234,15 @@ restart:
 	       error("invalid token");
 	    }
 	    break;
+	 case '>':
+	    nextch();
+	    if (ch == '>') {
+	       nextch();
+	       token = parser::token::PIPE;
+	    } else {
+	       error("invalid token");
+	    }
+	    break;
 	 default:
 	    nextch();
 	    error("invalid token");

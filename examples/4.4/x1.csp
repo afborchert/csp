@@ -1,0 +1,4 @@
+-- CSP, 4.4, X1
+QUADRUPLE = DOUBLE >> DOUBLE
+DOUBLE = (left?x -> right!(x * 2) -> DOUBLE)
+alpha left = alpha right = integer
