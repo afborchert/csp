@@ -1,5 +1,5 @@
 /* 
-   Copyright (c) 2011-2023 Andreas F. Borchert
+   Copyright (c) 2011-2024 Andreas F. Borchert
    All rights reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
@@ -41,7 +41,8 @@
 using namespace CSP;
 
 void usage(const char* cmdname) {
-   std::cerr << "Usage: " << cmdname << " [-Aaepv] source.csp" << std::endl;
+   std::cerr << "Usage: " << cmdname << " [-Aaepv] [-P n] source.csp" <<
+      std::endl;
    std::cerr << "Options:" << std::endl;
    std::cerr << " -A   print alphabet, one symbol per line, and exit" <<
       std::endl;
