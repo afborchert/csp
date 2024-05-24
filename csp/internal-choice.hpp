@@ -67,10 +67,12 @@ namespace CSP {
 	 struct InternalStatus: public Status {
 	    StatusPtr s1;
 	    StatusPtr s2;
-	    enum {undecided, headforp1, headforp2} nextmove;
+	    enum {undecided, headforp1, headforp2} nextmove = undecided;
 
 	    InternalStatus(StatusPtr status) :
-	       Status(status), s1(status), s2(status), nextmove(undecided) {
+	       Status(status),
+	       s1(std::make_shared<Status>(status)),
+	       s2(std::make_shared<Status>(status)) {
 	    }
 	 };
 	 using InternalStatusPtr = std::shared_ptr<InternalStatus>;

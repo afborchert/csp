@@ -75,7 +75,9 @@ namespace CSP {
 	    StatusPtr s1;
 	    StatusPtr s2;
 	    InternalStatus(StatusPtr status) :
-	       Status(status), s1(status), s2(status) {
+	       Status(status),
+	       s1(std::make_shared<Status>(status)),
+	       s2(std::make_shared<Status>(status)) {
 	    }
 	 };
 

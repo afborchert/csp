@@ -88,7 +88,8 @@ namespace CSP {
 	 std::shared_ptr<UniformIntDistribution> prg;
    };
 
-   /* access extended status */
+   /* access extended status and create it for status, if it
+      does not exist yet */
    template<typename T, typename... Args>
    std::shared_ptr<T> get_status(StatusPtr status, Args&&... args) {
       std::shared_ptr<T> s = std::dynamic_pointer_cast<T>(status);
@@ -98,7 +99,7 @@ namespace CSP {
 	 if (s) return s;
       }
       auto extended = std::make_shared<T>(status, std::forward<Args>(args)...);
-      extended->extended = extended;
+      status->extended = extended;
       return extended;
    }
 
